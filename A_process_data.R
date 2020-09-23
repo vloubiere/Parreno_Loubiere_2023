@@ -9,56 +9,72 @@ require(dplyr)
 # 1- Format metadata
 #---------------------------------------------------#
 # fq.gz
-metadata <- data.table(file= list.files("/groups/stark/vloubiere/data/epigenetic_cancer", ".fq.gz", full.names = T, recursive = T))
+metadata <- data.table(file= list.files("/groups/stark/vloubiere/projects/epigenetic_cancer/db/fastq", ".fq.gz", full.names = T, recursive = T))
 # method and projects
-metadata[, method:= if(grepl("_RNA$", dirname(file))){"RNA"}else if(grepl("_ChIP$", dirname(file))){"ChIP"}, file]
-metadata[, project:= if(grepl("/SA2020_", dirname(file))){"SA2020"}else if(grepl("/epiCancer_", dirname(file))){"epiCancer"}, file]
+metadata[, method:= tstrsplit(file, "/|_", keep= 11)]
+metadata[, project:= tstrsplit(file, "/|_", keep= 10)]
 # Sample, replicates and IDs
 metadata[project=="SA2020", c("sample", "rep"):= tstrsplit(basename(file), "_|.fq", keep= c(2, 4))]
+metadata[project=="available", c("sample", "rep"):= tstrsplit(basename(file), "_|.fq", keep= c(2, 4))]
+metadata[project=="dev", c("sample", "rep"):= tstrsplit(basename(file), "_|.fq", keep= c(2, 3))]
 metadata[project=="epiCancer", c("sample", "rep"):= tstrsplit(basename(file), "_|.fq", keep= c(1,2))]
 metadata[, id:= paste0(sample, "_", rep), .(sample, rep)]
+# Genomes and prefixes
+metadata[method=="RNA" & (project=="epiCancer" | grepl("RNAI$", sample)), genome:= "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_150bp/"]
+metadata[method=="RNA" & is.na(genome) & project=="dev" & grepl("hED$", sample), genome:= "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_50bp/"]
+metadata[method=="RNA" & is.na(genome) & project=="dev" & grepl("E1416$", sample), genome:= "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_75bp/"]
+metadata[method=="RNA" & is.na(genome) & project=="SA2020", genome:= "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_50bp/"]
+metadata[method=="RNA", bam_prefix:= paste0("/groups/stark/vloubiere/projects/epigenetic_cancer/db/bam/", project, "_RNA/", id), project]
+metadata[method=="RNA", counts_prefix:= paste0("/groups/stark/vloubiere/projects/epigenetic_cancer/db/counts/", project, "/", id), project]
+metadata[method=="RNA", bed_prefix:= paste0("/groups/stark/vloubiere/projects/epigenetic_cancer/db/bed/RNA/", id), project]
+metadata[method=="RNA", bw_prefix:= paste0("/groups/stark/vloubiere/projects/epigenetic_cancer/db/bw/RNA/", id), project]
+
+fwrite(metadata, "db/metadata/metadata_all.txt", col.names = T, row.names = F, sep= "\t", quote= F, na= NA)
 
 #---------------------------------------------------#
 # 2- commands
 #---------------------------------------------------#
-# ChIP
-ChIP_pipeline <- "module load r/3.6.2-foss-2018b; /software/2020/software/r/3.6.2-foss-2018b/bin/Rscript /groups/stark/vloubiere/pipelines/ChIPseq_pipeline.R"
-bwt2_idx <- "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Sequence/Bowtie2Index/genome"
-bed_prefix <- "/groups/stark/vloubiere/data/epigenetic_cancer/bed/"
-bw_prefix <- "/groups/stark/vloubiere/data/epigenetic_cancer/bw/"
-
-RNA_pipeline <- "module load r/3.6.2-foss-2018b; /software/2020/software/r/3.6.2-foss-2018b/bin/Rscript /groups/stark/vloubiere/pipelines/RNAseq_pipeline.R"
-genome150 <- "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_150bp/"
-genome50 <- "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_50bp/"
-bam_prefix_SA <- "/groups/stark/vloubiere/data/epigenetic_cancer/bam/SA2020_RNA/"
-bam_prefix_Epi <- "/groups/stark/vloubiere/data/epigenetic_cancer/bam/epiCancer_RNA/"
-counts_prefix_SA <- "/groups/stark/vloubiere/data/epigenetic_cancer/counts/SA2020/"
-counts_prefix_Epi <- "/groups/stark/vloubiere/data/epigenetic_cancer/counts/epiCancer/"
-gtf <- "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Annotation/Genes/genes.gtf"
-
-metadata <- metadata[, .(cmd=
-                           {
-                             if(method=="ChIP")
-                             {
-                               c(ChIP_pipeline, file[1], ifelse(.N==2, file[2], NA), bwt2_idx, "dm6", paste0(bed_prefix, id), paste0(bw_prefix, id))
-                             }
-                             if(method=="RNA")
-                             {
-                               bam_prefix <- paste0(ifelse(project=="SA2020", bam_prefix_SA, bam_prefix_Epi), id)
-                               counts_prefix <- paste0(ifelse(project=="SA2020", counts_prefix_SA, counts_prefix_Epi), id)
-                               genome <- ifelse(.N==2, genome150, genome50)
-                               c(RNA_pipeline, file[1], ifelse(.N==2, file[2], NA), genome, bam_prefix, counts_prefix, gtf)
-                             }
-                           }), .(id, method, project)]
+metadata <- metadata[, .(cmd= 
+  if(method=="ChIP")
+  {
+  
+  c("module load r/3.6.2-foss-2018b; /software/2020/software/r/3.6.2-foss-2018b/bin/Rscript /groups/stark/vloubiere/pipelines/ChIPseq_pipeline.R", 
+    file[1], 
+    ifelse(.N==2, file[2], NA), 
+    "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Sequence/Bowtie2Index/genome", 
+    "dm6", 
+    paste0("/groups/stark/vloubiere/projects/epigenetic_cancer/db/bed/ChIP/", id), 
+    paste0("/groups/stark/vloubiere/projects/epigenetic_cancer/db/bw/ChIP/", id))
+  
+  }else if(method=="ATAC"){
+    
+    c("module load r/3.6.2-foss-2018b; /software/2020/software/r/3.6.2-foss-2018b/bin/Rscript /groups/stark/vloubiere/pipelines/ChIPseq_pipeline.R", 
+      file[1], 
+      ifelse(.N==2, file[2], NA), 
+      "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Sequence/Bowtie2Index/genome", 
+      "dm6", 
+      paste0("/groups/stark/vloubiere/projects/epigenetic_cancer/db/bed/ATAC/", id), 
+      paste0("/groups/stark/vloubiere/projects/epigenetic_cancer/db/bw/ATAC/", id))
+    
+  }else if(method=="RNA"){
+    
+    c("module load r/3.6.2-foss-2018b; /software/2020/software/r/3.6.2-foss-2018b/bin/Rscript /groups/stark/vloubiere/pipelines/RNAseq_pipeline.R", 
+      file[1], 
+      ifelse(.N==2, file[2], NA), 
+      genome,
+      bam_prefix, 
+      bed_prefix, 
+      bw_prefix, 
+      counts_prefix, 
+      "/groups/stark/vloubiere/genomes/flybase/dmel-all-r6.35_simplified.gtf")
+    
+  }), .(id, method, project, genome, bam_prefix, bed_prefix, bw_prefix, counts_prefix)]
 metadata <- metadata[, .(cmd= paste0(cmd, collapse= " ")), .(id, method, project)]
 
 #---------------------------------------------------#
 # 3- RUN
 #---------------------------------------------------#
-logs <- "/groups/stark/vloubiere/data/epigenetic_cancer/logs/"
-metadata[, bsub(cmd, o= logs, e= logs, cores = 8, m = 20), cmd]
-
-
-
-
-
+logs <- "/groups/stark/vloubiere/projects/epigenetic_cancer/db/logs/"
+metadata[grepl("E1416", id), bsub(cmd, o= paste0(logs, id), e= paste0(logs, id), cores = 12, m = 40, name = paste0("vl_", id)), .(cmd, id)]
+# metadata[project %in% c("available", "dev"), bsub(cmd, o= paste0(logs, id), e= paste0(logs, id), cores = 12, m = 40, name = paste0("vl_", id)), .(cmd, id)]
+# metadata[, bsub(cmd, o= paste0(logs, id), e= paste0(logs, id), cores = 12, m = 40, name = paste0("vl_", id)), .(cmd, id)]

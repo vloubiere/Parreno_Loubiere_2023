@@ -1,4 +1,4 @@
-source("/groups/stark/vloubiere/functions/bsub_wrapper.R")
+sapply(list.files("/groups/stark/vloubiere/functions", ".R$", full.names = T), source)
 
 #-------------------------------------------------------------#
 # dm3
@@ -18,27 +18,47 @@ source("/groups/stark/vloubiere/functions/bsub_wrapper.R")
 #-------------------------------------------------------------#
 # dm6
 #-------------------------------------------------------------#
-# 150 nt
+# # 150 nt
+# cores <- 6
+# genomeDir <- "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_150bp/"
+# dm6.fa <- "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Sequence/WholeGenomeFasta/genome.fa"
+# dm6_genes.gtf <- "/groups/stark/vloubiere/genomes/flybase/dmel-all-r6.35_simplified.gtf"
+# cmd <- paste0("module load star/2.7.1a-foss-2018b; /software/2020/software/star/2.7.1a-foss-2018b/bin/STAR 
+#                 --runMode genomeGenerate 
+#                 --genomeSAindexNbases 12
+#                 --runThreadN ", cores,
+#               " --genomeDir ", genomeDir, 
+#               " --genomeFastaFiles ", dm6.fa,
+#               " --sjdbGTFfile ", dm6_genes.gtf , " --sjdbOverhang 149")
+# bsub(cmd, o= "/groups/stark/vloubiere/genomes/STAR_genome/", 
+#           e= "/groups/stark/vloubiere/genomes/STAR_genome/", cores= cores)
+
+# 75nt
 cores <- 6
-genomeDir <- "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_150bp/"
+genomeDir <- "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_75bp/"
 dm6.fa <- "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Sequence/WholeGenomeFasta/genome.fa"
-dm6_genes.gtf <- "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Annotation/Genes/genes.gtf"
+dm6_genes.gtf <- "/groups/stark/vloubiere/genomes/flybase/dmel-all-r6.35_simplified.gtf"
 cmd <- paste0("module load star/2.7.1a-foss-2018b; /software/2020/software/star/2.7.1a-foss-2018b/bin/STAR 
-                --runMode genomeGenerate 
+                --runMode genomeGenerate
+                --genomeSAindexNbases 12
                 --runThreadN ", cores,
               " --genomeDir ", genomeDir, 
               " --genomeFastaFiles ", dm6.fa,
-              " --sjdbGTFfile ", dm6_genes.gtf , " --sjdbOverhang 149")
-bsub(cmd, o= genomeDir, e= genomeDir, cores= cores)
-# 50nt
-cores <- 6
-genomeDir <- "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_50bp/"
-dm6.fa <- "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Sequence/WholeGenomeFasta/genome.fa"
-dm6_genes.gtf <- "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Annotation/Genes/genes.gtf"
-cmd <- paste0("module load star/2.7.1a-foss-2018b; /software/2020/software/star/2.7.1a-foss-2018b/bin/STAR 
-                --runMode genomeGenerate 
-                --runThreadN ", cores,
-              " --genomeDir ", genomeDir, 
-              " --genomeFastaFiles ", dm6.fa,
-              " --sjdbGTFfile ", dm6_genes.gtf , " --sjdbOverhang 49")
-bsub(cmd, o= genomeDir, e= genomeDir, cores= cores)
+              " --sjdbGTFfile ", dm6_genes.gtf , " --sjdbOverhang 74")
+bsub(cmd, o= "/groups/stark/vloubiere/genomes/STAR_genome/", 
+     e= "/groups/stark/vloubiere/genomes/STAR_genome/", cores= cores)
+
+# # 50nt
+# cores <- 6
+# genomeDir <- "/groups/stark/vloubiere/genomes/STAR_genome/dm6/STAR_genome_50bp/"
+# dm6.fa <- "/groups/stark/vloubiere/genomes/Drosophila_melanogaster/UCSC/dm6/Sequence/WholeGenomeFasta/genome.fa"
+# dm6_genes.gtf <- "/groups/stark/vloubiere/genomes/flybase/dmel-all-r6.35_simplified.gtf"
+# cmd <- paste0("module load star/2.7.1a-foss-2018b; /software/2020/software/star/2.7.1a-foss-2018b/bin/STAR 
+#                 --runMode genomeGenerate
+#                 --genomeSAindexNbases 12
+#                 --runThreadN ", cores,
+#               " --genomeDir ", genomeDir, 
+#               " --genomeFastaFiles ", dm6.fa,
+#               " --sjdbGTFfile ", dm6_genes.gtf , " --sjdbOverhang 49")
+# bsub(cmd, o= "/groups/stark/vloubiere/genomes/STAR_genome/", 
+#           e= "/groups/stark/vloubiere/genomes/STAR_genome/", cores= cores)
