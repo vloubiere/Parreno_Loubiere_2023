@@ -5,36 +5,42 @@ require(gridExtra)
 require(data.table)
 
 # Import and clean counts
-dat <- data.table(file= list.files("db/counts", ".txt", full.names = T, recursive = T))
-dat[, sample:= gsub(".txt", "", basename(file))]
-dat[, c("cdition", "rep"):= tstrsplit(sample, "_")]
-dat[grepl("epiCancer", file), project:= "epiCancer"]
-dat[grepl("SA2020/WRNAI|SA2020/PHRNAI", file), project:= "RNAI25"]
-dat[is.na(project), project:= "AMM"]
-dat <- dat[, fread(file), c(colnames(dat))]
-colnames(dat)[6:7] <- c("symbol", "counts")
-dat <- dat[!grepl("^__", symbol)]
+dat <- fread("db/metadata/metadata_all.txt")
+dat <- dat[method=="RNA"]
+dat[!grepl("rep", rep), rep:= paste0("rep", rep)]
+dat[, layout:= ifelse(.N==2, "PAIRED", "SINGLE"), id]
+dat[project=="epiCancer" | grepl("RNAI$", sample), length:= 150]
+dat[grepl("^WTE1416", sample), length:= 75]
+dat[is.na(length), length:= 50]
 
 #--------------------------------------------------------------------#
 # 1- DESeq2 analysis
 #--------------------------------------------------------------------#
-# dds objects
+current <- dat[, .(layout, length, rep, sample, id, counts_prefix)]
+current[, file:= list.files("db/counts/", paste0("^", basename(counts_prefix)), recursive = T, full.names = T), counts_prefix]
+
+current <- current[, fread(file, col.names = c("FBgn", "counts")), current][!grepl("^__", FBgn)]
+dmat <- dcast(current, FBgn~id, value.var = "counts")
+DF <- data.frame(dmat[, -1], row.names = dmat$FBgn)
+DF <- DF[rowSums(DF)>5,]
+
+sampleTable <- unique(dat[, .(id, sample, layout, length, rep)])
+sampleTable[!id %in% colnames(DF), id:= grep(paste0("^X", id, "$"), colnames(DF), value = T), id]
+sampleTable <- data.frame(sampleTable[, -1], row.names = sampleTable$id)
+
+dds <- DESeqDataSetFromMatrix(countData = DF,
+                              colData = sampleTable,
+                              design= ~ layout + length + rep + sample)
+dds_object <- DESeq(dds)
+saveRDS(dds_object, dds_file)
+
 dat[, 
     {
       current <- dcast(.SD, symbol~sample, value.var = "counts")
       dds_file <- paste0("Rdata/dds_object_", project, ".rds")
       if(!file.exists(dds_file))
       {
-        DF <- data.frame(current[, -1], row.names = current$symbol)
-        DF <- DF[rowSums(DF)>5,]
-        sampleTable <- data.frame(condition= sapply(colnames(DF), function(x) strsplit(x, "_")[[1]][1]), 
-                                  replicate= sapply(colnames(DF), function(x) strsplit(x, "_")[[1]][2]),
-                                  row.names = colnames(DF))
-        dds <- DESeqDataSetFromMatrix(countData = DF,
-                                      colData = sampleTable,
-                                      design= ~ replicate + condition)
-        dds_object <- DESeq(dds)
-        saveRDS(dds_object, dds_file)
+        
       }
       dds_object <- readRDS(dds_file)
       
