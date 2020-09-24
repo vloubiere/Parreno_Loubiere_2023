@@ -44,7 +44,7 @@ comparisons <- CJ(nominator= as.character(dds_object$sample),
 comparisons <- comparisons[nominator!=denominator]
 comparisons <- comparisons[sapply(comparisons$nominator, function(x) dat$project[grep(x, dat$id)[1]]) == sapply(comparisons$denominator, function(x) dat$project[grep(x, dat$id)[1]])]
 comparisons <- comparisons[!nominator %in% c("2A", "42D") & 
-                           denominator %in% c("120hED", "WTE1416", "W18", "WKD", "W29", "PH18", "PH29", "WRNAI", "X2A", "X42D")]
+                           denominator %in% c("120hED", "WTE1416", "W18", "WKD", "W29", "PH18", "PH29", "WRNAI", "2A", "42D")]
 comparisons[, FC_file:= paste0("db/FC_tables_all_transcriptomes/", nominator, "_vs_", denominator, "_FC.txt"), (comparisons)]
 comparisons[, 
             {
@@ -58,31 +58,32 @@ comparisons[,
               print("DONE")
             }, (comparisons)]
 
-# #--------------------------------------------------------------------#
-# # 2- MA plots
-# #--------------------------------------------------------------------#
-# diff <- data.table(file= list.files("db/FC_tables/", ".txt", full.names = T))
-# diff[, exp := gsub("_FC.txt", "", basename(file))]
-# diff <- diff[exp %in% c("PCXT1092A_vs_X2A", "PSCSUZ21B842D_vs_X42D", "EZ7312A_vs_X2A", "SUZ1212A_vs_X2A",
-#                         "PH18_vs_PH29", "PHJ9_vs_PH29", "PHJ11_vs_PH29",
-#                         "PHJ9_vs_PH18", "PHJ11_vs_PH18", "PH29_vs_PH18",
-#                         "PH18_vs_W18", "PHJ9_vs_WKD", "PHJ11_vs_WKD", "PH29_vs_W29",
-#                         "PHRNAI_vs_WRNAI")]
-# diff <- diff[, fread(file), c(colnames(diff))]
-# 
-# pdf("pdf/MA_plots_transcriptomes.pdf", width = 7, height = 8)
-# par(mfrow= c(2, 2), las= 1)
-# diff[,
-#      {
-#        y <- log2FoldChange
-#        pch <- ifelse(abs(y)<=5, 16, 2)
-#        y[y >  5] <- 5
-#        y[y < -5] <- -5
-#        Cc <- ifelse(is.na(padj) | padj >= 0.01, "lightgrey", ifelse(y>0, "red", "blue"))
-#        plot(baseMean, y, col= Cc, ylim= c(-5, 5), pch= pch, cex= 0.5, log= "x", ylab= "log2FoldChange", xlab= "baseMean")
-#        mtext(exp[1], line = 1, cex= 0.7)
-#        leg <- c(paste(length(which(Cc=="red")), "Up"), paste(length(which(Cc=="blue")), "Down"), "(padj<0.01)")
-#        legend("topright", leg, bty= "n", text.col = c("red", "blue", "black"), cex = 0.8)
-#        print("DONE")
-#      }, exp]
-# dev.off()
+#--------------------------------------------------------------------#
+# 2- MA plots
+#--------------------------------------------------------------------#
+diff <- data.table(file= list.files("db/FC_tables_all_transcriptomes/", ".txt", full.names = T))
+diff[, exp := gsub("_FC.txt", "", basename(file))]
+diff <- diff[exp %in% c("PCXT1092A_vs_X2A", "PSCSUZ21B842D_vs_X42D", "EZ7312A_vs_X2A", "SUZ1212A_vs_X2A",
+                        "PH18_vs_PH29", "PHJ9_vs_PH29", "PHJ11_vs_PH29",
+                        "PHJ9_vs_PH18", "PHJ11_vs_PH18", "PH29_vs_PH18",
+                        "PH18_vs_W18", "PHJ9_vs_WKD", "PHJ11_vs_WKD", "PH29_vs_W29", "PHRNAI_vs_WRNAI",
+                        "WTE1416_vs_120hED", "72hED_vs_120hED", "96hED__vs_120hED",
+                        "72hED_vs_WTE1416", "96hED_vs_WTE1416", "120hED_vs_WTE1416")]
+diff <- diff[, fread(file), c(colnames(diff))]
+
+pdf("pdf/MA_plots_all_transcriptomes.pdf", width = 7, height = 8)
+par(mfrow= c(2, 2), las= 1)
+diff[,
+     {
+       y <- log2FoldChange
+       pch <- ifelse(abs(y)<=5, 16, 2)
+       y[y >  5] <- 5
+       y[y < -5] <- -5
+       Cc <- ifelse(is.na(padj) | padj >= 0.01, "lightgrey", ifelse(y>0, "red", "blue"))
+       plot(baseMean, y, col= Cc, ylim= c(-5, 5), pch= pch, cex= 0.5, log= "x", ylab= "log2FoldChange", xlab= "baseMean")
+       mtext(exp[1], line = 1, cex= 0.7)
+       leg <- c(paste(length(which(Cc=="red")), "Up"), paste(length(which(Cc=="blue")), "Down"), "(padj<0.01)")
+       legend("topright", leg, bty= "n", text.col = c("red", "blue", "black"), cex = 0.8)
+       print("DONE")
+     }, exp]
+dev.off()
