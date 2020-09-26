@@ -32,7 +32,6 @@ dat[is.na(length), length:= 50]
 # dds <- DESeqDataSetFromMatrix(countData = DF,
 #                               colData = sampleTable,
 #                               design= ~ rep + sample)
-#                               # design= ~ layout + length + rep + sample)
 # dds_object <- DESeq(dds)
 # saveRDS(dds_object, "Rdata/dds_object_all_transcriptomes.rds")
 
@@ -42,9 +41,10 @@ dds_object <- readRDS("Rdata/dds_object_all_transcriptomes.rds")
 comparisons <- CJ(nominator= as.character(dds_object$sample), 
                   denominator= as.character(dds_object$sample), unique = T)
 comparisons <- comparisons[nominator!=denominator]
+# Identify pairs coming from same project
 comparisons <- comparisons[sapply(comparisons$nominator, function(x) dat$project[grep(x, dat$id)[1]]) == sapply(comparisons$denominator, function(x) dat$project[grep(x, dat$id)[1]])]
 comparisons <- comparisons[!nominator %in% c("2A", "42D") & 
-                           denominator %in% c("120hED", "WTE1416", "W18", "WKD", "W29", "PH18", "PH29", "WRNAI", "2A", "42D")]
+                           denominator %in% c("72hED", "96hED", "120hED", "WTE1416", "W18", "WKD", "W29", "PH18", "PH29", "WRNAI", "2A", "42D")]
 comparisons[, FC_file:= paste0("db/FC_tables_all_transcriptomes/", nominator, "_vs_", denominator, "_FC.txt"), (comparisons)]
 comparisons[, 
             {
@@ -63,24 +63,25 @@ comparisons[,
 #--------------------------------------------------------------------#
 diff <- data.table(file= list.files("db/FC_tables_all_transcriptomes/", ".txt", full.names = T))
 diff[, exp := gsub("_FC.txt", "", basename(file))]
-diff <- diff[exp %in% c("PCXT1092A_vs_X2A", "PSCSUZ21B842D_vs_X42D", "EZ7312A_vs_X2A", "SUZ1212A_vs_X2A",
-                        "PH18_vs_PH29", "PHJ9_vs_PH29", "PHJ11_vs_PH29",
-                        "PHJ9_vs_PH18", "PHJ11_vs_PH18", "PH29_vs_PH18",
-                        "PH18_vs_W18", "PHJ9_vs_WKD", "PHJ11_vs_WKD", "PH29_vs_W29", "PHRNAI_vs_WRNAI",
-                        "WTE1416_vs_120hED", "72hED_vs_120hED", "96hED__vs_120hED",
-                        "72hED_vs_WTE1416", "96hED_vs_WTE1416", "120hED_vs_WTE1416")]
-diff <- diff[, fread(file), c(colnames(diff))]
+setkeyv(diff, "exp")
+diff <- diff[c("PCXT1092A_vs_2A", "PSCSUZ21B842D_vs_42D", "EZ7312A_vs_2A", "SUZ1212A_vs_2A",
+               "PH18_vs_PH29", "PHJ9_vs_PH29", "PHJ11_vs_PH29",
+               "PHJ9_vs_PH18", "PHJ11_vs_PH18", "PH29_vs_PH18",
+               "PH18_vs_W18", "PHJ9_vs_WKD", "PHJ11_vs_WKD", "PH29_vs_W29", "PHRNAI_vs_WRNAI",
+               "WTE1416_vs_120hED", "72hED_vs_120hED", "96hED_vs_120hED",
+               "72hED_vs_WTE1416", "96hED_vs_72hED", "120hED_vs_96hED")]
+diff <- diff[, fread(file), (diff)]
 
 pdf("pdf/MA_plots_all_transcriptomes.pdf", width = 7, height = 8)
 par(mfrow= c(2, 2), las= 1)
 diff[,
      {
        y <- log2FoldChange
-       pch <- ifelse(abs(y)<=5, 16, 2)
-       y[y >  5] <- 5
-       y[y < -5] <- -5
+       pch <- ifelse(abs(y)<=6, 16, 2)
+       y[y >  6] <- 6
+       y[y < -6] <- -6
        Cc <- ifelse(is.na(padj) | padj >= 0.01, "lightgrey", ifelse(y>0, "red", "blue"))
-       plot(baseMean, y, col= Cc, ylim= c(-5, 5), pch= pch, cex= 0.5, log= "x", ylab= "log2FoldChange", xlab= "baseMean")
+       plot(baseMean, y, col= Cc, ylim= c(-6, 6), pch= pch, cex= 0.5, log= "x", ylab= "log2FoldChange", xlab= "baseMean")
        mtext(exp[1], line = 1, cex= 0.7)
        leg <- c(paste(length(which(Cc=="red")), "Up"), paste(length(which(Cc=="blue")), "Down"), "(padj<0.01)")
        legend("topright", leg, bty= "n", text.col = c("red", "blue", "black"), cex = 0.8)

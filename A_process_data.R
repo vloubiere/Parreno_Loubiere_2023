@@ -75,6 +75,6 @@ metadata <- metadata[, .(cmd= paste0(cmd, collapse= " ")), .(id, method, project
 # 3- RUN
 #---------------------------------------------------#
 logs <- "/groups/stark/vloubiere/projects/epigenetic_cancer/db/logs/"
-metadata[grepl("E1416", id), bsub(cmd, o= paste0(logs, id), e= paste0(logs, id), cores = 12, m = 40, name = paste0("vl_", id)), .(cmd, id)]
+# metadata[grepl("E1416", id), bsub(cmd, o= paste0(logs, id), e= paste0(logs, id), cores = 12, m = 40, name = paste0("vl_", id)), .(cmd, id)]
 # metadata[project %in% c("available", "dev"), bsub(cmd, o= paste0(logs, id), e= paste0(logs, id), cores = 12, m = 40, name = paste0("vl_", id)), .(cmd, id)]
 # metadata[, bsub(cmd, o= paste0(logs, id), e= paste0(logs, id), cores = 12, m = 40, name = paste0("vl_", id)), .(cmd, id)]
