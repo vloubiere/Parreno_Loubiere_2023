@@ -1,21 +1,26 @@
-setwd("/home/vloubiere/genomes/dm6/subreadr_index/")
+setwd("/_R_data/projects/epigenetic_cancer/")
 require(Rsubread)
+require(DESeq2)
+require(data.table)
 
 #----------------------------------------------------------#
 # Build dm6 index
 #----------------------------------------------------------#
+# setwd("/_R_data/genomes/dm6/subreadr_index/")
 # ref <- "/home/vloubiere/genomes/dm6/Sequence/WholeGenomeFasta/genome.fa"
-# buildindex(basename="subreadr_dm6_index", reference= ref)
+# buildindex(basename= "subreadr_dm6_index", reference= ref)
+# setwd("/_R_data/projects/epigenetic_cancer/")
 
 #----------------------------------------------------------#
 # Metadata
 #----------------------------------------------------------#
-dat <- data.table(file= list.files("/home/vloubiere/projects/epigenetic_cancer/db/fastq", ".fq.gz", full.names = T, recursive = T))
+dat <- data.table(file= list.files("db/fastq", ".fq.gz", full.names = T, recursive = T))
 dat[, cdition:= .(strsplit(sub("(_)(?=[^_]+$)", " ", .BY, perl=T), " ")[[1]][1]), gsub("rep|_1.fq.gz|_2.fq.gz|.fq.gz", "", basename(file))]
 dat[, replicate:= .(paste0("rep", strsplit(sub("(_)(?=[^_]+$)", " ", .BY, perl=T), " ")[[1]][2])), gsub("rep|_1.fq.gz|_2.fq.gz|.fq.gz", "", basename(file))]
-dat[, bam:= paste0("/home/vloubiere/projects/epigenetic_cancer/db/bam/", cdition, "_", replicate, ".bam"), .(cdition, replicate)]
-dat[, counts_file:= paste0("/home/vloubiere/projects/epigenetic_cancer/db/counts/", gsub(".bam$", "_counts.rds", basename(bam)))]
-dat[, group:= tstrsplit(dat$file, "/", keep= 8)]
+dat[, bam:= paste0("db/bam/", cdition, "_", replicate, ".bam"), .(cdition, replicate)]
+dat[, counts_file:= paste0("db/counts/", gsub(".bam$", "_counts.rds", basename(bam)))]
+dat[, group:= tstrsplit(file, "/", keep= 3)]
+dat[, dds_file:= paste0("db/dds/", group, "_dds.rds")]
 
 #----------------------------------------------------------#
 # Alignment
@@ -40,9 +45,9 @@ dat[, {
 dat[, {
   if(!file.exists(counts_file)){
     if(.N==2){
-      counts <- featureCounts(bam, annot.ext= "/home/vloubiere/genomes/dm6/dmel-all-r6.36.gtf", isGTFAnnotationFile = T, isPairedEnd = T)
+      counts <- featureCounts(bam, annot.ext= "../../genomes/dm6/dmel-all-r6.36.gtf", isGTFAnnotationFile = T, isPairedEnd = T)
     }else if(.N==1){
-      counts <- featureCounts(bam, annot.ext= "/home/vloubiere/genomes/dm6/dmel-all-r6.36.gtf", isGTFAnnotationFile = T, isPairedEnd = F)
+      counts <- featureCounts(bam, annot.ext= "../../genomes/dm6/dmel-all-r6.36.gtf", isGTFAnnotationFile = T, isPairedEnd = F)
     }
     saveRDS(counts, counts_file)
   }
@@ -53,34 +58,35 @@ dat[, {
 # DESeq2
 #----------------------------------------------------------#
 dat[, {
-  if(!file.exists(output)){
-    sampleTable <- data.frame(unique(.SD[, .(cdition, replicate, counts_file)]), row.names = "counts_file")
-    mat <- readRDS("Rdata/processed_peSTARRSeq_data/filtered_counts_prior_DESeq2.rds")
-    sampleTable <- grep("rep", colnames(mat), value = T)
-    sampleTable <- data.frame(condition= sapply(sampleTable, function(x) strsplit(x, "_")[[1]][1]),
-                              replicate= sapply(sampleTable, function(x) strsplit(x, "_")[[1]][2]),
-                              row.names= sampleTable)
-    DF <- data.frame(mat[, DSCP_rep1:input_rep5], row.names = mat$rn)+1
-    # DESeq2
-    dds <- DESeqDataSetFromMatrix(countData= DF, colData= sampleTable, design= ~replicate+condition)
-    # SizeFactors
-    sizeFactors(dds) <- estimateSizeFactorsForMatrix(as.matrix(DF[grep("control.*vs.*control", rownames(DF)),]))
-    # Result
-    res <- DESeq(dds)
-    saveRDS(res, "/groups/stark/vloubiere/projects/pe_STARRSeq/Rdata/processed_peSTARRSeq_data/dds_result_object.rds")
-    
-    # Differential expression
-    diff <- as.data.table(as.data.frame(results(res, contrast= c("condition", "DSCP", "input"))), keep.rownames= T)
-    diff[, c("enh_L", "enh_R"):= tstrsplit(rn, "_vs_")]
-    diff <- diff[, .(enh_L, enh_R, baseMean, log2FoldChange, lfcSE, stat, pvalue, padj)]
-    
-    boxplot(diff[grepl("control", enh_L) & grepl("control", enh_R), log2FoldChange], notch= T)
-    abline(h= 0, lty= 2)
-    saveRDS(diff, "/groups/stark/vloubiere/projects/pe_STARRSeq/Rdata/processed_peSTARRSeq_data/DESeq2_FC_table.rds")
-    
+  if(!file.exists(dds_file)){
+    # DESEq2
+    sampleTable <- data.frame(unique(.SD[, .(cdition, replicate, counts_file= basename(counts_file))]), row.names = "counts_file")
+    DF <- .SD[, {
+      .c <- data.table(readRDS(counts_file)$counts, keep.rownames = T)
+      colnames(.c)[2] <- "counts"
+      .c
+    }, counts_file]
+    DF <- data.frame(dcast(DF, rn~basename(counts_file), value.var = "counts"), row.names = "rn")
+    DF <- DF[rowSums(DF)>10, ]
+    dds <- DESeqDataSetFromMatrix(countData= DF, colData= sampleTable, design= ~replicate+cdition)
+    dds <- DESeq(dds)
+    saveRDS(dds, dds_file)
+  }else{
+    dds <- readRDS(dds_file)
   }
-  print(paste(output, "DONE!"))
-}, .(group, output= paste0("/home/vloubiere/projects/epigenetic_cancer/db/dds/", group, "_dds.rds"))]
+  print(paste(dds_file, "DONE!"))
+  # Differential expression
+  diff <- CJ(sampleTable$cdition, sampleTable$cdition, unique = T)
+  diff <- diff[V1!=V2]
+  diff[, FC_file:= paste0("db/FC_tables/", group, "_", V1, "_vs_", V2, "_FC.txt"), .(V1, V2)]
+  diff[, {
+    if(!file.exists(FC_file)){
+      .c <- as.data.frame(results(dds, contrast= c("cdition", V1, V2)))
+      fwrite(.c, FC_file, col.names = T, row.names = T, sep ="\t", quote= F)
+    }
+    print(paste(FC_file, "DONE!"))
+  }, .(FC_file, V1, V2)]
+}, .(group, dds_file)]
 
 
 
