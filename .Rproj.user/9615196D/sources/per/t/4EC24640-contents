@@ -1,0 +1,39 @@
+setwd("/_R_data/projects/ancient_yersinia_pestis/")
+require(Rsubread)
+require(DESeq2)
+require(data.table)
+
+#----------------------------------------------------------#
+# Build hg38 index
+#----------------------------------------------------------#
+# setwd("/_R_data/genomes/hg38/subreadr_index/")
+# ref <- "/_R_data/genomes/hg38/Sequence/WholeGenomeFasta/genome.fa"
+# buildindex(basename= "subreadr_hg38_index", reference= ref)
+# setwd("/_R_data/projects/ancient_yersinia_pestis/")
+
+
+#----------------------------------------------------------#
+# Build CO92 index
+#----------------------------------------------------------#
+# setwd("/_R_data/genomes/CO92/subreadr_index/")
+# ref <- "/_R_data/genomes/CO92/Ypestis_CO92_NC_003143.1.fasta"
+# buildindex(basename= "subreadr_CO92_index", reference= ref)
+# setwd("/_R_data/projects/ancient_yersinia_pestis/")
+
+
+fq1 <- fread("fastq/test_run_1.1.fastq", nrows = 10000, header = F)
+fq1 <- fq1[seq(nrow(fq1)) %% 4==2]
+fq2 <- fread("fastq/test_run_1.2.fastq", nrows = 10000, header= F)
+fq2 <- fq2[seq(nrow(fq2)) %% 4==2]
+par(mfrow=c(2,1))
+plot(density(nchar(fq1$V1)))
+plot(density(nchar(fq2$V1)))
+
+if(!file.exist("bam/test_run_1.sam")){
+  subjunc(index= "/_R_data/genomes/CO92/subreadr_index/subreadr_CO92_index", 
+          readfile1= "fastq/test_run_1.1.fastq", readfile2= "fastq/test_run_1.2.fastq", 
+          maxMismatches= 4, nthreads = 10, unique = T, output_file= "bam/test_run_1.sam", output_format = "SAM")
+}
+
+fread("bam/test_run_1.sam", )
+
