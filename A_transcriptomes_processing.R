@@ -27,11 +27,12 @@ dat[, dds_file:= paste0("db/dds/", group, "_dds.rds")]
 #----------------------------------------------------------#
 dat[, {
   if(!file.exists(bam)){
+    print("START...")
     if(.N==2){
-      stats <- capture.output(subjunc(index= "subreadr_dm6_index", readfile1= file[1], readfile2= file[2], 
+      stats <- capture.output(subjunc(index= "D:/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index", readfile1= file[1], readfile2= file[2], 
                                       maxMismatches = 6, nthreads = 10, unique = T, output_file= bam))
     }else if(.N==1){
-      stats <- capture.output(subjunc(index= "subreadr_dm6_index", readfile1= file[1], 
+      stats <- capture.output(subjunc(index= "D:/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index", readfile1= file[1], 
                                       nthreads = 10, unique = T, output_file= bam))
     }
     writeLines(stats, con = gsub(".bam$", "_stats.txt", bam))
@@ -45,9 +46,9 @@ dat[, {
 dat[, {
   if(!file.exists(counts_file)){
     if(.N==2){
-      counts <- featureCounts(bam, annot.ext= "../../genomes/dm6/dmel-all-r6.36.gtf", isGTFAnnotationFile = T, isPairedEnd = T)
+      counts <- featureCounts(bam, annot.ext= "../../genomes/dm6/dmel-all-r6.36.gtf", isGTFAnnotationFile = T, isPairedEnd = T, nthreads = 8)
     }else if(.N==1){
-      counts <- featureCounts(bam, annot.ext= "../../genomes/dm6/dmel-all-r6.36.gtf", isGTFAnnotationFile = T, isPairedEnd = F)
+      counts <- featureCounts(bam, annot.ext= "../../genomes/dm6/dmel-all-r6.36.gtf", isGTFAnnotationFile = T, isPairedEnd = F, nthreads = 8)
     }
     saveRDS(counts, counts_file)
   }
@@ -58,9 +59,9 @@ dat[, {
 # DESeq2
 #----------------------------------------------------------#
 dat[, {
+  sampleTable <- data.frame(unique(.SD[, .(cdition, replicate, counts_file= basename(counts_file))]), row.names = "counts_file")
   if(!file.exists(dds_file)){
     # DESEq2
-    sampleTable <- data.frame(unique(.SD[, .(cdition, replicate, counts_file= basename(counts_file))]), row.names = "counts_file")
     DF <- .SD[, {
       .c <- data.table(readRDS(counts_file)$counts, keep.rownames = T)
       colnames(.c)[2] <- "counts"
@@ -81,7 +82,8 @@ dat[, {
   diff[, FC_file:= paste0("db/FC_tables/", group, "_", V1, "_vs_", V2, "_FC.txt"), .(V1, V2)]
   diff[, {
     if(!file.exists(FC_file)){
-      .c <- as.data.frame(results(dds, contrast= c("cdition", V1, V2)))
+      .c <- as.data.frame(lfcShrink(dds, type= "ashr", contrast= c("cdition", V1, V2)))
+      # .c <- as.data.frame(results(dds, contrast= c("cdition", V1, V2)))
       fwrite(.c, FC_file, col.names = T, row.names = T, sep ="\t", quote= F)
     }
     print(paste(FC_file, "DONE!"))
