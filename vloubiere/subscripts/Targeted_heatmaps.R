@@ -1,12 +1,3 @@
-setwd("/_R_data/projects/epigenetic_cancer/")
-sapply(list.files("/_R_data/functions/", ".R$", full.names = T), source)
-require(data.table)
-require(kohonen)
-require(pheatmap)
-require(ontologyIndex)
-require(STRINGdb)
-require(pdftools)
-
 dat <- readRDS("Rdata/som_clustering_transcriptomes.rds")
 
 Cc <- c("cornflowerblue", "white", "tomato")

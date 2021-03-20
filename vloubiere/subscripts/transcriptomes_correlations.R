@@ -1,9 +1,3 @@
-setwd("/_R_data/projects/epigenetic_cancer/")
-sapply(list.files("/_R_data/functions/", ".R$", full.names = T), source)
-require(data.table)
-require(kohonen)
-require(pheatmap)
-
 # Import
 dat <- data.table(file= list.files("db/counts/", "W18|WKD|W29|Ez18|EzJ9|EzJ11|Ez29|PH18|PHJ9|PHJ11|PH29", full.names = T))
 dat <- dat[, {.c <- as.data.table(readRDS(file)$counts, keep.rownames = "FBgn"); colnames(.c)[2] <- c("counts"); .c},  (dat)]

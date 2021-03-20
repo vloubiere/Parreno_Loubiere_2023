@@ -1,11 +1,3 @@
-setwd("/_R_data/projects/epigenetic_cancer/")
-sapply(list.files("/_R_data/functions/", ".R$", full.names = T), source)
-require(data.table)
-require(kohonen)
-require(pheatmap)
-require(ontologyIndex)
-require(rtracklayer)
-require(digest)
 
 dat <- readRDS("Rdata/som_clustering_transcriptomes.rds")
 dat <- unique(dat[, .(FBgn, cl, symbol, ycoor)])

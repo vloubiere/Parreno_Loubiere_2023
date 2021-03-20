@@ -1,9 +1,3 @@
-setwd("/_R_data/projects/epigenetic_cancer/")
-sapply(list.files("/_R_data/functions/", ".R$", full.names = T), source)
-require(data.table)
-require(kohonen)
-require(pheatmap)
-require(ontologyIndex)
 
 if(!file.exists("Rdata/fb_go_table.rds")){
   keep.genes <- fread("db/FC_tables/RNA_epiCancer_PH18_vs_Ez18_FC.txt")$V1

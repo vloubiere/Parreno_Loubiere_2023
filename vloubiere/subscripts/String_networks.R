@@ -17,7 +17,7 @@ current[, {
     mtext(paste("Cluster #", cl), side= 1)
   }
   print(paste0(cl, " DONE!"))
-  }, cl]
+}, cl]
 dev.off()
 
 # example1_mapped_pval05 <- string_db$add_diff_exp_color(subset(example1_mapped, padj<0.05), logFcColStr="log2FoldChange")

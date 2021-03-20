@@ -1,9 +1,3 @@
-setwd("/_R_data/projects/epigenetic_cancer/")
-require(Rsubread)
-require(DESeq2)
-require(data.table)
-require(BSgenome.Dmelanogaster.UCSC.dm6)
-
 #----------------------------------------------------------#
 # Alignment
 #----------------------------------------------------------#
@@ -57,7 +51,7 @@ if(!file.exists("../../public_data/dm6/peaks/merged_ATAC_seq_peaks.txt")){
 #----------------------------------------------------------#
 if(!file.exists("../../public_data/dm6/bg/ATAC_JJ_ED_merge.bedgraph")){
   if(!exists("counts")){
-  counts <- as.data.table(readRDS("../../public_data/dm6/counts/ATAC_gw_bin_counts.rds")$counts, keep.rownames= T)
+    counts <- as.data.table(readRDS("../../public_data/dm6/counts/ATAC_gw_bin_counts.rds")$counts, keep.rownames= T)
   }
   bdg <- GRanges(counts$rn)
   bdg$score <- counts[, rowSums(.SD), .SDcols= patterns("^SRR")]

@@ -1,8 +1,3 @@
-setwd("/_R_data/projects/epigenetic_cancer/")
-sapply(list.files("/_R_data/functions/", ".R$", full.names = T), source)
-require(data.table)
-require(gridExtra)
-
 stats <- data.table(file= list.files("db/bam/", "stats.txt", full.names = T))
 stats <- stats[grepl("^Ez|^PH|^W", basename(file))]
 stats <- stats[, .(Mapped_reads= readLines(file)), file]

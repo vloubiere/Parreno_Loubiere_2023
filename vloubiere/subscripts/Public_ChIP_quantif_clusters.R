@@ -1,12 +1,3 @@
-setwd("/_R_data/projects/epigenetic_cancer/")
-sapply(list.files("/_R_data/functions/", ".R$", full.names = T), source)
-require(data.table)
-require(kohonen)
-require(pheatmap)
-require(ontologyIndex)
-require(rtracklayer)
-require(digest)
-
 dat <- readRDS("Rdata/som_clustering_transcriptomes.rds")
 gtf <- import("../../genomes/dm6/dmel-all-r6.36.gtf")
 prom <- resize(gtf[gtf$gene_id %in% dat$FBgn & gtf$type=="gene"], 1, fix = "start")
