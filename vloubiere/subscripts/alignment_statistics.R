@@ -1,11 +1,12 @@
-stats <- data.table(file= list.files("db/bam/", "stats.txt", full.names = T))
-stats <- stats[grepl("^Ez|^PH|^W", basename(file))]
+stats <- data.table(file= list.files("db/bam/", "stats.txt", full.names = T, recursive = T))
 stats <- stats[, .(Mapped_reads= readLines(file)), file]
 stats <- stats[grepl("Mapped :", Mapped_reads)]
 stats[, Mapped_reads:= gsub("\\||Mapped| |:|fragments|, wherein", "", Mapped_reads)]
-stats[, Mapped_reads:= gsub("\\(", " (", Mapped_reads)]
-stats[, file:= gsub("_stats.txt", "" , basename(file))]
+stats[, Mapped_reads:= gsub("reads", "", Mapped_reads)]
+stats[, c("Mapped_reads", "Percentage"):= tstrsplit(Mapped_reads, "\\(|\\)", keep= c(1,2))]
+stats[, Mapped_reads:= formatC(as.numeric(Mapped_reads), big.mark = ",", format = "d")]
+stats[, cdition:= gsub("_stats.txt", "" , basename(file))]
 
-pdf("pdf/Alignment_statistics.pdf", height = 10)
-grid.table(stats)
+pdf("pdf/Alignment_statistics.pdf", height = 20)
+grid.table(stats[, .(cdition, Mapped_reads, Percentage)])
 dev.off()

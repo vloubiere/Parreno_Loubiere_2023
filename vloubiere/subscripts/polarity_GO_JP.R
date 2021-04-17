@@ -12,4 +12,4 @@ sub[, N:= lengths(genes)]
 sub[order(-N)][1:20]
 
 res <- unique(current[name== "apicolateral plasma membrane", .(symbol= V3, FBgn= V2)])
-fwrite(res)
+fwrite(res, "JP_data_RNA_PolyComb_01.02/polarity_genes.txt", sep= "\t")

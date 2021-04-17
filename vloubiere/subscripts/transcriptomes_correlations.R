@@ -1,6 +1,11 @@
-# Import
-dat <- data.table(file= list.files("db/counts/", "W18|WKD|W29|Ez18|EzJ9|EzJ11|Ez29|PH18|PHJ9|PHJ11|PH29", full.names = T))
-dat <- dat[, {.c <- as.data.table(readRDS(file)$counts, keep.rownames = "FBgn"); colnames(.c)[2] <- c("counts"); .c},  (dat)]
+# Select epigenetic cancer transcriptomes
+dat <- data.table(file= list.files("db/counts/", "W18|WKD|W29|Ez18|EzJ9|EzJ11|Ez29|PH18|PHJ9|PHJ11|PH29", full.names = T, recursive = T))
+# Process
+dat <- dat[, {
+  .c <- as.data.table(readRDS(file)$counts, keep.rownames = "FBgn")
+  colnames(.c)[2] <- c("counts")
+  .c
+  },  (dat)]
 dat[, cdition:= gsub("_counts.rds", "", basename(file))]
 dat <- dcast(dat, FBgn~cdition, value.var = "counts")
 

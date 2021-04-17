@@ -1,15 +1,21 @@
-dat <- readRDS("Rdata/som_clustering_transcriptomes.rds")
+dat <- readRDS("Rdata/final_clustering_transcriptomes.rds")
 
-Cc <- c("cornflowerblue", "white", "tomato")
+Cc <- c("blue", "cornflowerblue", "white", "tomato", "red")
 lim <- c(-5,0,5)
 
 dat[, pdf:= tempfile(fileext = "pdf"), cl]
 dat[, {
   n_genes <- length(unique(FBgn))
+  
   pdf(pdf, height = 0.275*n_genes+2)
-  res <- my_heatmap(.SD, row.BY = "symbol", col.BY = "cdition", value.var = "log2FoldChange", col = Cc, cluster_cols = F, 
-                    leg_title = "log2FC", breaks = lim, main = paste0("Cluster ", cl, " (", n_genes, " genes)"))
-  text(res$xcoor, res$ycoor, round(res$log2FoldChange, 1))
+  mat <- as.matrix(dcast(.SD, symbol~cdition, value.var = "log2FoldChange"), 1)
+  vl_heatmap(mat, 
+             cluster_rows = F,
+             cluster_cols = F, 
+             col= Cc, 
+             breaks = lim,
+             legend_title = "log2FC")
+  mtext(paste0("Cluster ", cl, " (", n_genes, " genes)"))
   dev.off()
 }, .(cl, pdf)]
 

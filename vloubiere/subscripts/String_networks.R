@@ -1,21 +1,16 @@
-setwd("/_R_data/projects/epigenetic_cancer/")
-sapply(list.files("/_R_data/functions/", ".R$", full.names = T), source)
-require(data.table)
-require(kohonen)
-require(pheatmap)
-require(ontologyIndex)
-require(STRINGdb)
+dat <- readRDS("Rdata/final_clustering_transcriptomes.rds")
 
-dat <- readRDS("Rdata/som_clustering_transcriptomes.rds")
-string_db <- STRINGdb$new(version="11", species= 7227, score_threshold= 200, input_directory="") # Species ID can be found on STRING website, 11 is the current version of STRING
-current <- as.data.table(string_db$map(dat, "symbol", removeUnmappedRows = TRUE)) # TRhe second argument corresponds to the colname within the data.table containing gene symbols
+# Species ID can be found on STRING website, 11 is the current version of STRING
+string_db <- STRINGdb$new(version="11", species= 7227, score_threshold= 200, input_directory="") 
+
+# TRhe second argument corresponds to the colname within the data.table containing gene symbols
+current <- as.data.table(string_db$map(dat, "symbol", removeUnmappedRows = TRUE)) 
 
 pdf("pdf/string_cluster_networks.pdf")
 current[, {
-  if(length(unique(STRING_id))<200){
-    string_db$plot_network(STRING_id)
-    mtext(paste("Cluster #", cl), side= 1)
-  }
+  .c <- .SD[order(abs(log2FoldChange), decreasing = T)][1:200, STRING_id]
+  string_db$plot_network(.c)
+  mtext(paste("Cluster #", cl), side= 1)
   print(paste0(cl, " DONE!"))
 }, cl]
 dev.off()

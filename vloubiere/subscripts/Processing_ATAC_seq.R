@@ -5,8 +5,16 @@ dat <- data.table(file= list.files("../../public_data/dm6/fq/ATAC_JJ_2018/", ful
 dat[, bam:= paste0("../../public_data/dm6/bam/ATAC_JJ_2018/", gsub(".fastq.gz", ".bam", basename(file)))]
 dat[, {
   if(!file.exists(bam)){
-    stats <- capture.output(align(index= "D:/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index", readfile1= file, nthreads = 8, unique = T, output_file= bam))
-    # align(index= "D:/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index", readfile1= file, nthreads = 8, unique = T, output_file= bam)
+    stats <- capture.output(align(index= "D:/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index", 
+                                  readfile1= file, 
+                                  nthreads = 8, 
+                                  unique = T, 
+                                  output_file= bam))
+    # align(index= "D:/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index", 
+    #       readfile1= file, 
+    #       nthreads = 8, 
+    #       unique = T, 
+    #       output_file= bam)
     writeLines(stats, con = gsub(".bam$", "_stats.txt", bam))
   }
   print(paste(bam, "DONE!"))
@@ -22,7 +30,11 @@ if(!file.exists("../../public_data/dm6/counts/ATAC_gw_bin_counts.rds")){
   bins[, Strand:= "+"]
   bins[, GeneID:= paste0(Chr, ":", Start, "-", End)]
   bins <- bins[, .(GeneID, Chr, Start, End, Strand)]
-  counts <- featureCounts(dat$bam, annot.ext= as.data.frame(bins), isPairedEnd = F, nthreads = 8, allowMultiOverlap = T)
+  counts <- featureCounts(dat$bam, 
+                          annot.ext= as.data.frame(bins), 
+                          isPairedEnd = F, 
+                          nthreads = 8, 
+                          allowMultiOverlap = T)
   saveRDS(counts, "../../public_data/dm6/counts/ATAC_gw_bin_counts.rds")
 }
 
@@ -40,9 +52,16 @@ if(!file.exists("../../public_data/dm6/peaks/merged_ATAC_seq_peaks.txt")){
   peaks <- as.data.table(reduce(peaks, min.gapwidth= 101))
   peaks <- peaks[, .(GeneID= paste0(seqnames, ":", start, "-", end), Chr= seqnames, Start= start, End= end, Strand= "+")]
   enrich <- as.data.table(featureCounts(list.files("D:/_R_data/public_data/dm6/bam/ATAC_JJ_2018/", ".bam$", full.names = T), 
-                                        annot.ext= as.data.frame(peaks), isPairedEnd = F, nthreads = 8, allowMultiOverlap = T)$counts)
+                                        annot.ext= as.data.frame(peaks), 
+                                        isPairedEnd = F, 
+                                        nthreads = 8, 
+                                        allowMultiOverlap = T)$counts)
   peaks[, log2_counts:= log2(rowSums(enrich)+1)]
-  fwrite(peaks, "../../public_data/dm6/peaks/merged_ATAC_seq_peaks.txt", col.names = T, row.names = F, sep= "\t", quote= F)
+  fwrite(peaks, "../../public_data/dm6/peaks/merged_ATAC_seq_peaks.txt", 
+         col.names = T, 
+         row.names = F, 
+         sep= "\t", 
+         quote= F)
   export(peaks, "../../public_data/dm6/peaks/merged_ATAC_seq_peaks.bed")
 }
 
