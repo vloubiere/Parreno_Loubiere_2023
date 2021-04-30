@@ -1,0 +1,12 @@
+vl_ChIP_pipeline(fq1= "../../projects/public_data/dm6/fq/H3K9me3_L3_modEncode/H3K9me3_L3_rep1.fastq.gz",
+                 Rsubread_index_prefix = "../../genomes/dm6/subreadr_index/subreadr_dm6_index", 
+                 bam_folder = "../../projects/public_data/dm6/bam/H3K9me3_modEncode_L3/", 
+                 bw_folder = "../../projects/public_data/dm6/bw/", 
+                 extend = 300, 
+                 use_samtools = F)
+vl_ChIP_pipeline(fq1= "../../projects/public_data/dm6/fq/H3K9me3_L3_modEncode/H3K9me3_L3_rep2.fastq.gz",
+                 Rsubread_index_prefix = "../../genomes/dm6/subreadr_index/subreadr_dm6_index", 
+                 bam_folder = "../../projects/public_data/dm6/bam/H3K9me3_modEncode_L3/", 
+                 bw_folder = "../../projects/public_data/dm6/bw/", 
+                 extend = 300, 
+                 use_samtools = F)

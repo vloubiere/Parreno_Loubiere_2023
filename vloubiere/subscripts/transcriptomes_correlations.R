@@ -1,15 +1,42 @@
-# Select epigenetic cancer transcriptomes
-dat <- data.table(file= list.files("db/counts/", "W18|WKD|W29|Ez18|EzJ9|EzJ11|Ez29|PH18|PHJ9|PHJ11|PH29", full.names = T, recursive = T))
-# Process
-dat <- dat[, {
+# ALL
+all <- data.table(file= list.files("db/counts/", recursive = T, full.names = T))
+all <- all[, {
   .c <- as.data.table(readRDS(file)$counts, keep.rownames = "FBgn")
   colnames(.c)[2] <- c("counts")
   .c
-  },  (dat)]
+}, file]
+
+all[, cdition:= gsub("_counts.rds", "", basename(file))]
+all <- dcast(all, FBgn~cdition, value.var = "counts")
+pcc <- cor(as.matrix(all, 1))
+
+pdf("pdf/PCC_all_epi_cancer.pdf", width = 20, height = 20)
+par(mar= c(10,10,5,10), xaxs= "i", yaxs= "i")
+vl_heatmap(pcc, display_numbers = T, col = matlab.like(10))
+dev.off()
+
+# EpiCancer
+dat <- data.table(file= list.files("db/counts/RNA_epiCancer/", full.names = T))
+dat <- dat[, {
+  .c <- as.data.table(readRDS(file)$counts, keep.rownames = "FBgn")
+  colnames(.c)[2] <- c("counts")
+  .c}, (dat)]
+
 dat[, cdition:= gsub("_counts.rds", "", basename(file))]
 dat <- dcast(dat, FBgn~cdition, value.var = "counts")
-
-pdf("pdf/PCC.pdf", width = 10, height = 10)
 pcc <- cor(as.matrix(dat, 1))
-my_heatmap(pcc)
+
+pdf("pdf/PCC_all_epi_cancer.pdf", width = 12, height = 12)
+par(mar= c(10,10,5,10), xaxs= "i", yaxs= "i")
+vl_heatmap(pcc, display_numbers = T)
 dev.off()
+
+pcc <- pcc[,!grepl("_T", colnames(pcc))]
+pcc <- pcc[!grepl("_T", rownames(pcc)),]
+
+pdf("pdf/PCC_pre_transplant_epi_cancer.pdf", width = 12, height = 12)
+par(mar= c(10,10,5,10), xaxs= "i", yaxs= "i")
+vl_heatmap(pcc, display_numbers = T)
+dev.off()
+
+
