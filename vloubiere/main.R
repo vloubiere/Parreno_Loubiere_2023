@@ -14,6 +14,7 @@ require(STRINGdb)
 require(TFBSTools)
 require(BSgenome.Dmelanogaster.UCSC.dm6)
 require(pdftools)
+require(diagram)
 
 #### Transcritpomes raw data processing
 if(F)
@@ -22,6 +23,7 @@ if(F)
   file.edit("D:/_R_data/projects/epigenetic_cancer/git_epiCancer/vloubiere/subscripts/download_modEncode_RNASeq.R") # Not working
   file.edit("D:/_R_data/projects/epigenetic_cancer/git_epiCancer/vloubiere/subscripts/download_Paro_data.R")
   file.edit("D:/_R_data/projects/epigenetic_cancer/git_epiCancer/vloubiere/subscripts/transcriptomes_processing.R")
+  file.edit("D:/_R_data/projects/epigenetic_cancer/git_epiCancer/vloubiere/subscripts/MA_plots.R")
   file.edit("git_epiCancer/vloubiere/subscripts/alignment_statistics.R")
   file.edit("git_epiCancer/vloubiere/subscripts/transcriptomes_correlations.R")
 }
@@ -46,7 +48,6 @@ if(F)
   file.edit("git_epiCancer/vloubiere/subscripts/String_networks.R")
   
   file.edit("git_epiCancer/vloubiere/subscripts/clustering_heatmaps.R")
-  
   file.edit("git_epiCancer/vloubiere/subscripts/PCA_transriptomes.R")
 }
 
