@@ -1,7 +1,9 @@
+setwd("D:/_R_data/projects/epigenetic_cancer/")
+
 #----------------------------------------------------------#
 # Alignment
 #----------------------------------------------------------#
-dat <- data.table(file= list.files("../../public_data/dm6/fq/ATAC_JJ_2018/", full.names = T))
+dat <- data.table(file= list.files("../public_data/dm6/fq/ATAC_JJ_2018/fq/ATAC_JJ_2018/", full.names = T))
 dat[, bam:= paste0("../../public_data/dm6/bam/ATAC_JJ_2018/", gsub(".fastq.gz", ".bam", basename(file)))]
 dat[, {
   if(!file.exists(bam)){

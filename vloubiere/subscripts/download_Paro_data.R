@@ -1,3 +1,5 @@
+setwd("D:/_R_data/projects/epigenetic_cancer/")
+
 dat <- fread("external_data/paro_2018_ecd_ph_transcriptomes_metadata.txt")
 dat <- dat[, .(ftp= unlist(strsplit(ftp, "\\|"))), experiment_title]
 dat[, cdition:= unlist(tstrsplit(dat$experiment_title, ":|;", keep= 2))]
