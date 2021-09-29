@@ -1,22 +1,28 @@
-dat <- data.table(file= list.files("db/FC_tables/", "RNA_epiCancer", full.names = T))
-dat[, cdition:= gsub("RNA_epiCancer_|.txt$" , "", basename(file)), file]
-dat <- dat[, fread(file), (dat)]
+setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+require(vlfunctions)
+require(readxl)
 
+dat <- readRDS("Rdata/final_FC_table.rds")
 dir.create("pdf/MA_plots", showWarnings = F)
 
+png("pdf/MA_plots/MA_Plots.png", 
+    width = 1000, 
+    height = 750)
+par(mfrow= c(3,4),
+    pty= "s")
+lim <- 7
 dat[, 
     {
       y <- log2FoldChange
-      pch <- ifelse(abs(y)<=5, 16, 2)
-      y[y >  5] <- 5
-      y[y < -5] <- -5
+      pch <- ifelse(abs(y)<=lim, 16, 2)
+      y[y >  lim] <- lim
+      y[y < -lim] <- -lim
       Cc <- ifelse(is.na(padj) | padj >= 0.01, "lightgrey", ifelse(y>0, "red", "blue"))
       
-      pdf(paste0("pdf/MA_plots/", cdition, ".pdf"), width = 7, height = 8)
       plot(baseMean, 
            y, 
            col= Cc, 
-           ylim= c(-5, 5), 
+           ylim= c(-lim, lim), 
            pch= pch, 
            cex= 0.5, 
            log= "x", 
@@ -33,8 +39,8 @@ dat[,
              bty= "n", 
              text.col = c("red", "blue", "black"), 
              cex = 0.8)
-      dev.off()
-
       print("DONE")
       
-}, cdition]
+    }, cdition]
+dev.off()
+file.show("pdf/MA_plots/MA_Plots.png")

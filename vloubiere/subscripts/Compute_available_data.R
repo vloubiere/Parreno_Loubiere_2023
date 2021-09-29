@@ -1,4 +1,4 @@
-RE <- readRDS("Rdata/gene_REs.rds")
+RE <- readRDS("Rdata/ED_REs_features_final.rds")
 
 # ChIP
 dat <- data.table(file= list.files("../../projects/public_data/dm6/bw/", full.names = T))[-28] # REmove rep1 K9
