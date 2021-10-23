@@ -1,11 +1,13 @@
 setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 
 
-dat <- readRDS("Rdata/clustering_dose_transcriptomes.rds")
+dat <- readRDS("Rdata/clustering_epiCancer_transcriptomes.rds")
 .l <- split(dat$FBgn, dat$rcl)
 .l <- lapply(.l, unique)
 
-pdf("pdf/clustering/clustering_dose_GOs.pdf", height = 10, width = 10)
+pdf("pdf/clustering/clustering_epiCancer_GOs.pdf", 
+    height = 13, 
+    width = 13)
 vl_GO_clusters(.l, 
                cex = 0.3, 
                N_top = 10)

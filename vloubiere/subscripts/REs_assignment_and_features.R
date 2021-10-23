@@ -120,30 +120,23 @@ cl[, row:= as.integer(row)]
 REs[cl, HTM_cl:= i.cl_name, on= "RE_ID==row"]
 setcolorder(REs, c("seqnames", "start", "end", "strand", "RE_ID", "HTM_cl"))
 
+
 #-----------------------------------------#
-# Motif enrichment
+# Compute motif counts
 #-----------------------------------------#
-sel <- vl_Dmel_motifs_DB$metadata[!is.na(vl_Dmel_motifs_DB$metadata$Dmel) & # Associated to a known TF
-                                    vl_Dmel_motifs_DB$metadata$X..motif_collection_name %in% # From a relevant DB
-                                    c("flyfactorsurvey", "bergman", "jaspar", "idmmpmm", "cisbp"), "motif_name"]
-sel <- which(name(vl_Dmel_motifs_DB$All_pwms_log_odds) %in% sel)
-hit <- matchMotifs(vl_Dmel_motifs_DB$All_pwms_log_odds[sel], 
-                   resize(granges(GRanges(REs)), width=500, "center"), 
-                   genome= "dm6", 
-                   p.cutoff= 5e-4, 
-                   bg= "even", 
-                   out= "scores")
-counts <- as.matrix(motifCounts(hit))
-colnames(counts) <- name(vl_Dmel_motifs_DB$All_pwms_log_odds[sel])
-counts <- as.data.table(counts)
-names(counts) <- paste0("motif__", names(counts))
+mot <- REs[, .(seqnames, start, end, strand, FBgn, type, RE_ID)]
+mot[, start:= start-500]
+mot[, end:= start+1000]
+mot <- vl_motif_counts(bed = mot, 
+                       genome = "dm6")
 
 #-----------------------------------------#
 # save
 #-----------------------------------------#
-REs <- cbind(REs, counts)
 saveRDS(REs, 
         "Rdata/ED_REs_features_final.rds")
+saveRDS(mot[, .(motif, motif_name, motif_FBgn, FBgn, type, RE_ID, motif_counts)], 
+        "Rdata/ED_REs_motif_counts_final.rds")
 
 
 

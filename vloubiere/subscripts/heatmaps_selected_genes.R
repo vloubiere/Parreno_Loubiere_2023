@@ -3,37 +3,87 @@ require(vlfunctions)
 require(readxl)
 
 dat <- readRDS("Rdata/final_FC_table.rds")
-setkeyv(dat, "symbol")
-genes <- read_excel("Rdata/list_genes_interest.xlsx")
+genes <- as.data.table(read_excel("Rdata/list_genes_interest.xlsx"))
+genes[, group:= factor(group, levels= c("PRC1",
+                                        "PRC2",
+                                        "HOX",
+                                        "JAK-STAT",
+                                        "Cancer markers",
+                                        "RDGN",
+                                        "Ecdysone metamorhphosis",
+                                        "cell-cell adhesion GO"))]
+setorderv(genes, "group")
 
-pdf("pdf/hypothesis_driven_heatmaps.pdf", 
-    height = 4, 
-    width = 6)
-par(mar= c(5,7,4,5))
+# epiCancer
+sub <- dat[grepl("TS", cdition)]
+sub <- dcast(sub, 
+             symbol~cdition, 
+             value.var = "log2FoldChange")
+setkeyv(sub, "symbol")
 
-for(i in seq(genes))
-{
-  .c <- genes[[i]]
-  mat <- dcast(na.omit(dat[.c]), 
-               symbol~cdition,
-               value.var = "log2FoldChange")
-  mat <- as.matrix(na.omit(mat), 1)
-  mat <- mat[na.omit(match(.c, rownames(mat))),]
-      
-  pl <- vl_heatmap(mat,
-                   display_numbers = T,
-                   cluster_cols = F,
-                   cluster_rows = T, 
-                   breaks = c(-1, 0, 2))
-  pl[dat, padj:= i.padj, on= c("row==symbol", "col==cdition")]
-  pl[, padj:= cut(padj, 
-                  c(-Inf, 1e-5, 1e-3, 1e-2, 5e-2, Inf),
-                  c("****", "***", "**", "*", ""))]
-  text(x = pl$xplot,
-       y = pl$yplot, 
-       labels = pl$padj, 
-       pos= 3, 
-       offset = 0.25,
-       cex= 0.5)
-}
+pdf("pdf/hypothesis_driven_heatmaps_epiCancer.pdf", 
+    height = 16*0.8, 
+    width = 9*0.8)
+par(xaxs= "i",
+    yaxs= "i")
+layout(matrix(c(1,2,3,4,5,6,7,8,8,8,8,8,8,8), 
+              ncol= 2), 
+       heights = c(6/36, 5/36, 11/36, 4/36, 5/36, 6/36, 9/36), 
+       widths = c(0.8,1))
+genes[, {
+  mat <- as.matrix(na.omit(sub[symbol]), 1)
+  par(mai= c(ifelse(group %in% c("Ecdysone metamorhphosis",
+                                 "cell-cell adhesion GO"), 0.6, 0.1),
+             0.75,
+             0.3,
+             ifelse(group=="cell-cell adhesion GO", 1, 0.15)))
+  vl_heatmap(mat,  
+             cluster_cols = F,
+             cluster_rows = T,
+             show_colnames = ifelse(group %in% c("Ecdysone metamorhphosis",
+                                                 "cell-cell adhesion GO"), T, F),
+             legend_title = "log2FC",
+             auto_margins = F, 
+             breaks = c(-5,0,5), 
+             display_numbers = T)
+  box(lwd= 0.25)
+  title(group, line = 1)
+}, group]
+dev.off()
+
+# Dose
+sub <- dat[grepl("dose", cdition)]
+sub <- dcast(sub, 
+             symbol~cdition, 
+             value.var = "log2FoldChange")
+setkeyv(sub, "symbol")
+
+pdf("pdf/hypothesis_driven_heatmaps_dose.pdf", 
+    height = 16*0.8, 
+    width = 9*0.8)
+par(xaxs= "i",
+    yaxs= "i")
+layout(matrix(c(1,2,3,4,5,6,7,8,8,8,8,8,8,8), 
+              ncol= 2), 
+       heights = c(6/36, 5/36, 11/36, 4/36, 5/36, 6/36, 9/36), 
+       widths = c(0.8,1))
+genes[, {
+  mat <- as.matrix(na.omit(sub[symbol]), 1)
+  par(mai= c(ifelse(group %in% c("Ecdysone metamorhphosis",
+                                 "cell-cell adhesion GO"), 0.6, 0.1),
+             0.75,
+             0.3,
+             ifelse(group=="cell-cell adhesion GO", 1, 0.15)))
+  vl_heatmap(mat,  
+             cluster_cols = F,
+             cluster_rows = T,
+             show_colnames = ifelse(group %in% c("Ecdysone metamorhphosis",
+                                                 "cell-cell adhesion GO"), T, F),
+             legend_title = "log2FC",
+             auto_margins = F, 
+             breaks = c(-5,0,5), 
+             display_numbers = T)
+  box(lwd= 0.25)
+  title(group, line = 1)
+}, group]
 dev.off()

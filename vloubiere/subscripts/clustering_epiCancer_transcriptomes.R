@@ -17,7 +17,7 @@ mat <- dcast(dat,
              value.var = "log2FoldChange")
 mat <- as.matrix(mat, 1)
 mat <- na.omit(mat)
-mat <- mat[rownames(mat) %in% dat[padj<0.05 & abs(log2FoldChange>=1), symbol],]
+mat <- mat[rownames(mat) %in% dat[padj<0.01 & abs(log2FoldChange)>=1, symbol],]
 
 # Clip outliers
 mat <- apply(mat, 2, function(x)
@@ -45,19 +45,17 @@ plot(wss,
      xlab= " Number of clusters",
      ylab= "wss")
 lines(wss)
-points(8, 
-       wss[8], 
+points(7, 
+       wss[7], 
        cex= 2, 
        col= "red")
 par(mai= c(1.5651667, 0.75000000, 0.4500000, 0.9371667))
 cl <- vl_heatmap(mat, 
-                 cluster_cols = T,
-                 clustering_distance_cols = "euclidean",
-                 clustering_method = "complete",
+                 cluster_cols = F,
+                 clustering_distance_rows = "pearson",
                  show_rownames = F, 
                  breaks = c(-5,0,5),
                  col =  c("darkblue", "blue", "cornflowerblue", "white", "tomato", "red", "darkred"),
-                 kmeans_k = 8, 
                  legend_title = "log2FC", 
                  auto_margins = F)
 cl[, text(0, 

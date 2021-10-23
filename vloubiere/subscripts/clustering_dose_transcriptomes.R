@@ -9,7 +9,7 @@ mat <- dcast(dat[cdition %in% c("PH18_dose", "PH21_dose", "PH25_dose", "PH29_dos
              value.var = "log2FoldChange")
 mat <- as.matrix(mat, 1)
 mat <- na.omit(mat)
-mat <- mat[rownames(mat) %in% dat[padj<0.05 & abs(log2FoldChange>1), symbol],]
+mat <- mat[rownames(mat) %in% dat[padj<0.05 & abs(log2FoldChange)>1, symbol],]
 # Clip outliers
 mat <- apply(mat, 2, function(x)
 {
