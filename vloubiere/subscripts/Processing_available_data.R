@@ -1,14 +1,16 @@
 require(data.table)
+require(readxl)
 require(vlfunctions)
 require(BSgenome.Dmelanogaster.UCSC.dm6)
 
-dat <- fread("Rdata/raw_metadata_final.txt")[cdition=="ATAC_ED" | grepl("H3K9me3", cdition)]
+dat <- as.data.table(read_excel("Rdata/raw_metadata_final.xlsx"))[cdition=="ATAC_ED" | grepl("H3K9me3", cdition)]
 
 #--------------------------------------------#
 # K9me3 and ATAC-Seq processing
 #--------------------------------------------#
-dir.create("D:/_R_data/projects/public_data/dm6/bw/ATAC_rep/", showWarnings = F)
-dir.create("D:/_R_data/projects/public_data/dm6/bw/K9me3_rep/", showWarnings = F)
+dir.create("/mnt/d/_R_data/projects/public_data/dm6/bw/ATAC_rep/", showWarnings = F)
+dir.create("/mnt/d/_R_data/projects/public_data/dm6/bw/K9me3_rep/", showWarnings = F)
+
 
 dat[, {
  bw_folder <- ifelse(grepl("ATAC", fq_file),
@@ -19,17 +21,17 @@ dat[, {
  if(!file.exists(bw_ouptut))
  {
   vl_ChIP_pipeline(fq1 = fq_file,
-                   chrom_sizes = fread("D:/_R_data/genomes/dm6/dm6.chrom.sizes_CHIP.txt",
+                   chrom_sizes = fread("/mnt/d/_R_data/genomes/dm6/dm6.chrom.sizes_CHIP.txt",
                                        col.names = c("seqnames", "seqlengths")),
                    basename_prefix = "",
-                   Rsubread_index_prefix = "D:/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index",
-                   bam_folder = "D:/_R_data/projects/public_data/dm6/bam/",
+                   Rsubread_index_prefix = "/mnt/d/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index",
+                   bam_folder = "/mnt/d/_R_data/projects/public_data/dm6/bam/",
                    bw_folder = bw_folder,
                    extend = 300,
                    use_samtools = F)
   print(paste(bw_ouptut, "DONE!"))
  }else
-  print(paste(bw_ouptut, "ALREADY EXISTS!"))
+  
 }, .(fq_file, prefix_output)]
 
 #--------------------------------------------#
