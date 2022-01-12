@@ -21,12 +21,12 @@ meta[grepl("29_", basename(file)), cdition:= "PH29"]
 meta[grepl("_1_", basename(file)), rep:= "rep1"]
 meta[grepl("_2_", basename(file)), rep:= "rep2"]
 meta[, sam:= paste0("db/sam/cutnrun/", ChIP, "_", cdition, "_", rep, ".sam")]
-meta[, ChIP_bed:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/reps/", ChIP, "_", cdition, "_", rep, "_uniq.bed")]
-meta[, spikein_bed:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/reps/", ChIP, "_", cdition, "_", rep, "_uniq_spikein.bed")]
-meta[, ChIP_bed_merge:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/merge/", ChIP, "_", cdition, "_merge_uniq.bed")]
-meta[, spikein_bed_merge:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/merge/", ChIP, "_", cdition, "_merge_uniq_spikein.bed")]
-meta[, bw_reps:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bw/cutnrun_reps_vl/", ChIP, "_", cdition, "_", rep, ".bw"), ]
-meta[, bw_merge:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bw/cutnrun_merge_vl/", ChIP, "_", cdition, "_merge.bw"), ]
+# meta[, ChIP_bed:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/reps/", ChIP, "_", cdition, "_", rep, "_uniq.bed")]
+# meta[, spikein_bed:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/reps/", ChIP, "_", cdition, "_", rep, "_uniq_spikein.bed")]
+# meta[, ChIP_bed_merge:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/merge/", ChIP, "_", cdition, "_merge_uniq.bed")]
+# meta[, spikein_bed_merge:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/merge/", ChIP, "_", cdition, "_merge_uniq_spikein.bed")]
+# meta[, bw_reps:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bw/cutnrun_reps_vl/", ChIP, "_", cdition, "_", rep, ".bw"), ]
+# meta[, bw_merge:= paste0("/mnt/d/_R_data/projects/epigenetic_cancer/db/bw/cutnrun_merge_vl/", ChIP, "_", cdition, "_merge.bw"), ]
 fwrite(meta, 
        "Rdata/metadata_cutnrun_final.txt")
 
@@ -34,8 +34,7 @@ fwrite(meta,
 # Scer/Dm6 combined index
 # Yeast genome -> https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna
 #--------------------------------------------------------------#
-Rsubread_index_prefix <- "/mnt/d/_R_data/genomes/dm6_S288C_combined/dm6_S288C_combined_index/dm6_S288C_combined_index"
-if(F)
+if(length(list.files("/mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/", ".bt2$"))==0)
 {
   dm6 <- read.fasta("/mnt/d/_R_data/genomes/dm6/Sequence/WholeGenomeFasta/genome.fa")
   S288C <- read.fasta("/mnt/d/_R_data/genomes/S288C/GCF_000146045.2_R64_genomic.fna")
@@ -43,28 +42,20 @@ if(F)
   write.fasta(sequences = cmb, 
               names = names(cmb),
               file.out = "/mnt/d/_R_data/genomes/dm6_S288C_combined/dm6_S288C_combined.fa")
-  Rsubread::buildindex(basename = Rsubread_index_prefix, 
-                       reference = "/mnt/d/_R_data/genomes/dm6_S288C_combined/dm6_S288C_combined.fa")
+  system("bowtie2-build /mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/dm6_S288C.fna /mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/dm6_S288C")
 }
 
 #--------------------------------------------------------------#
 # Alignment
 #--------------------------------------------------------------#
-meta[, {
+meta[sam==sam[1], {
   if(!file.exists(sam))
   {
-    Rsubread::align(index = Rsubread_index_prefix,
-                    readfile1 = grep("_1.fq.gz$", file, value = T), 
-                    readfile2 = grep("_2.fq.gz$", file, value = T), 
-                    type= "dna", 
-                    output_file = sam, 
-                    maxMismatches= 6, 
-                    maxFragLength = 1000,
-                    unique= T, 
-                    nTrim3 = 5,
-                    nTrim5 = 5, 
-                    nthreads= getDTthreads()-2, 
-                    output_format = "SAM")
+    cmd <- paste0("bowtie2 -p 10 -x /mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/dm6_S288C --local --very-sensitive-local --no-unal --no-mixed --no-discordant --phred33 -I 10 -X 700")
+    cmd <- paste0(cmd, " -1 ", grep("_1.fq.gz$", file, value = T))
+    cmd <- paste0(cmd, " -2 ", grep("_2.fq.gz$", file, value = T))
+    cmd <- paste0(cmd, " -S ", sam, " > ", gsub(".sam$", "", sam))
+    system(cmd)
   }
 }, sam]
 
