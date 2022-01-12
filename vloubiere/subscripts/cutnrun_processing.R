@@ -1,4 +1,5 @@
 setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+require(vlfunctions)
 require(data.table)
 require(Rsubread)
 require(seqinr)
@@ -90,16 +91,17 @@ meta[, {
     # Process
     reads[flag %in% c(83, 147), c("side", "pos"):= .("end", as.numeric(read_most_left_pos)+nchar(read))]
     reads[flag %in% c(99, 163), c("side", "pos"):= .("start", as.numeric(read_most_left_pos))]
+    reads[, mapq:= as.numeric(mapq)]
+    reads <- reads[mapq>=20]
     reads <- na.omit(reads)
-    reads <- data.table::dcast(reads, ID+seqnames~side, value.var= list("pos", "mapq"))
-    reads <- reads[mapq_start>=20 & mapq_end>=20, .(seqnames, start= pos_start, end= pos_end)]
-    reads <- unique(reads)
+    reads <- data.table::dcast(reads, ID+seqnames~side, value.var= "pos")
+    reads <- unique(na.omit(reads))
     setorderv(reads, c("seqnames", "start"))
     # Split and save
-    ChIP <- GenomicRanges::GRanges(reads[seqnames %in% chrom_sizes[type=="ChIP", seqnames], .(seqnames, start, end)])
-    spike <- GenomicRanges::GRanges(reads[seqnames %in% chrom_sizes[type=="spike", seqnames], .(seqnames, start, end)])
-    rtracklayer::export.bed(ChIP, ChIP_bed)
-    rtracklayer::export.bed(spike, spikein_bed)
+    ChIP <- reads[seqnames %in% chrom_sizes[type=="ChIP", seqnames], .(seqnames, start, end)]
+    spike <- reads[seqnames %in% chrom_sizes[type=="spike", seqnames], .(seqnames, start, end)]
+    vl_exportBed(ChIP, ChIP_bed)
+    vl_exportBed(spike, spikein_bed)
   }
   print("DONE")
 }, .(ChIP_bed, spikein_bed, sam)]
@@ -108,15 +110,15 @@ meta[, {
 # Merged bed files
 #--------------------------------------------------------------#
 meta[, {
-  if(!file.exists(ChIP_bed_merge))
+  if(file.exists(ChIP_bed_merge))
   {
-    ChIP <- rbindlist(lapply(unique(ChIP_bed), fread))
-    fwrite(ChIP, ChIP_bed_merge)
+    ChIP <- rbindlist(lapply(unique(ChIP_bed), vl_importBed))
+    vl_exportBed(ChIP, ChIP_bed_merge)
   }
-  if(!file.exists(spikein_bed_merge))
+  if(file.exists(spikein_bed_merge))
   {
-    spike <- rbindlist(lapply(unique(spikein_bed), fread))
-    fwrite(spike, spikein_bed_merge)
+    spike <- rbindlist(lapply(unique(spikein_bed), vl_importBed))
+    vl_exportBed(spike, spikein_bed_merge)
   }
   print("DONE")
 }, .(ChIP_bed_merge, spikein_bed_merge)]
@@ -124,26 +126,27 @@ meta[, {
 #--------------------------------------------------------------#
 # bw_files
 #--------------------------------------------------------------#
+# Each rep separately
 meta[, {
-  # Each rep separately
-  .SD[, {
-    if(!file.exists(bw_reps))
-    {
-      .b <- import(ChIP_bed)
-      cov <- GenomicRanges::coverage(.b)/nrow(fread(spikein_bed))*1e4
-      rtracklayer::export.bw(GRanges(cov), 
-                             con= bw_reps)
-    }
-    print("DONE")
-  }, .(ChIP_bed, spikein_bed, bw_reps)]
-  # Merge
+  if(!file.exists(bw_reps))
+  {
+    .b <- import(ChIP_bed)
+    cov <- GenomicRanges::coverage(.b)/length(import(spikein_bed))*1e4
+    rtracklayer::export.bw(GRanges(cov), 
+                           con= bw_reps)
+  }
+  print("DONE")
+}, .(ChIP_bed, spikein_bed, bw_reps)]
+
+# Merged
+meta[, {
   if(!file.exists(bw_merge))
   {
-    .b <- Reduce(c, lapply(unique(ChIP_bed), import))
-    cov <- GenomicRanges::coverage(.b)/nrow(rbindlist(lapply(unique(spikein_bed), fread)))*1e4
+    .b <- import(ChIP_bed_merge)
+    cov <- GenomicRanges::coverage(.b)/length(import(spikein_bed_merge))*1e4
     rtracklayer::export.bw(GRanges(cov), 
                            con= bw_merge)
   }
   print("DONE")
-}, bw_merge]
+}, .(ChIP_bed_merge, spikein_bed_merge, bw_merge)]
 
