@@ -16,29 +16,35 @@ if(F)
   #### Process RNA-Seq data ####
   file.edit("git_epiCancer/vloubiere/subscripts/transcriptomes_processing.R")
   file.edit("git_epiCancer/vloubiere/subscripts/alignment_statistics.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/generate_final_FC_table.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/generate_final_FC_tables.R")
   
   #### Bulk analyses ####
-  file.edit("git_epiCancer/vloubiere/subscripts/MA_plots.R")
   file.edit("git_epiCancer/vloubiere/subscripts/transcriptomes_correlations.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/MA_plots.R")
   file.edit("git_epiCancer/vloubiere/subscripts/alluvial_plot_affected_genes.R")
   file.edit("git_epiCancer/vloubiere/subscripts/PCA_transriptomes.R")
   
   #### Clustering ####
-  file.edit("git_epiCancer/vloubiere/subscripts/clustering_transcriptomes.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/clustering_allograft_transcriptomes_PH29_PHD11.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/clustering_cutnrun_transcriptomes_PH29_PHD11.R")
   
   #-------------------------------------------------------------------------#
   # Cut N run
   #-------------------------------------------------------------------------#
+  # Processing and QC
   file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_processing.R")
   file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_QC.R")
   file.edit("git_epiCancer/vloubiere/subscripts/compare_vl_gonza_cutnrun_tracks.R")
+  
+  # Analyses
   file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_peak_calling.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_differential_analysis.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_diff_regions_analysis.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/GO_K27_cluster_genes.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/Screenshots_K27_clusters.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/K27_clusters_intersections.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_K27_changes_volcano_plot.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_clustering_PH29_PHD11.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_clustering_PHD9_PHD11.R")
+  
+  #-------------------------------------------------------------------------#
+  # Overlap cutnrun / transriptomes
+  #-------------------------------------------------------------------------#
   
   
   #-------------------------------------------------------------------------#

@@ -6,7 +6,7 @@ require(GenomicRanges)
 require(rtracklayer)
 require(BSgenome.Dmelanogaster.UCSC.dm6)
 
-reads <- fread("Rdata/metadata_cutnrun_final.txt")
+reads <- fread("Rdata/processed_metadata_CUTNRUN.txt")
 reads[, shuffled_bed:= paste0("db/bed/cutnrun/merge/", ChIP, "_", cdition, "_merge_shuffled.bed"), .(ChIP, cdition)]
 reads[, peaks_narrowpeaks:= paste0("db/narrowpeaks/", ChIP, "_", cdition, "_peaks.narrowPeak"), .(ChIP, cdition)]
 reads[, peaks_merged:= paste0("db/narrowpeaks/", ChIP, "_", cdition, "_merged_peaks.narrowPeak"), .(ChIP, cdition)]
@@ -52,91 +52,40 @@ reads[, {
   print("done")
 }, .(ChIP, cdition, ChIP_bed_merge, shuffled_bed, peaks_narrowpeaks, peaks_merged)]
 
+#--------------------------------------------#
 # Segment genome into homogenous regions
-if(!file.exists("Rdata/K27_regions_segmentation.bed"))
-{
-  merged_peaks <- reads[, vl_importBed(peaks_merged), .(ChIP, cdition, peaks_merged)]
-  merged_peaks <- vl_collapseBed(merged_peaks, return_idx_only = T)
-  setkeyv(merged_peaks, c("seqnames", "start"))
-  K27 <- merged_peaks[, {
-    ranges <- sort(unique(c(start, end[-.N]+1, end[.N])))
-    .(start= ranges[-length(ranges)], end= ranges[-1]-1)
-  }, .(seqnames, idx)]
-  K27 <- unique(K27)[end-start>300]
-  K27 <- cbind(K27,
-               vl_enrichBed(K27, 
-                            ChIP_bed = "db/bed/cutnrun/merge/H3K27Ac_PH18_merge_uniq.bed",
-                            Input_bed = "db/bed/cutnrun/merge/H3K27Ac_PH18_merge_shuffled.bed")[, .(K27Ac_WT= signalValue)],
-               vl_enrichBed(K27, 
-                            ChIP_bed = "db/bed/cutnrun/merge/H3K27Ac_PHD11_merge_uniq.bed",
-                            Input_bed = "db/bed/cutnrun/merge/H3K27Ac_PH18_merge_uniq.bed")[, .(K27Ac_PHD11= signalValue)],
-               vl_enrichBed(K27, 
-                            ChIP_bed = "db/bed/cutnrun/merge/H3K27Ac_PHD9_merge_uniq.bed",
-                            Input_bed = "db/bed/cutnrun/merge/H3K27Ac_PH18_merge_uniq.bed")[, .(K27Ac_PHD9= signalValue)],
-               vl_enrichBed(K27, 
-                            ChIP_bed = "db/bed/cutnrun/merge/H3K27Ac_PH29_merge_uniq.bed",
-                            Input_bed = "db/bed/cutnrun/merge/H3K27Ac_PH18_merge_uniq.bed")[, .(K27Ac_PH29= signalValue)],
-               vl_enrichBed(K27, 
-                            ChIP_bed = "db/bed/cutnrun/merge/H3K27me3_PH18_merge_uniq.bed",
-                            Input_bed = "db/bed/cutnrun/merge/H3K27me3_PH18_merge_shuffled.bed")[, .(K27me3_WT= signalValue)],
-               vl_enrichBed(K27, 
-                            ChIP_bed = "db/bed/cutnrun/merge/H3K27me3_PHD11_merge_uniq.bed",
-                            Input_bed = "db/bed/cutnrun/merge/H3K27me3_PH18_merge_uniq.bed")[, .(K27me3_PHD11= signalValue)],
-               vl_enrichBed(K27, 
-                            ChIP_bed = "db/bed/cutnrun/merge/H3K27me3_PHD9_merge_uniq.bed",
-                            Input_bed = "db/bed/cutnrun/merge/H3K27me3_PH18_merge_uniq.bed")[, .(K27me3_PHD9= signalValue)],
-               vl_enrichBed(K27, 
-                            ChIP_bed = "db/bed/cutnrun/merge/H3K27me3_PH29_merge_uniq.bed",
-                            Input_bed = "db/bed/cutnrun/merge/H3K27me3_PH18_merge_uniq.bed")[, .(K27me3_PH29= signalValue)])
-  fwrite(na.omit(K27),
-         "Rdata/K27_regions_segmentation.bed",
-         sep= "\t", 
-         col.names = T)
-}
-
-#-------------------#
-# clustering
-#-------------------#
-# Import
-dat <- fread("Rdata/K27_regions_segmentation.bed")
-cols <- grep("^K27", names(dat), value = T)
-dat[, (cols):= lapply(.SD, function(x) {
-  lim <- quantile(x, c(0.001, 0.999))
-  x[x<lim[1]] <- lim[1]
-  x[x>lim[2]] <- lim[2]
-  log2(x)
-}), .SDcols= cols]
-# blacklisted <- vl_importBed("/mnt/d/_R_data/genomes/dm6/dm6-blacklist.v2.bed")
-# Clip extremes
-grid <- somgrid(xdim = 2, 
-                ydim = 3, 
-                topo = "hexagonal", 
-                toroidal = T)
-som <- supersom(list(as.matrix(dat[, .(K27Ac_WT, K27me3_WT)]),
-                     as.matrix(dat[, .(K27Ac_PHD11, K27Ac_PHD9, K27Ac_PH29, K27me3_PHD11, K27me3_PHD9, K27me3_PH29)])), 
-                grid = grid, 
-                user.weights = c(10, 4))
-              
-dat[, cl:= som$unit.classif]
-setkeyv(dat, "cl")
-
-par(mfrow= c(1,2))
-setcolorder(dat, 
-            c("cl", "K27Ac_WT", "K27me3_WT"))
-vl_heatmap(dat[, cl:K27me3_WT], 
-           cluster_rows= F,
-           cluster_cols= F, 
-           breaks= c(-2,-0.25,0.25,2), 
-           col= c("cornflowerblue", "white", "white", "tomato"))
-setcolorder(dat, 
-            c("cl", "K27Ac_PHD11", "K27Ac_PHD9", "K27Ac_PH29", "K27me3_PHD11", "K27me3_PHD9", "K27me3_PH29"))
-vl_heatmap(dat[, cl:K27me3_PH29], 
-           cluster_rows= F,
-           cluster_cols= F, 
-           auto_margins= F, 
-           breaks= c(-2,-0.25,0.25,2), 
-           col= c("cornflowerblue", "white", "white", "tomato"))
-
-
-
-
+#--------------------------------------------#
+# Import peaks
+merged_peaks <- reads[, vl_importBed(peaks_merged), .(ChIP, cdition, peaks_merged)]
+merged_peaks <- vl_collapseBed(merged_peaks, return_idx_only = T)
+setkeyv(merged_peaks, c("seqnames", "start"))
+# Merge homogneous blocks
+K27 <- merged_peaks[, {
+  ranges <- sort(unique(c(start, end[-.N]+1, end[.N])))
+  .(start= ranges[-length(ranges)], end= ranges[-1]-1)
+}, .(seqnames, idx)]
+K27 <- unique(K27)[end-start>300]
+# Compute enrichment over 18C control
+ChIP <- reads[, cbind(K27,
+                      counts= vl_covBed(K27, ChIP_bed_merge),
+                      total_counts= fread(cmd= paste0("wc -l ", ChIP_bed_merge))$V1), .(ChIP_bed_merge, ChIP, cdition)]
+shuffle <- reads[cdition=="PH18", cbind(K27,
+                                        counts= vl_covBed(K27, shuffled_bed),
+                                        total_counts= fread(cmd= paste0("wc -l ", shuffled_bed))$V1), .(shuffled_bed, ChIP, cdition)]
+# WT levels (over shuffled)
+res <- rbind(merge(ChIP[cdition=="PH18", .(ChIP, cdition, seqnames, start, end, counts, total_counts)],
+                   shuffle[cdition=="PH18", .(ChIP, seqnames, start, end, counts, total_counts)],
+                   by= c("ChIP", "seqnames", "start", "end"),
+                   suffixes= c("_ChIP", "_control")),
+             # Mutant levels over PH18
+             merge(ChIP[cdition!="PH18", .(ChIP, cdition, seqnames, start, end, counts, total_counts)],
+                   ChIP[cdition=="PH18", .(ChIP, seqnames, start, end, counts, total_counts)],
+                   by= c("ChIP", "seqnames", "start", "end"),
+                   suffixes= c("_ChIP", "_control")))
+check <- res[,counts_ChIP>0 & counts_control>0]
+res[(check), c("OR", "pval"):= {
+  mat <- matrix(unlist(.BY), nrow= 2, byrow = T)
+  fisher.test(mat)[c("estimate", "p.value")]
+}, .(counts_ChIP, counts_control, total_counts_ChIP, total_counts_control)]
+res[, padj:= p.adjust(pval, method= "fdr")]
+saveRDS(res, "Rdata/K27_regions_segmentation.rds")

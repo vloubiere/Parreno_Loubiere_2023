@@ -4,46 +4,27 @@ require(vlfunctions)
 require(ggalluvial)
 
 #-------------------#
-dat <- readRDS("Rdata/final_FC_table.rds")
-dat[padj<0.01 & log2FoldChange>0, class1:="up"]
-dat[padj<0.01 & log2FoldChange<0, class1:="down"]
-dat[is.na(class1), class1:="unaffected"]
-dat[padj<0.01 & log2FoldChange>1, class2:="up"]
-dat[padj<0.01 & log2FoldChange<(-1), class2:="down"]
-dat[is.na(class2), class2:="unaffected"]
+dat <- rbindlist(readRDS("Rdata/RNA_tables_object.rds")$FC, idcol = T)
+dat[padj<0.05 & log2FoldChange>1, class:="up"]
+dat[padj<0.05 & log2FoldChange<(-1), class:="down"]
+dat[is.na(class), class:="unaffected"]
+dat <- dat[!(cdition=="PHD9" & .id=="allograft")]
+dat[, cdition:= factor(cdition, levels= c("PH18",
+                                          "PHD11", 
+                                          "PHD11_T2", 
+                                          "PHD11_T3",
+                                          "PHD9",
+                                          "PH29"))]
+                                  
 
-pdf("pdf/alluvial_plot_timecourse.pdf", width = 14, height = 4)
+pdf("pdf/RNA_timecourse/alluvial_plot_timecourse.pdf", width = 14, height = 4)
 par(mfrow=c(1,2), 
-    mar= rep(1,4))
-# PH dose low cutoff
-dose <- dat[grepl("dose$", cdition), .(any(class1!="unaffected"), cdition, class1), FBgn][(V1)]
-vl_alluvial_plot(dcast(dose, FBgn~cdition, value.var = "class1")[, -1],
-                 class_levels = c("down", "unaffected", "up"))
-# Dose high cutoff
-dose <- dat[grepl("dose$", cdition), .(any(class2!="unaffected"), cdition, class2), FBgn][(V1)]
-vl_alluvial_plot(dcast(dose, FBgn~cdition, value.var = "class2")[, -1],
-                 class_levels = c("down", "unaffected", "up"))
-
-# PH TS low cutoff
-PH_TS <- dat[grepl("PH.*TS$", cdition), .(any(class1!="unaffected"), cdition, class1), FBgn][(V1)]
-vl_alluvial_plot(dcast(PH_TS, FBgn~cdition, value.var = "class1")[, -1], 
-                 class_levels = c("down", "unaffected", "up"))
-
-# PH TS high cutoff
-PH_TS <- dat[grepl("PH.*TS$", cdition), .(any(class2!="unaffected"), cdition, class2), FBgn][(V1)]
-vl_alluvial_plot(dcast(PH_TS, FBgn~cdition, value.var = "class2")[, -1], 
-                 class_levels = c("down", "unaffected", "up"))
-
-
-# EZ TS low cutoff
-EZ_TS <- dat[grepl("EZ.*TS$", cdition), .(any(class1!="unaffected"), cdition, class1), FBgn][(V1)]
-vl_alluvial_plot(dcast(EZ_TS, FBgn~cdition, value.var = "class1")[, -1], 
-                 class_levels = c("down", "unaffected", "up"))
-
-# EZ TS high cutoff
-EZ_TS <- dat[grepl("EZ.*TS$", cdition), .(any(class2!="unaffected"), cdition, class2), FBgn][(V1)]
-vl_alluvial_plot(dcast(EZ_TS, FBgn~cdition, value.var = "class2")[, -1], 
-                 class_levels = c("down", "unaffected", "up"))
-
+    mar= rep(1,4),
+    cex= 0.7)
+dat[, {
+  .c <- dcast(.SD, FBgn~cdition, value.var = "class")[, -1]
+  .c <- .c[apply(.c, 1, function(x) any(x!="unaffected"))]
+  vl_alluvial_plot(.c,
+                   class_levels = c("down", "unaffected", "up"))
+}, .id]
 dev.off()
-

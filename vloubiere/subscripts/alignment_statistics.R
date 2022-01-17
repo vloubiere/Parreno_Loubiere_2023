@@ -1,19 +1,17 @@
 require(data.table)
 require(gridExtra)
 
-stats <- data.table(file= list.files(c("db/bam/", 
-                                       "/mnt/f/_R_data/projects/epigenetic_cancer/db/bam/"), 
-                                     ".bam.summary", 
-                                     full.names = T, 
-                                     recursive = T))
-stats[, cdition:= tstrsplit(file, "/bam//|.bam.summary", keep = 2)]
-stats <- stats[, fread(file), (stats)]
-stats <- dcast(stats, cdition~V1, value.var = "V2")
-stats[is.na(Total_reads), Total_reads:= Total_fragments]
-stats[is.na(Uniquely_mapped_reads), Uniquely_mapped_reads:= Uniquely_mapped_fragments]
-stats[, Percentage:= Uniquely_mapped_reads/Total_reads*100, .(Total_reads, Uniquely_mapped_reads)]
-stats[, Uniquely_mapped_reads:= formatC(Uniquely_mapped_reads, big.mark = ",", format = "d")]
+stats <- fread("Rdata/processed_metadata_RNA.txt")
+stats <- stats[grepl("^epiCancer", DESeq2_object), fread(gsub(".bam$", ".bam.summary", bam)), .(bam, cdition, rep, DESeq2_object)]
+stats <- dcast(stats[V1 %in% c("Total_fragments", "Uniquely_mapped_fragments")], 
+               cdition+rep+DESeq2_object~V1, 
+               value.var = "V2")
+stats[, Percentage:= round(Uniquely_mapped_fragments/Total_fragments*100, 1)]
+cols <- c("Total_fragments", "Uniquely_mapped_fragments")
+stats[, (cols):= lapply(.SD, formatC, big.mark = ",", format = "d"), .SDcols= cols]
+setkeyv(stats, c("DESeq2_object", "cdition", "rep"))
+setcolorder(stats, "DESeq2_object")
 
 pdf("pdf/alignment/Alignment_statistics.pdf", height = 35, width = 12)
-grid.table(stats[, .(cdition, Uniquely_mapped_reads, Percentage)])
+grid.table(stats)
 dev.off()
