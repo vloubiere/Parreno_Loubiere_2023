@@ -7,50 +7,38 @@ require(rtracklayer)
 require(BSgenome.Dmelanogaster.UCSC.dm6)
 
 reads <- fread("Rdata/processed_metadata_CUTNRUN.txt")
-reads[, shuffled_bed:= paste0("db/bed/cutnrun/merge/", ChIP, "_", cdition, "_merge_shuffled.bed"), .(ChIP, cdition)]
-reads[, peaks_narrowpeaks:= paste0("db/narrowpeaks/", ChIP, "_", cdition, "_peaks.narrowPeak"), .(ChIP, cdition)]
-reads[, peaks_merged:= paste0("db/narrowpeaks/", ChIP, "_", cdition, "_merged_peaks.narrowPeak"), .(ChIP, cdition)]
 
-# Peaks calling
-reads[, {
-  bs <- switch(ChIP, "H3K27Ac"= 100, "H3K27me3"= 1000)
-  min_width <- switch(ChIP, "H3K27Ac"= 250, "H3K27me3"= 5000)
-  min_dist <- switch(ChIP, "H3K27Ac"= 201, "H3K27me3"= 2501)
-  min_qval <- switch(ChIP, "H3K27Ac"= 3, "H3K27me3"= 10)
-  min_OR <- switch(ChIP, "H3K27Ac"= 1, "H3K27me3"= 2)
-  # Create shuffled bed if not already done
-  if(!file.exists(shuffled_bed))
-    vl_exportBed(vl_shuffleBed(ChIP_bed_merge), shuffled_bed)
-  # Peak calling
-  if(!file.exists(peaks_narrowpeaks))
-  {
-    peaks <- vl_peakCalling(ChIP_bed_merge,
-                            shuffled_bed,
-                            gaussian_blur = T,
-                            BSgenome = BSgenome.Dmelanogaster.UCSC.dm6, 
-                            bins_width = bs, 
-                            bins_OR_cutoff = 1)
-    fwrite(peaks, 
-           peaks_narrowpeaks, 
-           col.names = F, 
-           sep= "\t")
-  }
-  # Merged peaks
-  if(!file.exists(peaks_merged))
-  {
-    if(!exists(peaks_narrowpeaks))
-      peaks <- vl_importBed(peaks_narrowpeaks)
-    .m <- vl_collapseBed(peaks, mingap = min_dist)[end-start>min_width]
-    merged <- vl_enrichBed(.m, 
-                           ChIP_bed_merge, 
-                           shuffled_bed)
-    fwrite(merged[qValue>min_qval & signalValue>=min_OR], 
-           peaks_merged,
-           col.names = F, 
-           sep= "\t")
-  }
-  print("done")
-}, .(ChIP, cdition, ChIP_bed_merge, shuffled_bed, peaks_narrowpeaks, peaks_merged)]
+# K27me3 peaks
+merged_peaks <- reads[, vl_importBed(unique(peaks_merged)), ChIP]
+# Compute K27me3 counts
+K27me3 <- vl_collapseBed(merged_peaks[ChIP=="H3K27me3"])
+K27me3 <- reads[ChIP=="H3K27me3", cbind(K27me3,
+                                        counts= vl_covBed(K27me3, ChIP_bed)), .(ChIP_bed, ChIP, cdition, rep)]
+K27me3[, coor:= paste0(seqnames, ":",  start, "-", end)]
+DF <- dcast(K27me3, coor~cdition+rep, value.var = "counts")
+DF <- data.frame(DF[, -1], row.names = DF$coor)
+sampleTable <- data.table(colnames(DF))
+sampleTable[, c("cdition", "rep"):= tstrsplit(V1, "_")]
+sampleTable <- data.frame(sampleTable[,-1], 
+                          row.names = sampleTable[,V1])
+
+dds <- DESeq2::DESeqDataSetFromMatrix(countData= DF,
+                                      colData= sampleTable,
+                                      design= ~rep+cdition)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #--------------------------------------------#
 # Segment genome into homogenous regions

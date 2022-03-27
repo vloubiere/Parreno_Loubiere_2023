@@ -12,6 +12,8 @@ stats[, (cols):= lapply(.SD, formatC, big.mark = ",", format = "d"), .SDcols= co
 setkeyv(stats, c("DESeq2_object", "cdition", "rep"))
 setcolorder(stats, "DESeq2_object")
 
-pdf("pdf/alignment/Alignment_statistics.pdf", height = 35, width = 12)
+pdf("pdf/RNA/Alignment_statistics.pdf", 
+    height = 35, 
+    width = 12)
 grid.table(stats)
 dev.off()

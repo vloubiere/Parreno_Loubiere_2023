@@ -22,8 +22,7 @@ meta[, c("fq1", "fq2"):= lapply(.SD, function(x){
 # Output files
 #----------------------------------------------------------#
 meta[, bam:= paste0(hdir, "bam/", project, "/", prefix_output, ".bam"), .(project, prefix_output)]
-meta[, dds_file:= paste0("db/dds/", DESeq2_object, "_dds.rds"), DESeq2_object]
-fwrite(meta, "Rdata/processed_metadata_RNA.txt")
+meta[, dds_file:= paste0("db/dds/RNA/", DESeq2_object, "_dds.rds"), DESeq2_object]
 
 #----------------------------------------------------------#
 # ALIGNMENT
@@ -56,7 +55,7 @@ meta[, {
 # DESeq2
 #----------------------------------------------------------#
 # DESEQ
-meta[, {
+FC <- meta[, {
   if(!file.exists(dds_file))
   {
     # SampleTable and DF
@@ -81,32 +80,44 @@ meta[, {
     mcols(dds)$basepairs <- glength[names(dds@rowRanges), Length]
     # SAVE
     saveRDS(dds, dds_file)
-  }else{
-    # FC tables
+  }else
     dds <- readRDS(dds_file)
-    cmb <- CJ(dds$cdition, dds$cdition, unique = T)
-    cmb <- cmb[V1!=V2]
-    cmb[, FC_file:= paste0("db/FC_tables/", DESeq2_object, "_", V1, "_vs_", V2, ".txt")]
-    cmb[, {
-      if(!file.exists(FC_file))
-      {
-        .c <- DESeq2::lfcShrink(dds,
-                                type= "ashr",
-                                contrast= c("cdition",
-                                            as.character(V1),
-                                            as.character(V2)))
-        .c <- suppressWarnings(as.data.table(.c, keep.rownames= "FBgn"))
-        fwrite(.c,
-               FC_file,
-               col.names = T,
-               row.names = T,
-               sep ="\t",
-               quote= F)
-      }
-    }, .(V1, V2, FC_file)]
-  }
-  print("DONE")
+  FC <- CJ(as.character(dds$cdition), 
+           as.character(dds$cdition), 
+           unique = T)
+  FC <- FC[V1!=V2]
+  FC[]
 }, .(DESeq2_object, dds_file)]
+
+cditions_table <- read_xlsx("Rdata/RNA_dds_conditions.xlsx")
+setkeyv(FC, c("V1", "V2"))
+FC <- FC[as.data.table(cditions_table)]
+FC[, FC_file:= paste0("db/FC_tables/RNA/", DESeq2_object, "_", V1, "_vs_", V2, ".txt"), .(DESeq2_object, V1, V2)]
+FC[, {
+  dds <- readRDS(dds_file)
+  .SD[, {
+    if(!file.exists(FC_file))
+    {
+      # Compute FC tables
+      .c <- DESeq2::lfcShrink(dds,
+                              type= "ashr",
+                              contrast= c("cdition", V1, V2))
+      .c <- as.data.table(as.data.frame(.c), 
+                          keep.rownames = "FBgn")
+      fwrite(.c,
+             FC_file, 
+             col.names = T, 
+             sep= "\t")
+    }
+    print("DONE")
+  }, .(V1, V2, FC_file)]
+  print("DONE")
+}, .(dds_file)]
+
+meta$FC_file <- FC[meta, .(add= paste0(FC_file, collapse = ",")), .EACHI, on= c("DESeq2_object", "V1==cdition")]$add
+fwrite(meta, 
+       "Rdata/processed_metadata_RNA.txt",
+       na = NA)
 
 #----------------------------------------------------------#
 # BW files

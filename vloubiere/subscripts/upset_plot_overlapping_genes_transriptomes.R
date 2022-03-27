@@ -18,23 +18,15 @@ meta[, cdition:= factor(cdition,
 setorderv(meta, 
           c("DESeq2_object", 
             "cdition"))
-meta[, class:= ifelse(padj<0.05 & abs(log2FoldChange)>1, 
-                      ifelse(log2FoldChange>0, "up", "down"), "unaffected")]
-meta[is.na(padj), class:= "unaffected"]
+meta <- meta[padj<0.05 & abs(log2FoldChange)>1]
+meta[, class:= ifelse(log2FoldChange>0, "up", "down")]
 
-pdf("pdf/RNA/alluvial_plot_timecourse.pdf", 
-    width = 10, 
-    height = 4)
+pdf("pdf/RNA/upsetplot_overlapping_genes.pdf", width = 17)
 layout(matrix(1:2, ncol= 2), 
-       widths = c(1,1.5))
-par(mar= c(1,1,3,1),
-    cex= 0.7)
-meta[!grepl("vs_RNA_PHD11.txt$", FC_file), {
-  .c <- dcast(.SD, FBgn~cdition, value.var = "class")[, -1]
-  .c <- .c[apply(.c, 1, function(x) any(x!="unaffected"))]
-  vl_alluvial_plot(.c,
-                   class_levels = c("down", "unaffected", "up"))
-  mtext(DESeq2_object, 
-        line = 1.5)
+       widths = c(1, 1.6))
+meta[, {
+    .l <<- split(FBgn, list(cdition, class))
+    vl_upset_plot(.l, 
+                  intersection_cutoff = 10)
 }, DESeq2_object]
 dev.off()
