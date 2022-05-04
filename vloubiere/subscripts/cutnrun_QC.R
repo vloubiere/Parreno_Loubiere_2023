@@ -7,6 +7,7 @@ require(kohonen)
 
 # SPIKE IN fraction
 meta <- fread("Rdata/processed_metadata_CUTNRUN.txt")
+meta <- meta[ChIP %in% c("H3K27me3", "H3K27Ac", "IgG") & Comment!="failed" & Suffix==""]
 meta[, ChIP_reads:= fread(cmd= paste0("wc -l ", ChIP_bed))$V1, ChIP_bed]
 meta[, spikein_reads:= fread(cmd= paste0("wc -l ", spikein_bed))$V1, spikein_bed]
 pl <- unique(meta[, .(name= paste0(ChIP, "_", cdition, "_", rep), ChIP_reads, spikein_reads)])
@@ -44,19 +45,18 @@ dev.off()
 #-----------------------------------------------------------#
 # Correlations
 #-----------------------------------------------------------#
-# Replicates coverage
-dat <- data.table(file= list.files("db/bw/cutnrun_reps_vl/", full.names = T))
-dat[, cdition:= gsub(".bw", "", basename(file))]
-dat[, cdition:= gsub("merge", "ChIP-Seq", cdition)]
 bins <- vl_binBSgenome(BSgenome.Dmelanogaster.UCSC.dm6, bins_width = 500) 
-dat <- dat[, cbind(bins, score= vl_bw_coverage(bins, file)), .(cdition, file)]
+dat <- meta[, SJ(idx= seq(nrow(bins)), 
+                 score= vl_bw_coverage(bins, bw)), .(bw, cdition= paste0(ChIP, "_", cdition, "_", rep))]
 dat <- dcast(dat, 
-             seqnames+start+end~cdition, 
+             idx~cdition, 
              value.var = "score")
-# Heatmap
 cols <- grep("rep", names(dat), value = T)
 
-pdf("pdf/cutnrun/PCC_cutnrun_replicates.pdf")
+# Heatmap
+pdf("pdf/cutnrun/PCC_cutnrun_replicates.pdf", 
+    width= 9,
+    height= 9)
 vl_heatmap(cor(na.omit(dat[, ..cols])), 
            display_numbers = T, 
            col= c("blue", "yellow"),
@@ -66,10 +66,9 @@ dev.off()
 #-----------------------------------------------------------#
 # PCA
 #-----------------------------------------------------------#
-# Without ChIP-Seq
 pca <- as.data.table(prcomp(na.omit(dat[, ..cols]))$rotation,
                      keep.rownames= T)
-pca[grep(18, rn), Cc:= "grey50"]
+pca[grep("18", rn), Cc:= "grey50"]
 pca[grep("D9", rn), Cc:= "gold"]
 pca[grep("D11", rn), Cc:= "limegreen"]
 pca[grep("29", rn), Cc:= "orangered"]
@@ -92,8 +91,8 @@ legend(par("usr")[2],
        xpd= T,
        pch= 16,
        cex= 1.5,
-       legend = pca[, rn],
-       col= pca[, Cc],
+       legend = unique(gsub("_rep1|_rep2", "", pca[, rn])),
+       col= unique(pca[, Cc]),
        bty= "n")
 dev.off()
 
@@ -101,39 +100,50 @@ dev.off()
 #-----------------------------------------------------------#
 # Screenshots replicates
 #-----------------------------------------------------------#
-tracks <- data.table(file= list.files("db/bw/cutnrun_reps_vl/", full.names = T))
+meta[, ChIP:= factor(ChIP, c("H3K27Ac", "H3K27me3", "IgG"))]
+meta[, cdition:= factor(cdition, c("PH18", "PHD11", "PHD9", "PH29"))]
+setorderv(meta, c("ChIP", "cdition"))
+meta[ChIP=="H3K27Ac", max:= 20]
+meta[ChIP=="H3K27me3", max:= 25]
+meta[ChIP=="IgG", max:= 10]
+
 pdf("pdf/cutnrun/cutnrun_QC_screenshot_replicates.pdf", 
     width = 10, 
     height = 10)
-vl_screenshot(GRanges("chr3R", IRanges(16.615e6, 17.025e6)),
-              tracks$file, 
+par(mar= c(6, 10, 0, 2))
+vl_screenshot(bed = GRanges("chr3R", IRanges(16.615e6, 17.025e6)),
+              tracks = meta$bw, 
+              max= meta$max,
               genome = "dm6")
 vl_screenshot(GRanges("chr3R", IRanges(6.625e6, 7.1e6)),
-              tracks$file, 
+              meta$bw,
+              max= meta$max,
               genome = "dm6")
 vl_screenshot(GRanges("chr3R", IRanges(5e6, 15e6)),
-              tracks$file, 
+              meta$bw,
+              max= meta$max,
               genome = "dm6")
 dev.off()
 
 #-----------------------------------------------------------#
 # Screenshots merge
 #-----------------------------------------------------------#
-tracks <- data.table(file= list.files("db/bw/cutnrun_merge_vl/", full.names = T))
+tracks <- unique(meta[, .(bw_merge, max)])
 
 pdf("pdf/cutnrun/cutnrun_QC_screenshot_merged_tracks.pdf", 
     width = 10, 
     height = 6)
+par(mar= c(6, 10, 0, 1))
 vl_screenshot(GRanges("chr3R", IRanges(16.615e6, 17.025e6)),
-              tracks$file, 
-              genome = "dm6", 
-              n_genes = 1)
+              tracks$bw_merge, 
+              max= tracks$max,
+              genome = "dm6")
 vl_screenshot(GRanges("chr3R", IRanges(6.625e6, 7.1e6)),
-              tracks$file, 
-              genome = "dm6",
-              n_genes = 1)
+              tracks$bw_merge,
+              max= tracks$max,
+              genome = "dm6")
 vl_screenshot(GRanges("chr3R", IRanges(5e6, 15e6)),
-              tracks$file, 
-              genome = "dm6",
-              n_genes = 1)
+              tracks$bw_merge,
+              max= tracks$max,
+              genome = "dm6")
 dev.off()

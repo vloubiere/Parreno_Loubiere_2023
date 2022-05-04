@@ -21,12 +21,13 @@ setorderv(meta,
 meta <- meta[padj<0.05 & abs(log2FoldChange)>1]
 meta[, class:= ifelse(log2FoldChange>0, "up", "down")]
 
-pdf("pdf/RNA/upsetplot_overlapping_genes.pdf", width = 17)
+pdf("pdf/RNA/upsetplot_overlapping_genes.pdf", width = 23)
 layout(matrix(1:2, ncol= 2), 
-       widths = c(1, 1.6))
+       widths = c(1, 1.7))
 meta[, {
     .l <<- split(FBgn, list(cdition, class))
     vl_upset_plot(.l, 
                   intersection_cutoff = 10)
+    title(DESeq2_object)
 }, DESeq2_object]
 dev.off()

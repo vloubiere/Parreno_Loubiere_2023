@@ -91,7 +91,7 @@ meta[, {
 #--------------------------------------------------------------#
 # bw files
 #--------------------------------------------------------------#
-meta[, bw:= paste0("db/bw/cutnrun/", ChIP, "_", cdition, "_", rep, ".bw")]
+meta[, bw:= paste0("db/bw/cutnrun/", ChIP, "_", cdition, "_", rep, Suffix, ".bw")]
 meta[, {
   if(!file.exists(bw))
   {
@@ -102,7 +102,7 @@ meta[, {
   }
   print("DONE")
 }, bw]
-meta[, bw_merge:= paste0("db/bw/cutnrun/", ChIP, "_", cdition, "_merge.bw")]
+meta[, bw_merge:= paste0("db/bw/cutnrun/", ChIP, "_", cdition, Suffix, "_merge.bw")]
 meta[, {
   if(!file.exists(bw_merge))
   {
@@ -117,23 +117,19 @@ meta[, {
 #--------------------------------------------------------------#
 # Peak calling
 #--------------------------------------------------------------#
-peak_calling <- merge(meta[ChIP %in% c("H3K27Ac", "H3K27me3"), 
-                           .(ChIP,
-                             cdition,
-                             rep,
-                             bam)],
+peak_calling <- merge(meta[ChIP %in% c("H3K27Ac", "H3K27me3") & Suffix=="", 
+                           .(ChIP, cdition, rep, bam)],
                       meta[ChIP=="IgG" & Suffix=="", 
-                           .(cdition, 
-                             rep,
-                             bam)],
+                           .(cdition, rep, bam)],
                       by= c("cdition", "rep"), 
                       allow.cartesian= T,
                       suffixes= c("_ChIP", "_Input"))
+peak_calling[, output_prefix:= paste0(ChIP, "_", cdition, "_", rep)]
 peak_calling[, cmd:= paste0("/home/vloubiere/.local/bin/macs2 callpeak --keep-dup 1 -g dm --keep-dup 1 -f BAMPE --outdir ", 
                             normalizePath("db/peaks/K27_cutnrun/"),
                             " -t ", bam_ChIP, 
                             " -c ", bam_Input, 
-                            " -n ", paste0(ChIP, "_", cdition, "_", rep))]
+                            " -n ", output_prefix)]
 peak_calling[ChIP=="H3K27me3", cmd:= paste0(cmd, " --broad")]
 peak_calling[, {
   check <- list.files("db/peaks/K27_cutnrun/", 
@@ -145,8 +141,8 @@ peak_calling[, {
 # Merge
 peak_calling[, cmd:= paste0("/home/vloubiere/.local/bin/macs2 callpeak --keep-dup 1 -g dm --keep-dup 1 -f BAMPE --outdir ", 
                             normalizePath("db/peaks/K27_cutnrun/"),
-                            " -t ", paste(sam_ChIP, collapse= " "), 
-                            " -c ", paste(sam_Input, collapse= " "),
+                            " -t ", paste(bam_ChIP, collapse= " "), 
+                            " -c ", paste(bam_Input, collapse= " "),
                             " -n ", paste0(ChIP, "_", cdition, "_merge")), .(ChIP, cdition)]
 peak_calling[ChIP=="H3K27me3", cmd:= paste0(cmd, " --broad")]
 peak_calling[, {
@@ -157,267 +153,112 @@ peak_calling[, {
   print("DONE")
 }, cmd]
 
-
-
-peak_calling[, {
-  #Peak calling parameters
-  bs <- switch(ChIP, "H3K27Ac"= 100, "H3K27me3"= 1000)
-  min_width <- switch(ChIP, "H3K27Ac"= 250, "H3K27me3"= 5000)
-  min_dist <- switch(ChIP, "H3K27Ac"= 201, "H3K27me3"= 2501)
-  min_qval <- switch(ChIP, "H3K27Ac"= 3, "H3K27me3"= 10)
-  min_OR <- switch(ChIP, "H3K27Ac"= 1, "H3K27me3"= 2)
-
-  # Peak calling
-  if(!file.exists(peaks_narrowpeaks))
+# Confident peaks
+peaks <- peak_calling[, .(file= list.files("db/peaks/K27_cutnrun/", 
+                                           paste0(ChIP, "_", cdition, 
+                                           fcase(ChIP=="H3K27me3", ".*.broadPeak$",
+                                                 ChIP=="H3K27Ac", ".*.narrowPeak$")),
+                                           full.names = T)), .(ChIP, cdition)]
+peaks[, rep:= fcase(grepl("rep1", file), "rep1",
+                    grepl("rep2", file), "rep2",
+                    grepl("merge", file), "merge")]
+peaks[, filtered_peaks:= paste0("db/peaks/K27_cutnrun/", ChIP, "_", cdition, "_confident_peaks.bed")]
+peaks[, {
+  if(!file.exists(filtered_peaks))
   {
-    peaks <- vl_peakCalling(ChIP_bed_merge_ChIP,
-                            ChIP_bed_merge_Input,
-                            gaussian_blur = T,
-                            BSgenome = BSgenome.Dmelanogaster.UCSC.dm6, 
-                            bins_width = bs, 
-                            bins_OR_cutoff = 1)
-    # macs3 callpeak -t /mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/merge/H3K27Ac_PH18_merge_uniq.bed 
-    # -c /mnt/d/_R_data/projects/epigenetic_cancer/db/bed/cutnrun/merge/IgG_PH18_merge_uniq.bed 
-    # -g dm --nomodel --outdir /mnt/d/_R_data/projects/epigenetic_cancer/db/ --name test
+    .c <- fread(file[rep=="merge"])[, 1:9]
+    .c$rep1 <- fread(file[rep=="rep1"])[.c, .N, .EACHI, on= c("V1", "V2<=V3", "V3>=V2")]$N
+    .c$rep2 <- fread(file[rep=="rep2"])[.c, .N, .EACHI, on= c("V1", "V2<=V3", "V3>=V2")]$N
+    fwrite(.c[rep1>0 & rep2>0, V1:V9],
+           filtered_peaks,
+           sep= "\t",
+           quote= F)
+  }
+  print("DONE")
+}, filtered_peaks]
+
+# Merged_peaks
+peaks[ChIP=="H3K27me3", c("enr_cutoff", "dist_cutoff"):= .(2, 2500)]
+peaks[ChIP=="H3K27Ac", c("enr_cutoff", "dist_cutoff"):= .(3, 250)]
+peaks[, merged_file:= paste0("db/peaks/K27_cutnrun_changes/", ChIP, "_merged_peaks.bed")]
+peaks[, {
+  .c <- vl_importBed(unique(filtered_peaks))
+  .c <- vl_collapseBed(.c[V7>enr_cutoff & V9>2], 
+                       mingap = dist_cutoff)
+  vl_exportBed(.c, 
+               merged_file)
+}, .(merged_file, enr_cutoff, dist_cutoff)]
+
+#--------------------------------------------------------------#
+# Compute counts merged peaks
+#--------------------------------------------------------------#
+meta[ChIP %in% c("H3K27me3","H3K27Ac"), read_counts:= paste0("db/counts/cutnrun/", ChIP, "_counts.txt")]
+meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
+  if(!file.exists(read_counts))
+  {
+    peaks <- vl_importBed(paste0("db/peaks/K27_cutnrun_changes/", ChIP, "_merged_peaks.bed"))
+    files <- unique(ChIP_bed)
+    names <- gsub("_uniq.bed", "", basename(files))
+    peaks[, (names):= lapply(files, function(x) vl_covBed(peaks, x))]
     fwrite(peaks, 
-           peaks_narrowpeaks, 
-           col.names = F, 
-           sep= "\t")
+           file = read_counts,
+           quote= F,
+           sep= "\t",
+           col.names = T)
   }
-  
-  # Merged peaks
-  if(!file.exists(peaks_merged))
-  {
-    peaks <- vl_importBed(peaks_narrowpeaks)
-    # Merge (potentially over-segmented) peaks from peak calling
-    .m <- vl_collapseBed(peaks, mingap = min_dist)[end-start>min_width]
-    # Rec-omput enrichment of merged peaks
-    merged <- vl_enrichBed(.m, 
-                           ChIP_bed_merge, 
-                           shuffled_bed)
-    fwrite(merged[qValue>min_qval & signalValue>=min_OR], 
-           peaks_merged,
-           col.names = F, 
-           sep= "\t")
-  }
-  print("done")
-}, .(ChIP, cdition, ChIP_bed_merge_ChIP, ChIP_bed_merge_Input, peaks_narrowpeaks, peaks_merged)]
+  print("DONE")
+}, .(ChIP, read_counts)]
 
 #--------------------------------------------------------------#
-# Segment genome into homogenous regions and compute enrichment
+# DESeq2 analysis
 #--------------------------------------------------------------#
-meta[, dds_file:= paste0("db/dds/cutnrun/", ChIP, ".dds"), ChIP]
-meta[, dds_file_merge:= paste0("db/dds/cutnrun/K27_segmentation_", ChIP, ".dds"), ChIP]
-
-if(!file.exists("db/narrowpeaks/cutnrun/K27_segmentation_merged.bed"))
-{
-  if(!file.exists("db/narrowpeaks/cutnrun/K27Ac_mergedBed_peaks.narrowPeak"))
+meta[ChIP %in% c("H3K27me3","H3K27Ac"), dds_file:= paste0("db/dds/cutnrun/", ChIP, ".dds"), ChIP]
+meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
+  # if(!file.exists(dds_file))
+  if(T)
   {
-    K27Ac_merged <- vl_peakCalling(ChIP= c("db/bed/cutnrun/merge/H3K27Ac_PH18_merge_uniq.bed",
-                                           "db/bed/cutnrun/merge/H3K27Ac_PHD11_merge_uniq.bed",
-                                           "db/bed/cutnrun/merge/H3K27Ac_PHD9_merge_uniq.bed",
-                                           "db/bed/cutnrun/merge/H3K27Ac_PH29_merge_uniq.bed"),
-                                   Input = c("db/bed/cutnrun/merge/IgG_PH18_merge_uniq.bed",
-                                             "db/bed/cutnrun/merge/IgG_PHD11_merge_uniq.bed",
-                                             "db/bed/cutnrun/merge/IgG_PHD9_merge_uniq.bed",
-                                             "db/bed/cutnrun/merge/IgG_PH29_merge_uniq.bed"),
-                                   bins_width = 100,
-                                   BSgenome = BSgenome.Dmelanogaster.UCSC.dm6::BSgenome.Dmelanogaster.UCSC.dm6)
-    K27Ac_merged <- vl_collapseBed(K27Ac_merged, mingap = 201)[end-start>101]
-    vl_exportBed(K27Ac_merged, "db/narrowpeaks/cutnrun/K27Ac_mergedBed_peaks.narrowPeak")
-  }else
-    K27Ac_merged <- vl_importBed("db/narrowpeaks/cutnrun/K27Ac_mergedBed_peaks.narrowPeak")
-  
-  if(!file.exists("db/narrowpeaks/cutnrun/K27me3_mergedBed_peaks.narrowPeak"))
-  {
-    K27me3_merged <- vl_peakCalling(ChIP= c("db/bed/cutnrun/merge/H3K27me3_PH18_merge_uniq.bed",
-                                           "db/bed/cutnrun/merge/H3K27me3_PHD11_merge_uniq.bed",
-                                           "db/bed/cutnrun/merge/H3K27me3_PHD9_merge_uniq.bed",
-                                           "db/bed/cutnrun/merge/H3K27me3_PH29_merge_uniq.bed"),
-                                   Input = c("db/bed/cutnrun/merge/IgG_PH18_merge_uniq.bed",
-                                             "db/bed/cutnrun/merge/IgG_PHD11_merge_uniq.bed",
-                                             "db/bed/cutnrun/merge/IgG_PHD9_merge_uniq.bed",
-                                             "db/bed/cutnrun/merge/IgG_PH29_merge_uniq.bed"),
-                                   bins_width = 1000,
-                                   BSgenome = BSgenome.Dmelanogaster.UCSC.dm6::BSgenome.Dmelanogaster.UCSC.dm6)
-    K27me3_merged <- vl_collapseBed(K27me3_merged, mingap = 2501)[end-start>5000]
-    vl_exportBed(K27me3_merged, "db/narrowpeaks/cutnrun/K27me3_mergedBed_peaks.narrowPeak")
-  }else
-    K27me3_merged <- vl_importBed("db/narrowpeaks/cutnrun/K27me3_mergedBed_peaks.narrowPeak")
-  
-  # Collapse
-  merged_peaks <- rbind(K27Ac_merged, K27me3_merged)
-  merged_peaks <- vl_collapseBed(merged_peaks, return_idx_only = T)
-  
-  # Segment
-  setkeyv(merged_peaks, c("seqnames", "start"))
-  K27 <- merged_peaks[, {
-    ranges <- sort(unique(c(start, end[-.N]+1, end[.N])))
-    .(start= ranges[-length(ranges)], end= ranges[-1]-1)
-  }, .(seqnames, idx)]
-  K27 <- unique(K27)[end-start>300]
-  
-  # Compute WT enrichment
-  K27$K27me3_log2_enr_PH18 <- vl_enrichBed(K27,
-                                           ChIP_bed = "db/bed/cutnrun/merge/H3K27me3_PH18_merge_uniq.bed",
-                                           Input_bed = "db/bed/cutnrun/merge/IgG_PH18_merge_uniq.bed")$signalValue
-  K27$K27me3_log2_enr_PHD11 <- vl_enrichBed(K27,
-                                            ChIP_bed = "db/bed/cutnrun/merge/H3K27me3_PHD11_merge_uniq.bed",
-                                            Input_bed = "db/bed/cutnrun/merge/IgG_PHD11_merge_uniq.bed")$signalValue
-  K27$K27me3_log2_enr_PHD9 <- vl_enrichBed(K27,
-                                           ChIP_bed = "db/bed/cutnrun/merge/H3K27me3_PHD9_merge_uniq.bed",
-                                           Input_bed = "db/bed/cutnrun/merge/IgG_PHD9_merge_uniq.bed")$signalValue
-  K27$K27me3_log2_enr_PH29 <- vl_enrichBed(K27,
-                                           ChIP_bed = "db/bed/cutnrun/merge/H3K27me3_PH29_merge_uniq.bed",
-                                           Input_bed = "db/bed/cutnrun/merge/IgG_PH29_merge_uniq.bed")$signalValue
-  K27$K27Ac_log2_enr_PH18 <- vl_enrichBed(K27,
-                                          ChIP_bed = "db/bed/cutnrun/merge/H3K27Ac_PH18_merge_uniq.bed",
-                                          Input_bed = "db/bed/cutnrun/merge/IgG_PH18_merge_uniq.bed")$signalValue
-  K27$K27Ac_log2_enr_PHD11 <- vl_enrichBed(K27,
-                                           ChIP_bed = "db/bed/cutnrun/merge/H3K27Ac_PHD11_merge_uniq.bed",
-                                           Input_bed = "db/bed/cutnrun/merge/IgG_PHD11_merge_uniq.bed")$signalValue
-  K27$K27Ac_log2_enr_PHD9 <- vl_enrichBed(K27,
-                                          ChIP_bed = "db/bed/cutnrun/merge/H3K27Ac_PHD9_merge_uniq.bed",
-                                          Input_bed = "db/bed/cutnrun/merge/IgG_PHD9_merge_uniq.bed")$signalValue
-  K27$K27Ac_log2_enr_PH29 <- vl_enrichBed(K27,
-                                          ChIP_bed = "db/bed/cutnrun/merge/H3K27Ac_PH29_merge_uniq.bed",
-                                          Input_bed = "db/bed/cutnrun/merge/IgG_PH29_merge_uniq.bed")$signalValue
-  
-  # SAVE
-  fwrite(K27[, !"idx"],
-         col.names = T, 
-         sep= "\t",
-         "db/narrowpeaks/cutnrun/K27_segmentation_mergedBed.bed")
-}
-
-#--------------------------------------------------------------#
-# DESeq2 analysis separate ChIP
-#--------------------------------------------------------------#
-# Make dds
-FC <- meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
-  if(!file.exists(dds_file))
-  {
-    # Collapse peaks/ChIP
-    merged_peaks <- vl_importBed(unique(peaks_merged))
-    merged_peaks <- vl_collapseBed(merged_peaks)
+    counts <- fread(read_counts)
+    cols <- grep("_PH", names(counts))
+    counts <- counts[rowSums(counts[, cols, with= F])>100]
     
-    # Compute overlapping reads for all replicates and make DF
-    .c <- lapply(unique(ChIP_bed), function(x) vl_covBed(merged_peaks, x))
-    names(.c) <- paste0(ChIP, "_", cdition, "_", rep)
-    DF <- data.frame(do.call(cbind, .c))
-    rownames(DF) <- merged_peaks[, paste0(seqnames, ":", start, "-", end)]
-    
-    # Assemble DESeq2 SampleTable
-    sampleTable <- data.table(colnames(DF), 
-                              as.data.table(tstrsplit(colnames(DF), "_")))
-    names(sampleTable) <- c("sample", "ChIP", "cdition", "rep")
-    sampleTable <- data.frame(sampleTable[, .(cdition, rep)], 
-                              row.names = sampleTable$sample)
+    # Format
+    DF <- data.frame(counts[, cols, with= F], 
+                     row.names = counts[, paste0(seqnames, ":", start, "-", end)])
+    sampleTable <- as.data.frame(setNames(tstrsplit(names(DF), "_"), c("ChIP", "cdition", "rep")),
+                                 row.names = names(DF))
     
     # Run DESeq2 and save dds
     dds <- DESeq2::DESeqDataSetFromMatrix(countData= DF,
                                           colData= sampleTable,
                                           design= ~rep+cdition)
-    dds <- DESeq2::DESeq(dds)
-    libsize <- data.table(file= unique(ChIP_bed))[, fread(cmd= paste0("wc -l ", file)), file]$V1
+    libsize <- sapply(colnames(dds), function(x) {
+      cmd <- paste("wc -l", list.files("db/bed/cutnrun/", paste0(x, "_uniq.bed"), full.names = T))
+      fread(cmd = cmd)$V1
+    })
     sizeFactors(dds) <- libsize/min(libsize)
+    dds <- DESeq2::DESeq(dds)
     saveRDS(dds, dds_file)
-    print("DONE")
-  }else
-    dds <- readRDS(dds_file)
-  CJ(as.character(dds$cdition),
-     as.character(dds$cdition), 
-     unique= T)[V1!=V2]
-}, .(ChIP, dds_file)]
-
-FC <- FC[V2=="PH18"]
-FC[, FC_file:= paste0("db/FC_tables/cutnrun/", ChIP, "_", V1, "_vs_", V2, ".txt"), .(ChIP, V1, V2)]
-FC[, {
+  }
   dds <- readRDS(dds_file)
-  .SD[, {
-    if(!file.exists(FC_file))
-    {
-      # Compute FC tables
-      .c <- DESeq2::lfcShrink(dds,
-                              type= "ashr",
-                              contrast= c("cdition", V1, V2))
-      .c <- as.data.table(as.data.frame(.c), 
-                          keep.rownames = "coor")
-      fwrite(.c,
-             FC_file, 
-             col.names = T, 
-             sep= "\t")
-    }
-    print("DONE")
-  }, .(V1, V2, FC_file)]
-  print("DONE")
-}, dds_file]
-meta[FC, FC_file_ChIP_peaks:= .(i.FC_file), on= c("ChIP", "cdition==V1")]
-
-#--------------------------------------------------------------#
-# DESeq2 analysis merged ChIP
-#--------------------------------------------------------------#
-FC_merge <- meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
-  if(!file.exists(dds_file_merge))
+  for(temp in c("PH29", "PHD9", "PHD11"))
   {
-    K27 <- vl_importBed("db/narrowpeaks/cutnrun/K27_segmentation_mergedBed.bed")[, 1:3]
-      
-    # Compute overlapping reads for all ChIP replicates
-    .c <- lapply(unique(ChIP_bed), function(x) vl_covBed(K27, x))
-    names(.c) <- paste0(ChIP, "_", cdition, "_", rep)
-    
-    # Assemble DESeq2 DF
-    DF <- data.frame(do.call(cbind, .c))
-    rownames(DF) <- K27[, paste0(seqnames, ":", start, "-", end)]
-    
-    # Assemble DESeq2 SampleTable
-    sampleTable <- data.table(colnames(DF), 
-                              as.data.table(tstrsplit(colnames(DF), "_")))
-    names(sampleTable) <- c("sample", "ChIP", "cdition", "rep")
-    sampleTable <- data.frame(sampleTable[, .(cdition, rep)], 
-                              row.names = sampleTable$sample)
-    
-    # Run DESeq2 and save dds
-    dds <- DESeq2::DESeqDataSetFromMatrix(countData= DF,
-                                          colData= sampleTable,
-                                          design= ~rep+cdition)
-    dds <- DESeq2::DESeq(dds)
-    libsize <- data.table(file= unique(ChIP_bed))[, fread(cmd= paste0("wc -l ", file)), file]$V1
-    sizeFactors(dds) <- libsize/min(libsize)
-    saveRDS(dds, dds_file_merge)
-    print("DONE")
-  }else
-    dds <- readRDS(dds_file_merge)
-  CJ(as.character(dds$cdition),
-     as.character(dds$cdition), 
-     unique= T)[V1!=V2]
-}, .(ChIP, dds_file_merge)]
-
-FC_merge <- FC_merge[V2=="PH18"]
-FC_merge[, FC_merge_file:= paste0("db/FC_tables/cutnrun/K27_segmentation_", ChIP, "_", V1, "_vs_", V2, ".txt"), .(ChIP, V1, V2)]
-FC_merge[, {
-  dds <- readRDS(dds_file_merge)
-  .SD[, {
-    if(!file.exists(FC_merge_file))
+    FC_file <- paste0("db/FC_tables/cutnrun/", ChIP, "_", temp, "_vs_PH18.txt")
+    # if(!file.exists(FC_file))
+    if(T)
     {
-      # Compute FC_merge tables
-      .c <- DESeq2::lfcShrink(dds,
-                              type= "ashr",
-                              contrast= c("cdition", V1, V2))
-      .c <- as.data.table(as.data.frame(.c), 
-                          keep.rownames = "coor")
-      fwrite(.c,
-             FC_merge_file, 
+      res <- as.data.frame(DESeq2::results(dds, 
+                                           contrast= c("cdition", temp, "PH18")))
+      res <- as.data.table(res, keep.rownames = T)
+      res[, c("seqnames", "start", "end"):= tstrsplit(rn, ":|-")]
+      fwrite(res[, .(seqnames, start, end, baseMean, log2FoldChange, lfcSE, stat, pvalue, padj)],
+             FC_file,
              col.names = T, 
-             sep= "\t")
+             sep= "\t",
+             quote=F)
     }
     print("DONE")
-  }, .(V1, V2, FC_merge_file)]
-  print("DONE")
-}, dds_file_merge]
-
-
-meta[FC_merge, FC_file_K27_segmentation:= .(i.FC_merge_file), on= c("ChIP", "cdition==V1")]
+  }
+}, .(ChIP, read_counts, dds_file)]
 fwrite(meta, 
        "Rdata/processed_metadata_CUTNRUN.txt", 
-       na = NA)
+       na= NA)

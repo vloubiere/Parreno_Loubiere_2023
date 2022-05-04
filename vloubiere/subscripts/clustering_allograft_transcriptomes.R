@@ -87,6 +87,29 @@ cl$motif_enr$enr <- vl_motif_cl_enrich(cl$motif_enr$counts,
                                        cl_IDs = cl$rows$cl,
                                        plot= F)
 
+#FPKMs
+fpkms <- as.data.table(DESeq2::fpkm(readRDS("db/dds/RNA/epiCancer_ED_allograft_RNA_gDNA_dds.rds")), 
+                       keep.rownames = "FBgn")
+cl$ref_fpkms <- fpkms[, .(FBgn,
+                          PH29= rowMeans(.SD[, .(TPH29_1.bam, TPH29_2.bam, TPH29_3.bam)]))]
+
+#PRC1 binding
+loadRData <- function(fileName){
+  load(fileName)
+  get(ls()[ls() != "fileName"])
+}
+PRC1 <- loadRData("external_data/SA2020_cl.list")
+cl$rows[, PRC1_bound:= symbol %in% unlist(PRC1$genes)]
+
+# HTMs
+regions <- FBGN[type=="gene"][cl$rows, .(seqnames, start, end, cl), on= "gene_id==FBgn"]
+regions <- vl_resizeBed(regions, 5000, center = "center")
+regions[, H3K27me3_W18:= vl_bw_coverage(regions, 
+                                        "db/bw/cutnrun/H3K27me3_PH18_merge.bw")]
+regions[, H3K27Ac_W18:= vl_bw_coverage(regions, 
+                                       "db/bw/cutnrun/H3K27Ac_PH18_merge.bw")]
+cl$HTMs <- regions
+
 # SAVE
 saveRDS(cl,
         "Rdata/clustering_allograft_transcriptomes.rds")

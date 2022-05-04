@@ -86,7 +86,6 @@ FC <- meta[, {
            as.character(dds$cdition), 
            unique = T)
   FC <- FC[V1!=V2]
-  FC[]
 }, .(DESeq2_object, dds_file)]
 
 cditions_table <- read_xlsx("Rdata/RNA_dds_conditions.xlsx")

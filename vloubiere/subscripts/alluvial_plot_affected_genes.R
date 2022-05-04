@@ -26,15 +26,18 @@ pdf("pdf/RNA/alluvial_plot_timecourse.pdf",
     width = 10, 
     height = 4)
 layout(matrix(1:2, ncol= 2), 
-       widths = c(1,1.5))
+       widths = c(1,1.3))
 par(mar= c(1,1,3,1),
-    cex= 0.7)
+    cex= 0.7,
+    las= 2)
 meta[!grepl("vs_RNA_PHD11.txt$", FC_file), {
   .c <- dcast(.SD, FBgn~cdition, value.var = "class")[, -1]
   .c <- .c[apply(.c, 1, function(x) any(x!="unaffected"))]
   vl_alluvial_plot(.c,
-                   class_levels = c("down", "unaffected", "up"))
-  mtext(DESeq2_object, 
-        line = 1.5)
+                   class_levels = c("down", "unaffected", "up"),
+                   col= c("cornflowerblue", "lightgrey", "tomato"))
+  title(main= DESeq2_object, 
+        line = 1.5,
+        las= 1)
 }, DESeq2_object]
 dev.off()

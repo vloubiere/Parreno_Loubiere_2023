@@ -19,15 +19,17 @@ if(F)
   
   #### Bulk analyses ####
   file.edit("git_epiCancer/vloubiere/subscripts/transcriptomes_correlations.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/PCA_FPKM_transriptomes.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/PCA_log2FC_transriptomes.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/PCA_tissues_vs_transplants.R")
   file.edit("git_epiCancer/vloubiere/subscripts/MA_plots.R")
   file.edit("git_epiCancer/vloubiere/subscripts/alluvial_plot_affected_genes.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/PCA_transriptomes.R")
   file.edit("git_epiCancer/vloubiere/subscripts/upset_plot_overlapping_genes_transriptomes.R")
   
   #### Clustering ####
   file.edit("git_epiCancer/vloubiere/subscripts/clustering_cutnrun_transcriptomes.R")
   file.edit("git_epiCancer/vloubiere/subscripts/clustering_allograft_transcriptomes.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/figure_transiptome_clusters.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/figure_transcriptomes_clusters.R")
   
   #### Tables for AMM ####
   file.edit("git_epiCancer/vloubiere/subscripts/tables_AMM.R")
@@ -38,9 +40,14 @@ if(F)
   # Processing and QC
   file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_processing.R")
   file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_QC.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/compare_vl_gonza_cutnrun_tracks.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/compare_vl_gonza_cutnrun_tracks.R") # Gonzalo's files removed
   
   # Analyses
+  file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_MA_plots.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_target_genes_analysis.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_target_genes_analysis.R")
+  
+  # To be cleaned
   file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_clustering_DESeq2.R")
   file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_clustering_peaks.R")
   file.edit("git_epiCancer/vloubiere/subscripts/cutnrun_K27_changes_volcano_plot.R")
