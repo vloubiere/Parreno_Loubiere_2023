@@ -2,22 +2,27 @@ setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(vlfunctions)
 require(data.table)
 
-# Import data
-obj <- lapply(c("Rdata/clustering_allograft_transcriptomes.rds",
-                "Rdata/clustering_cutnrun_genotype_transcriptomes.rds"), function(x) readRDS(x))
-names(obj) <- c("allograft", "cuntrun")
+loadRData <- function(fileName){
+  load(fileName)
+  get(ls()[ls() != "fileName"])
+}
 
-pdf("pdf/Figures/Clustering_transcriptomes.pdf", 
+# Import data
+obj <- readRDS("Rdata/clustering_RNA.rds")
+
+pdf("pdf/Figures/Clustering_allograft_cutnrun_systems_RNA.pdf", 
     width= 25)
-mat <- matrix(c(1,2,3,5,6,7,
-                1,2,4,5,6,7),
-              nrow= 2, byrow = T)
-layout(mat, widths = c(1,1,0.9,1.5,2.4,1))
-for(i in seq(obj))
+mat <- matrix(c(1,2,3,6,7,8,
+                1,2,4,6,7,8,
+                1,2,5,6,7,8),
+              nrow= 3, byrow = T)
+layout(mat, 
+       widths = c(1,1,0.9,1.5,2.4,1))
+for(cdition in names(obj))
 {
-  list2env(obj[[i]], 
+  list2env(obj[[cdition]], 
            envir = environment())
-  if(i==1)
+  if(cdition=="allograft")
   {
     lims <- c(-8, 8)
     adj.vertices <- 10
@@ -26,7 +31,7 @@ for(i in seq(obj))
     top_mot_enr <- 10
     cex_ball_GO <- 0.75
   }
-  if(i==2)
+  if(cdition=="cutnrun")
   {
     lims <- c(-5, 5)
     adj.vertices <- 4
@@ -56,10 +61,10 @@ for(i in seq(obj))
        rev(paste0("Cluster ", names(cl_counts), "\n(", cl_counts, ")")),
        xpd= T,
        pos= 2)
-  title(paste0(c("Allograft", "CutNrun genotype")[i], " (SOM)"))
+  title(paste0(cdition, " (SOM)"))
   
   # Histone marks
-  mat <- apply(HTMs[rows$order, .(H3K27Ac_W18, H3K27me3_W18)], 2, function(x) log2(x+0.001))
+  mat <- apply(rows[(order), .(H3K27Ac_W18, H3K27me3_W18)], 2, function(x) log2(x+0.001))
   vl_heatmap(scale(mat), 
              cluster_rows= F,
              show_rownames= F,
@@ -74,33 +79,76 @@ for(i in seq(obj))
        xpd= T,
        pos= 2)
   
+  # CHROMHMM
+  all_chrom <- fread("external_data/chromatin_types_SA2020_table_s1.txt")
+  chrom <- rbind(rows[, .(chromhmm, cl)],
+                 all_chrom[, .(chromhmm= V4, cl="all")])
+  chrom <- dcast(na.omit(chrom), 
+                 chromhmm~cl, 
+                 fun.aggregate = length)
+  chrom <- as.matrix(chrom, 1)
+  chrom <- apply(chrom, 2, function(x) x/sum(x)*100)
+  chrom <- chrom[order(apply(chrom, 1, sum), decreasing = T),]
+  Cc <- sapply(rownames(chrom), function(x) switch(x, 
+                                                   "aTSS"= "tomato",
+                                                   "aTTS"= "red",
+                                                   "Enhancer"= "limegreen",
+                                                   "PcG"= "cornflowerblue",
+                                                   "Null"= "grey"))
+  par(mar= c(2,5,2,6))
+  barplot(chrom,
+          col= Cc,
+          las= 1,
+          ylab= "% chromhmm class")
+  legend(par("usr")[2],
+         par("usr")[4],
+         legend = rownames(chrom),
+         fill= Cc,
+         xpd= T,
+         bty= "n")
+  
   # PRC1 binding
-  par(mar= c(5,5,4,2))
-  pl <- table(rows$PRC1_bound, rows$cl)
-  perc <- c(genome= 2069/16514*100, # SA202 PRC1 bound genes vs all mRNA/ncRNA genes
-            apply(pl, 2, function(x) round(x[2]/sum(x)*100)))
-  bar <- barplot(perc,
+  all_PRC1 <- loadRData("external_data/SA2020_cl.list")
+  all_PRC1 <- rbindlist(lapply(all_PRC1$genes, function(x) data.table(symbol= x)), idcol = "PRC1_cluster")
+  PRC1_binding <- rbind(rows[, .(PRC1_cluster, cl)],
+                        all_PRC1[, .(PRC1_cluster, cl= "all")])
+  PRC1_binding[, total:= ifelse(cl=="all", 16514, .N), cl]
+  PRC1_binding <- PRC1_binding[!is.na(PRC1_cluster)]
+  PRC1_binding[, PRC1_cluster:= switch(PRC1_cluster,
+                                       "aTSS A"= "aTSS", 
+                                       "aTSS B"= "aTSS", 
+                                       "Enhancer A"= "Enhancer", 
+                                       "Enhancer B"= "Enhancer", 
+                                       "Polycomb A"= "Polycomb", 
+                                       "Polycomb B"= "Polycomb", 
+                                       "Repressed"= "Repressed"), PRC1_cluster]
+  PRC1_binding <- PRC1_binding[, .(perc= .N/total*100), .(cl, PRC1_cluster)]
+  mat <- dcast(unique(PRC1_binding), 
+               PRC1_cluster~cl, 
+               value.var = "perc", 
+               fill = 0)
+  mat <- as.matrix(mat, 1)
+  mat <- mat[c("aTSS", "Enhancer", "Polycomb", "Repressed"),]
+  Cc <- c("tomato", "limegreen", "cornflowerblue", "grey")
+  bar <- barplot(mat,
                  ylab= "% PRC1 bound genes",
-                 las= 1)
-  text(bar, 
-       perc,
-       c(16514, apply(pl, 2, sum)),
-       xpd= T,
-       pos= 3)
+                 las= 1,
+                 col= Cc)
+  legend(par("usr")[2],
+         par("usr")[4],
+         legend = rownames(mat),
+         fill= Cc,
+         xpd= T,
+         bty= "n")
   
   # ref FPKMs
-  cols <- names(ref_fpkms)[-1]
-  ref_fpkms[rows, cl:= i.cl, on= "FBgn"]
-  ref_fpkms[, cl:= as.character(cl)]
-  .c <- rbind(na.omit(ref_fpkms),
-              ref_fpkms[, cl:="genome"])
-  .c[, cl:= factor(cl)]
-  .c[, cl:= relevel(cl, "genome")]
-  par(las= 2)
-  vl_boxplot(as.formula(paste0(cols, "~cl")),
-             .c,
+  if(cdition=="allograft")
+    .f <- as.formula(PH29_FPKM~cl) else if(cdition=="cutnrun")
+      .f <- as.formula(W18_FPKM~cl)
+  vl_boxplot(.f,
+             rows,
              las= 0,
-             ylab= paste("FPKMs", cols))
+             ylab= .f[[2]])
   
   # Network
   par(mar= c(0,0,1,0),
@@ -128,7 +176,7 @@ for(i in seq(obj))
   # Motifs
   par(las= 1,
       mar= c(2,8,2,5))
-  plot(motif_enr$enr, 
+  plot(motif_enr, 
        padj_cutoff= mot_padj_cutoff, 
        auto_margins= F, 
        N_top= top_mot_enr,

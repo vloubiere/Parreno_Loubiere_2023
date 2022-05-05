@@ -26,7 +26,7 @@ mat[is.na(mat)] <- 0
 mat <- scale(mat)
 pca <- prcomp(mat)$rotation
 
-pdf("pdf/RNA/PCA_FPKMs_transcriptomes.pdf",
+pdf("pdf/Figures/PCA_FPKMs_RNA.pdf",
     width = 5,
     height = 5.5)
 plot(pca[,"PC1"],

@@ -19,13 +19,22 @@ setcolorder(tables,
                        byrow= T))))
 
 # Add clusters
-cl <- readRDS("Rdata/clustering_allograft_transcriptomes.rds")
-tables[cl$rows, allograft_cl:= i.cl, on="FBgn"]
-cl <- readRDS("Rdata/clustering_cutnrun_genotype_transcriptomes.rds")
-tables[cl$rows, cutnrun_genotype_cl:= i.cl, on="FBgn"]
-setcolorder(tables, 
-            c("FBgn", "symbol", "allograft_cl", "cutnrun_genotype_cl"))
+cl <- readRDS("Rdata/clustering_RNA.rds")
+tables[cl$allograft$rows, allograft_cl:= i.cl, on="FBgn"]
+tables[cl$cutnrun$rows, cutnrun_genotype_cl:= i.cl, on="FBgn"]
 
+# Add PRC1 binding
+loadRData <- function(fileName){
+  load(fileName)
+  get(ls()[ls() != "fileName"])
+}
+PRC1 <- loadRData("external_data/SA2020_cl.list")
+PRC1 <- rbindlist(lapply(PRC1$genes, function(x) data.table(symbol= x)), idcol = "PRC1_cluster")
+tables[PRC1, PRC1_cluster:= i.PRC1_cluster, on= "symbol"]
+
+# Order and save
+setcolorder(tables, 
+            c("FBgn", "symbol", "allograft_cl", "cutnrun_genotype_cl", "PRC1_cluster"))
 fwrite(tables, 
        "db/FC_tables/RNA_table_AMM.txt",
        col.names = T, 

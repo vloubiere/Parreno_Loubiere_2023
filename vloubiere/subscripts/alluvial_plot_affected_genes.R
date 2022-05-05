@@ -22,7 +22,7 @@ meta[, class:= ifelse(padj<0.05 & abs(log2FoldChange)>1,
                       ifelse(log2FoldChange>0, "up", "down"), "unaffected")]
 meta[is.na(padj), class:= "unaffected"]
 
-pdf("pdf/RNA/alluvial_plot_timecourse.pdf", 
+pdf("pdf/Figures/alluvial_plot_timecourse_RNA.pdf", 
     width = 10, 
     height = 4)
 layout(matrix(1:2, ncol= 2), 

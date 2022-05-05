@@ -21,7 +21,8 @@ setorderv(meta,
 meta <- meta[padj<0.05 & abs(log2FoldChange)>1]
 meta[, class:= ifelse(log2FoldChange>0, "up", "down")]
 
-pdf("pdf/RNA/upsetplot_overlapping_genes.pdf", width = 23)
+pdf("pdf/Figures/upsetplot_overlapping_genes_RNA.pdf", 
+    width = 23)
 layout(matrix(1:2, ncol= 2), 
        widths = c(1, 1.7))
 meta[, {

@@ -14,7 +14,7 @@ setorderv(meta, c("DESeq2_object", "cdition"))
 
 lim <- 10
 
-pdf("pdf/RNA/MA_plots.pdf", 10, 8.5)
+pdf("pdf/Figures/MA_plots_RNA.pdf", 10, 8.5)
 par(mfrow=c(3,4))
 meta[, {
   y <- log2FoldChange

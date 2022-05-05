@@ -27,7 +27,7 @@ pca[grepl("allograft", cdition), col:= vl_palette_many_categ(10)[.GRP], cdition]
 pca[grepl("cutnrun", cdition), col:= vl_palette_many_categ(10)[.GRP], cdition]
 
 
-pdf("pdf/RNA/PCA_log2FC_transcriptomes.pdf", 
+pdf("pdf/Figures/PCA_log2FC_RNA.pdf", 
     width = 5, 
     height = 5.5)
 par(las= 1)

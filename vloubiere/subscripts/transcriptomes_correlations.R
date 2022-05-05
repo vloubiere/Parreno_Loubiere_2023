@@ -6,7 +6,7 @@ require(readxl)
 meta <- fread("Rdata/processed_metadata_RNA.txt")
 meta <- meta[project=="RNA_epiCancer"]
 
-pdf("pdf/RNA/PCC_replicates.pdf")
+pdf("pdf/Figures/PCC_replicates_RNA.pdf")
 meta[, {
     dds <- readRDS(dds_file)
     counts <- log2(counts(dds)+1)

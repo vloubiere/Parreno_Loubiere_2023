@@ -17,6 +17,9 @@ genes <- genes[type=="gene" & gene_id %in% genes[type %in% c("mRNA", "ncRNA"), g
 genes <- vl_resizeBed(genes, center = "start", upstream = 2000, downstream = 2000)
 ov <- genes[dat, .(FBgn= .(gene_id), symbol= .(gene_symbol)), .EACHI, on= c("seqnames", "start<=end", "end>=start")]
 dat[, c("FBgn", "symbol"):= ov[, .(FBgn, symbol)]]
+fwrite(dat,
+       sep= "\t",
+       "db/FC_tables/CUTNRUN_table_AMM.txt")
 
 pdf("pdf/cutnrun/GO_genes_overlapping_CUTNRUN_changes.pdf", 
     width = 9,
