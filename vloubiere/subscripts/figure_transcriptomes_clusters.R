@@ -11,13 +11,13 @@ loadRData <- function(fileName){
 obj <- readRDS("Rdata/clustering_RNA.rds")
 
 pdf("pdf/Figures/Clustering_allograft_cutnrun_systems_RNA.pdf", 
-    width= 25)
-mat <- matrix(c(1,2,3,6,7,8,
-                1,2,4,6,7,8,
-                1,2,5,6,7,8),
+    width= 22)
+mat <- matrix(c(1,2,5,6,7,
+                1,3,5,6,7,
+                1,4,5,6,7),
               nrow= 3, byrow = T)
 layout(mat, 
-       widths = c(1,1,0.9,1.5,2.4,1))
+       widths = c(1,0.9,1.5,2.4,1))
 for(cdition in names(obj))
 {
   list2env(obj[[cdition]], 
@@ -43,7 +43,7 @@ for(cdition in names(obj))
   
   # Heatmap
   par(mar= c(7,10,2,10))
-  vl_heatmap(log2FC_mat[rows$order,], 
+  vl_heatmap(data[(order), grep("^RNA_", names(data)), with= F], 
              cluster_rows= F,
              cluster_cols= F, 
              breaks = seq(lims[1], lims[2], length.out= 100), 
@@ -63,25 +63,9 @@ for(cdition in names(obj))
        pos= 2)
   title(paste0(cdition, " (SOM)"))
   
-  # Histone marks
-  mat <- apply(rows[(order), .(H3K27Ac_W18, H3K27me3_W18)], 2, function(x) log2(x+0.001))
-  vl_heatmap(scale(mat), 
-             cluster_rows= F,
-             show_rownames= F,
-             breaks= c(-2,0,2), 
-             auto_margins = F)
-  abline(h= cl_pos[-length(cl_pos)], 
-         lwd= 2,
-         xpd= F)
-  text(par("usr")[1], 
-       cl_pos-diff(c(1, cl_pos))/2,
-       rev(paste0("Cluster ", names(cl_counts), "\n(", cl_counts, ")")),
-       xpd= T,
-       pos= 2)
-  
   # CHROMHMM
   all_chrom <- fread("external_data/chromatin_types_SA2020_table_s1.txt")
-  chrom <- rbind(rows[, .(chromhmm, cl)],
+  chrom <- rbind(data[, .(chromhmm, cl)],
                  all_chrom[, .(chromhmm= V4, cl="all")])
   chrom <- dcast(na.omit(chrom), 
                  chromhmm~cl, 
@@ -110,7 +94,7 @@ for(cdition in names(obj))
   # PRC1 binding
   all_PRC1 <- loadRData("external_data/SA2020_cl.list")
   all_PRC1 <- rbindlist(lapply(all_PRC1$genes, function(x) data.table(symbol= x)), idcol = "PRC1_cluster")
-  PRC1_binding <- rbind(rows[, .(PRC1_cluster, cl)],
+  PRC1_binding <- rbind(data[, .(PRC1_cluster, cl)],
                         all_PRC1[, .(PRC1_cluster, cl= "all")])
   PRC1_binding[, total:= ifelse(cl=="all", 16514, .N), cl]
   PRC1_binding <- PRC1_binding[!is.na(PRC1_cluster)]
@@ -146,17 +130,18 @@ for(cdition in names(obj))
     .f <- as.formula(PH29_FPKM~cl) else if(cdition=="cutnrun")
       .f <- as.formula(W18_FPKM~cl)
   vl_boxplot(.f,
-             rows,
+             data,
              las= 0,
              ylab= .f[[2]])
   
   # Network
   par(mar= c(0,0,1,0),
       las= 0)
-  plot(net,
-       size= net$vertices$size*adj.vertices,
-       top_N = top_network)
-  leg <- unique(rows[net$vertices, .(cl, col), on= "symbol==name"])[order(cl)]
+  plot(network,
+       size= network$vertices$size*adj.vertices,
+       top_N = top_network, 
+       cex.label= network$vertices$size/2)
+  leg <- unique(data[network$vertices, .(cl, col), on= "symbol==name"])[order(cl)]
   legend("topleft",
          fill= leg$col,
          legend= paste0("Cluster ", leg$cl),
@@ -176,7 +161,7 @@ for(cdition in names(obj))
   # Motifs
   par(las= 1,
       mar= c(2,8,2,5))
-  plot(motif_enr, 
+  plot(mot_enrichment, 
        padj_cutoff= mot_padj_cutoff, 
        auto_margins= F, 
        N_top= top_mot_enr,

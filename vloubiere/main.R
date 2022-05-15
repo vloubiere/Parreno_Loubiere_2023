@@ -62,7 +62,6 @@ if(F)
   file.edit("git_epiCancer/vloubiere/subscripts/genomic_SNPs_mutations.R")
   file.edit("git_epiCancer/vloubiere/subscripts/genomic_InDels_mutations.R")
   
-  
   #-------------------------------------------------------------------------#
   # MISCELLANEOUS / Casual
   #-------------------------------------------------------------------------#

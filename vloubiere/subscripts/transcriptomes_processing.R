@@ -3,8 +3,8 @@ require(vlfunctions)
 require(readxl)
 
 meta <- as.data.table(read_xlsx("Rdata/metadata_RNA.xlsx"))
-meta <- meta[DESeq2_object %in% c("epiCancer_ED_allograft_RNA_gDNA", 
-                                  "epiCancer_ED_RNA_CUTNRUN",
+meta <- meta[DESeq2_object %in% c("epiCancer_ED_GFP+_system_RNA", 
+                                  "epiCancer_ED_GFP-_system_RNA",
                                   "RNA_development_Public",
                                   "RNA_mutants_SA2020_ED_Martinez",
                                   "RNA_Paro_2018_Paro",

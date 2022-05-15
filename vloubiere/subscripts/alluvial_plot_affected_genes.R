@@ -6,15 +6,13 @@ require(readxl)
 meta <- fread("Rdata/processed_metadata_RNA.txt")
 meta <- meta[project=="RNA_epiCancer"]
 meta <- meta[, .(FC_file= unlist(tstrsplit(FC_file, ","))), .(DESeq2_object, cdition)]
-meta <- unique(meta[FC_file!="NA" & !grepl("vs_RNA_PHD11.txt$", FC_file)]) # Do not consider PHD11_T vs PHD11
+meta <- unique(meta[FC_file!="NA"])
 meta <- meta[, fread(FC_file), (meta)]
 meta[, cdition:= factor(cdition, 
                         levels= c("RNA_PH18",
-                                  "RNA_PHD11",
-                                  "RNA_PHD9",
                                   "RNA_PH29",
-                                  "RNA_PHD11_T2",
-                                  "RNA_PHD11_T3"))]
+                                  "RNA_PHD9",
+                                  "RNA_PHD11"))]
 setorderv(meta, 
           c("DESeq2_object", 
             "cdition"))
@@ -23,14 +21,13 @@ meta[, class:= ifelse(padj<0.05 & abs(log2FoldChange)>1,
 meta[is.na(padj), class:= "unaffected"]
 
 pdf("pdf/Figures/alluvial_plot_timecourse_RNA.pdf", 
-    width = 10, 
+    width = 8, 
     height = 4)
-layout(matrix(1:2, ncol= 2), 
-       widths = c(1,1.3))
-par(mar= c(1,1,3,1),
+par(mfrow= c(1,2),
     cex= 0.7,
-    las= 2)
-meta[!grepl("vs_RNA_PHD11.txt$", FC_file), {
+    las= 2,
+    mar= c(4,2,4,1))
+meta[, {
   .c <- dcast(.SD, FBgn~cdition, value.var = "class")[, -1]
   .c <- .c[apply(.c, 1, function(x) any(x!="unaffected"))]
   vl_alluvial_plot(.c,

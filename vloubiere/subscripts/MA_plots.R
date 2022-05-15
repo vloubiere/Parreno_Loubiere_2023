@@ -9,7 +9,7 @@ meta <- meta[, .(FC_file= unlist(tstrsplit(FC_file, ","))), .(DESeq2_object, cdi
 meta <- unique(meta[FC_file!="NA"])
 meta <- meta[, fread(FC_file), (meta)]
 meta[, cdition:= factor(cdition, 
-                        levels= c("RNA_PH18", "RNA_PHD11", "RNA_PHD9", "RNA_PH29", "RNA_PHD11_T2", "RNA_PHD11_T3"))]
+                        levels= c("RNA_PH18", "RNA_PHD11", "RNA_PHD9", "RNA_PH29"))]
 setorderv(meta, c("DESeq2_object", "cdition"))
 
 lim <- 10
@@ -36,10 +36,9 @@ meta[, {
        ylab= "log2FoldChange", 
        xlab= "baseMean",
        las= 1)
-  mtext(paste0(DESeq2_object, "\n", 
-               gsub(paste0(DESeq2_object, "_(.*).txt$"), "\\1", basename(FC_file))), 
-        line = 1, 
-        cex= 0.7)
+  title(main= paste(cdition,
+                    fcase(grepl("GFP+", DESeq2_object), "GFP+",
+                          grepl("GFP-", DESeq2_object), "GFP-")))
   leg <- c(paste(length(which(Cc=="red")), "Up"), 
            paste(length(which(Cc=="blue")), "Down"), "(p<0.05, |log2FC|>1)")
   legend("topright", 
