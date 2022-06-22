@@ -25,15 +25,20 @@ if(F)
   file.edit("git_epiCancer/vloubiere/subscripts/MA_plots.R")
   file.edit("git_epiCancer/vloubiere/subscripts/alluvial_plot_affected_genes.R")
   file.edit("git_epiCancer/vloubiere/subscripts/upset_plot_overlapping_genes_transriptomes.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/heatmap_PcG_members.R")
   
   #### Clustering ####
   file.edit("git_epiCancer/vloubiere/subscripts/clustering_transcriptomes.R")
   file.edit("git_epiCancer/vloubiere/subscripts/figure_transcriptomes_clusters.R")
   file.edit("git_epiCancer/vloubiere/subscripts/transcriptomes_clusters_FC_diff.R")
   
+  #### Reverting vs non reverting ####
+  file.edit("git_epiCancer/vloubiere/subscripts/compare_cl2_cl5_transcriptomes_clusters.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/PcG_enrich_vs_FC_#1.R")
+  file.edit("git_epiCancer/vloubiere/subscripts/PcG_enrich_vs_FC_#2.R")
+  
   #### Tables for AMM ####
   file.edit("git_epiCancer/vloubiere/subscripts/tables_AMM.R")
-  file.edit("git_epiCancer/vloubiere/subscripts/collect_figures_pdfs_RNA.R")
   
   #-------------------------------------------------------------------------#
   # Cut N run

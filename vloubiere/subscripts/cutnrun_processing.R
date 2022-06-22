@@ -11,7 +11,7 @@ require(rtracklayer)
 #--------------------------------------------------------------#
 meta <- readxl::read_xlsx("Rdata/metadata_cutnrun.xlsx")
 meta <- as.data.table(meta)[Comment!="failed"]
-meta[is.na(Suffix), Suffix:= ""]
+meta[Suffix=="NA", Suffix:= ""]
 
 #--------------------------------------------------------------#
 # Scer/Dm6 combined index
@@ -52,11 +52,17 @@ meta[, {
   if(!file.exists(bam))
   {
     # bowtie 2
+    sam_file <- gsub(".bam$", ".sam", bam)
     cmd <- paste0("bowtie2 -p 10 -x /mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/dm6_S288C --local --very-sensitive-local --no-unal --no-mixed --no-discordant --phred33 -I 10 -X 700")
     cmd <- paste0(cmd, " -1 ", fq1)
     cmd <- paste0(cmd, " -2 ", fq2)
-    cmd <- paste0(cmd, " -b ", bam)
+    cmd <- paste0(cmd, " -S ", sam_file)
+    # browser()
     system(cmd)
+    # sam to bam
+    cmd <- paste0("/usr/bin/samtools view -@ 9 -b -q 30 ", sam_file, " -o ", bam)
+    system(cmd)
+    file.remove(sam_file)
   }
   print("DONE")
 }, bam]
@@ -117,7 +123,7 @@ meta[, {
 #--------------------------------------------------------------#
 # Peak calling
 #--------------------------------------------------------------#
-peak_calling <- merge(meta[ChIP %in% c("H3K27Ac", "H3K27me3") & Suffix=="", 
+peak_calling <- merge(meta[ChIP %in% c("H3K27Ac", "H3K27me3", "H2AK118Ub") & Suffix=="", 
                            .(ChIP, cdition, rep, bam)],
                       meta[ChIP=="IgG" & Suffix=="", 
                            .(cdition, rep, bam)],
@@ -130,7 +136,11 @@ peak_calling[, cmd:= paste0("/home/vloubiere/.local/bin/macs2 callpeak --keep-du
                             " -t ", bam_ChIP, 
                             " -c ", bam_Input, 
                             " -n ", output_prefix)]
-peak_calling[ChIP=="H3K27me3", cmd:= paste0(cmd, " --broad")]
+peak_calling[ChIP %in% c("H3K27me3", "H2AK118Ub"), cmd:= paste0(cmd, " --broad")]
+#-------------------#
+# Custom K118 
+peak_calling[ChIP=="H2AK118Ub" & rep=="rep1" & cdition=="PH18", bam_ChIP:= "/mnt/f/_R_data/projects/epigenetic_cancer/db/bam/cutnrun/H2AK118Ub_WT_rep1.bam"]
+#-------------------#
 peak_calling[, {
   check <- list.files("db/peaks/K27_cutnrun/", 
                       paste0(ChIP, "_", cdition, "_", rep, ".*peaks.xls"))
@@ -144,7 +154,7 @@ peak_calling[, cmd:= paste0("/home/vloubiere/.local/bin/macs2 callpeak --keep-du
                             " -t ", paste(bam_ChIP, collapse= " "), 
                             " -c ", paste(bam_Input, collapse= " "),
                             " -n ", paste0(ChIP, "_", cdition, "_merge")), .(ChIP, cdition)]
-peak_calling[ChIP=="H3K27me3", cmd:= paste0(cmd, " --broad")]
+peak_calling[ChIP %in% c("H3K27me3", "H2AK118Ub"), cmd:= paste0(cmd, " --broad")]
 peak_calling[, {
   check <- list.files("db/peaks/K27_cutnrun/", 
                       paste0(ChIP, "_", cdition, "_merge_peaks.xls"))
@@ -157,6 +167,7 @@ peak_calling[, {
 peaks <- peak_calling[, .(file= list.files("db/peaks/K27_cutnrun/", 
                                            paste0(ChIP, "_", cdition, 
                                            fcase(ChIP=="H3K27me3", ".*.broadPeak$",
+                                                 ChIP=="H2AK118Ub", ".*.broadPeak$",
                                                  ChIP=="H3K27Ac", ".*.narrowPeak$")),
                                            full.names = T)), .(ChIP, cdition)]
 peaks[, rep:= fcase(grepl("rep1", file), "rep1",
@@ -179,6 +190,7 @@ peaks[, {
 
 # Merged_peaks
 peaks[ChIP=="H3K27me3", c("enr_cutoff", "dist_cutoff"):= .(2, 2500)]
+peaks[ChIP=="H2AK118Ub", c("enr_cutoff", "dist_cutoff"):= .(2, 2500)]
 peaks[ChIP=="H3K27Ac", c("enr_cutoff", "dist_cutoff"):= .(3, 250)]
 peaks[, merged_file:= paste0("db/peaks/K27_cutnrun_changes/", ChIP, "_merged_peaks.bed")]
 peaks[, {
@@ -192,8 +204,14 @@ peaks[, {
 #--------------------------------------------------------------#
 # Compute counts merged peaks
 #--------------------------------------------------------------#
-meta[ChIP %in% c("H3K27me3","H3K27Ac"), read_counts:= paste0("db/counts/cutnrun/", ChIP, "_counts.txt")]
-meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
+meta[ChIP %in% c("H3K27me3","H3K27Ac","H2AK118Ub") & Comment=="NA", read_counts:= paste0("db/counts/cutnrun/", ChIP, "_counts.txt")]
+
+#-------------------#
+# Custom K118 
+meta[ChIP=="H2AK118Ub" & rep=="rep1" & cdition=="PH18", ChIP_bed:= "db/bed/cutnrun/H2AK118Ub_WT_rep1_uniq.bed"]
+#-------------------#
+
+meta[!is.na(read_counts), {
   if(!file.exists(read_counts))
   {
     peaks <- vl_importBed(paste0("db/peaks/K27_cutnrun_changes/", ChIP, "_merged_peaks.bed"))
@@ -209,13 +227,23 @@ meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
   print("DONE")
 }, .(ChIP, read_counts)]
 
+#-------------------#
+# Custom K118 
+K118 <- fread("db/counts/cutnrun/H2AK118Ub_counts.txt")
+setnames(K118, "H2AK118Ub_WT_rep1", "H2AK118Ub_PH18_rep1", skip_absent=TRUE)
+fwrite(K118,
+       "db/counts/cutnrun/H2AK118Ub_counts.txt",
+       quote= F,
+       sep= "\t",
+       col.names = T)
+#-------------------#
+
 #--------------------------------------------------------------#
 # DESeq2 analysis
 #--------------------------------------------------------------#
-meta[ChIP %in% c("H3K27me3","H3K27Ac"), dds_file:= paste0("db/dds/cutnrun/", ChIP, ".dds"), ChIP]
-meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
-  # if(!file.exists(dds_file))
-  if(T)
+meta[!is.na(read_counts), dds_file:= paste0("db/dds/cutnrun/", ChIP, ".dds"), ChIP]
+meta[!is.na(read_counts) & ChIP=="H2AK118Ub", {
+  if(!file.exists(dds_file))
   {
     counts <- fread(read_counts)
     cols <- grep("_PH", names(counts))
@@ -235,6 +263,11 @@ meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
       cmd <- paste("wc -l", list.files("db/bed/cutnrun/", paste0(x, "_uniq.bed"), full.names = T))
       fread(cmd = cmd)$V1
     })
+    #-------------------#
+    # Custom K118
+    if("H2AK118Ub_PH18_rep1" %in% names(libsize))
+      libsize["H2AK118Ub_PH18_rep1"] <- fread(cmd = "wc -l db/bed/cutnrun/H2AK118Ub_WT_rep1_uniq.bed")$V1
+    #-------------------#
     sizeFactors(dds) <- libsize/min(libsize)
     dds <- DESeq2::DESeq(dds)
     saveRDS(dds, dds_file)
@@ -262,3 +295,4 @@ meta[ChIP %in% c("H3K27me3","H3K27Ac"), {
 fwrite(meta, 
        "Rdata/processed_metadata_CUTNRUN.txt", 
        na= NA)
+

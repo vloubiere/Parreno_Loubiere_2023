@@ -45,7 +45,7 @@ dev.off()
 #-----------------------------------------------------------#
 # Correlations
 #-----------------------------------------------------------#
-bins <- vl_binBSgenome(BSgenome.Dmelanogaster.UCSC.dm6, bins_width = 500) 
+bins <- vl_binBSgenome(BSgenome.Dmelanogaster.UCSC.dm6, bins_width = 5000) 
 dat <- meta[, SJ(idx= seq(nrow(bins)), 
                  score= vl_bw_coverage(bins, bw)), .(bw, cdition= paste0(ChIP, "_", cdition, "_", rep))]
 dat <- dcast(dat, 
@@ -66,8 +66,10 @@ dev.off()
 #-----------------------------------------------------------#
 # PCA
 #-----------------------------------------------------------#
+cols <- cols[!grepl("^IgG", cols)]
 pca <- as.data.table(prcomp(na.omit(dat[, ..cols]))$rotation,
                      keep.rownames= T)
+
 pca[grep("18", rn), Cc:= "grey50"]
 pca[grep("D9", rn), Cc:= "gold"]
 pca[grep("D11", rn), Cc:= "limegreen"]

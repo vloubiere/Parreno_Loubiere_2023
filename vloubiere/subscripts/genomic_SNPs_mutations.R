@@ -3,48 +3,78 @@ require(vlfunctions)
 require(data.table)
 require(readxl)
 
-# Import data
-dat <- data.table(pattern= c("PH18.*PH18.*.somaticcall_SNP.vcf.gz$",
-                             "PH18.*PH29.*.somaticcall_SNP.vcf.gz$",
-                             "PH18.*PHD9.*.somaticcall_SNP.vcf.gz$",
-                             "PH18.*PHD11.*.somaticcall_SNP.vcf.gz$"))
-dat <- dat[, .(file= list.files("db/DNA_analysis_novogene/somatic_mutations/", 
-                                pattern,
-                                recursive = T,
-                                full.names = T)), pattern]
-dat[, annot:= gsub(".vcf.gz$",
-                   ".avinput.variant_function.gz",
-                   file), file]
-dat[, exon_annot:= gsub(".vcf.gz$",
-                        ".avinput.exonic_variant_function.gz",
-                        file), file]
-dat[, cdition:= gsub(".somaticcall_SNP.vcf.gz$", "", basename(file))]
-dat <- dat[, {
-  .c <- fread(file,
-              fill= T, 
-              skip = "#CHROM", 
-              sel= c(1,2,5,7),
-              col.names = c("CHROM", "POS", "ALT", "FILTER"))
-  .c <- .c[FILTER=="PASS"]
-  .a <- fread(annot, 
-              fill= T,
-              sel= c(11,12,15,1,2),
-              col.names = c("CHROM", "POS", "ALT", "ANNOT_REGION", "ANNOTATION"))
-  .c <- merge(.c, 
-              .a,
-              by= c("CHROM", "POS", "ALT"), 
-              all.x= T)
-  .e <- fread(exon_annot, 
-              fill= T,
-              sel= c(12,13,16,2,3),
-              col.names = c("CHROM", "POS", "ALT", "MUTATION_TYPE", "EXON_ANNOTATION"))
-  .c <- merge(.c, 
-              .e,
-              by= c("CHROM", "POS", "ALT"),
-              all.x= T)
-}, (dat)]
-dat[, ID:= paste0(CHROM, "_", POS, "_", ALT)]
-dat <- dat[!ID %in% dat[cdition=="PH18_1_PH18_2", ID]]
+if(!exists("dat"))
+{
+  # Collect files paths
+  dat <- data.table(pattern= c("PH18.*PH18.*.somaticcall_SNP.vcf.gz$",
+                               "PH18.*PH29.*.somaticcall_SNP.vcf.gz$",
+                               "PH18.*PHD9.*.somaticcall_SNP.vcf.gz$",
+                               "PH18.*PHD11.*.somaticcall_SNP.vcf.gz$"))
+  dat <- dat[, .(file= list.files("db/DNA_analysis_novogene/somatic_mutations/", 
+                                  pattern,
+                                  recursive = T,
+                                  full.names = T)), pattern]
+  dat[, annot:= gsub(".vcf.gz$",
+                     ".avinput.variant_function.gz",
+                     file), file]
+  dat[, exon_annot:= gsub(".vcf.gz$",
+                          ".avinput.exonic_variant_function.gz",
+                          file), file]
+  dat[, cdition:= gsub(".somaticcall_SNP.vcf.gz$", "", basename(file))]
+  # Import files
+  dat <- dat[, {
+    # Import original vcf file
+    .c <- fread(file,
+                fill= T, 
+                skip = "#CHROM", 
+                sel= c(1,2,4,5,7,9,10,11),
+                col.names = c("CHROM", "POS", "REF", "ALT", "FILTER", "FORMAT", "TUMOR", "NORMAL"))
+    # Only keep somatic mutations passing all filters
+    .c <- .c[FILTER=="PASS"]
+    # Reshape NORM and TUM columns before binding
+    NORM <- mcmapply(function(names, var) {
+      x <- as.data.table(tstrsplit(var, ":"))
+      setnames(x, paste0(unlist(tstrsplit(names, ":")), "_NORM"))
+      return(x)
+    }, 
+    names= .c$FORMAT, 
+    var= .c$NORMAL, 
+    SIMPLIFY = F)
+    TUM <- mcmapply(function(names, var) {
+      x <- as.data.table(tstrsplit(var, ":"))
+      setnames(x, paste0(unlist(tstrsplit(names, ":")), "_TUM"))
+      return(x)
+    }, 
+    names= .c$FORMAT, 
+    var= .c$TUMOR, 
+    SIMPLIFY = F)
+    # Make object
+    .c <- cbind(.c[, CHROM:ALT], 
+                rbindlist(NORM, fill= T), 
+                rbindlist(TUM, fill= T))
+    # Add functional annotations
+    .a <- fread(annot, 
+                fill= T,
+                sel= c(11,12,14,15,1,2),
+                col.names = c("CHROM", "POS", "REF", "ALT", "ANNOT_REGION", "ANNOTATION"))
+    .c <- merge(.c, 
+                .a,
+                by= c("CHROM", "POS", "ALT"), 
+                all.x= T)
+    # Add Exonic annotation
+    .e <- fread(exon_annot, 
+                fill= T,
+                sel= c(12,13,15,16,2,3),
+                col.names = c("CHROM", "POS", "REF", "ALT", "MUTATION_TYPE", "EXON_ANNOTATION"))
+    .c <- merge(.c, 
+                .e,
+                by= c("CHROM", "POS", "ALT"),
+                all.x= T)
+  }, (dat)]
+  dat[, ID:= paste0(CHROM, "_", POS, "_", ALT)]
+  # Remove all mutations which are found by comparing the two 18C conditions
+  dat <- dat[!ID %in% dat[cdition=="PH18_1_PH18_2", ID]]
+}
 
 # SNPs overlaps
 pdf("pdf/DNA/gDNA_SNPs_overlaps.pdf", 
@@ -55,6 +85,21 @@ title("all SNPs")
 vl_upset_plot(split(dat[MUTATION_TYPE %in% c("nonsynonymous SNV", "stopgain"), ID], 
                     dat[MUTATION_TYPE %in% c("nonsynonymous SNV", "stopgain"), cdition]))
 title("non sysnonymous/stopgain mutations only")
+dev.off()
+
+# SNPs overlaps
+cols <- c("AF_NORM", "AF_TUM")
+dat[, (cols):= lapply(.SD, as.numeric), .SDcols= cols]
+pdf("pdf/DNA/gDNA_SNPs_Allele_freq.pdf", 
+    width = 14, 
+    height = 7)
+par(mfrow=c(2,3))
+dat[, {
+  plot(AF_NORM, 
+       AF_TUM, 
+       main= cdition,
+       ) 
+}, cdition]
 dev.off()
 
 # SNPs functional features

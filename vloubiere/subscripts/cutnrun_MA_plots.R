@@ -7,15 +7,16 @@ dat[, c("ChIP", "cdition"):= tstrsplit(basename(file), "_", keep= 1:2)]
 dat <- dat[, fread(file), (dat)]
 
 # Check if overlaps with reversed mark
-dat[, c("peaks_file", "reversed"):= {
+dat[ChIP %in% c("H3K27Ac", "H3K27me3"), c("peaks_file", "reversed"):= {
   file <- list.files("db/FC_tables/cutnrun/", 
                       switch(ChIP, 
-                             "H3K27me3"= paste0("H3K27Ac_", cdition, "_vs_PH18.txt"), 
+                             "H3K27me3"= paste0("H3K27Ac_", cdition, "_vs_PH18.txt"),
                              "H3K27Ac"= paste0("H3K27me3_", cdition, "_vs_PH18.txt")),
                       full.names = T)
   if(ChIP=="H3K27me3")
-    peaks <- fread(file)[padj<0.05 & log2FoldChange>1] else if(ChIP=="H3K27Ac")
-      peaks <- fread(file)[padj<0.05 & log2FoldChange<(-1)]
+    peaks <- fread(file)[padj<0.05 & log2FoldChange>1] 
+  if(ChIP=="H3K27Ac")
+    peaks <- fread(file)[padj<0.05 & log2FoldChange<(-1)]
   .(file, 
     peaks[.SD, .N>0, .EACHI, on= c("seqnames", "start<=end", "end>=start")]$V1)
 }, .(ChIP, cdition)]
@@ -25,8 +26,8 @@ pdf("pdf/cutnrun/MA_plots.pdf",
     height = 5.5)
 par(mfrow=c(2,3))
 dat[, {
-  Cc <- fcase(padj<0.05 & log2FoldChange>1, "tomato",
-              padj<0.05 & log2FoldChange<(-1), "cornflowerblue",
+  Cc <- fcase(padj<0.05 & log2FoldChange>0, "tomato",
+              padj<0.05 & log2FoldChange<(0), "cornflowerblue",
               default= "lightgrey")
   plot(log2(baseMean),
        log2FoldChange, 
@@ -36,23 +37,27 @@ dat[, {
        ylim= c(-3.5, 3.5),
        las= 1,
        main= paste(ChIP, cdition))
-  points(log2(baseMean)[reversed],
-         log2FoldChange[reversed],
-         cex= 0.5)
-  legend(switch(ChIP, 
-                "H3K27me3"= "topleft",
-                "H3K27Ac"= "bottomleft"),
-         legend = c(paste0("Up ", sum(Cc=="tomato")),
-                    paste0("Stable ", sum(Cc=="lightgrey")),
-                    paste0("Down ", sum(Cc=="cornflowerblue")),
-                    paste0(switch(ChIP,
-                                  "H3K27Ac" = "H3K27me3 Loss ",
-                                  "H3K27me3" = "H3K27Ac Gain "), sum(reversed))),
-         pch= c(19,19,19,1),
-         col= c(adjustcolor(c("tomato", "lightgrey", "cornflowerblue"), 0.5), "black"),
-         text.col= c("tomato", "grey20", "cornflowerblue", "black"),
-         bty= "n",
-         cex= 0.5)
+  abline(h=0, lty= "11")
+  if(ChIP!="H2AK118Ub")
+  {
+    points(log2(baseMean)[reversed],
+           log2FoldChange[reversed],
+           cex= 0.5)
+    legend(switch(ChIP, 
+                  "H3K27me3"= "topleft",
+                  "H3K27Ac"= "bottomleft"),
+           legend = c(paste0("Up ", sum(Cc=="tomato")),
+                      paste0("Stable ", sum(Cc=="lightgrey")),
+                      paste0("Down ", sum(Cc=="cornflowerblue")),
+                      paste0(switch(ChIP,
+                                    "H3K27Ac" = "H3K27me3 Loss ",
+                                    "H3K27me3" = "H3K27Ac Gain "), sum(reversed))),
+           pch= c(19,19,19,1),
+           col= c(adjustcolor(c("tomato", "lightgrey", "cornflowerblue"), 0.5), "black"),
+           text.col= c("tomato", "grey20", "cornflowerblue", "black"),
+           bty= "n",
+           cex= 0.5)
+  }
   print("")
 }, .(ChIP, cdition)]
 dev.off()
