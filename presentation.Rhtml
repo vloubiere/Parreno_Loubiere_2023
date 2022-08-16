@@ -1,0 +1,169 @@
+<html>
+
+<head>
+<title> Epigenetic Cancer</title>
+</head>
+
+<body>
+
+<p><b>Epignetic Cancer project</b></p>
+<p><b>1/ RNA-Seq (only focused on GFP- system for now!)</b></p>
+
+<p>Alignment statistics</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+print(getwd())
+knitr::include_graphics("../pdf/Figures/Alignment_statistics_RNA.pdf")
+end.rcode-->
+
+<p>GFP reads (genetic system validation)</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/GFP_norm_counts.pdf")
+end.rcode-->
+
+<p>PCC replicates</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/PCC_replicates_RNA.pdf")
+end.rcode-->
+
+<p>PCA replicates (QC, norm counts)</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/PCA_counts_RNA.pdf")
+end.rcode-->
+
+<p>PCA conditions (compare conditions, log2FC)</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/PCA_log2FC_RNA.pdf")
+end.rcode-->
+
+<p>MA plots (diff genes)</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/MA_plots_RNA.pdf")
+end.rcode-->
+
+<p>Alluvial plots (transitions between conditions)</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "900px"
+knitr::include_graphics("pdf/Figures/alluvial_plot_timecourse_RNA.pdf")
+end.rcode-->
+
+<p>Gene overlaps between conditions</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/upsetplot_overlapping_genes_RNA.pdf")
+end.rcode-->
+
+<p>Heatmap logFC genes of interest</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/Heatmap_FC_GOF.pdf")
+end.rcode-->
+
+<p>GO up and down genes per condition</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/GO_up_down_genes_GFP-.pdf")
+end.rcode-->
+
+<p><b>2/ CUTNRUN</b></p>
+
+<p>PCC between replicates (QC)</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/cutnrun/PCC_cutnrun_replicates.pdf")
+end.rcode-->
+
+<p>MA plots (diff regions)</p>
+<!--begin.rcode echo=FALSE, out.width = "500px", out.height = "500px"
+knitr::include_graphics("pdf/cutnrun/MA_plots.pdf")
+end.rcode-->
+
+<p><b>3/ Clustering based on RNA-Seq</b></p>
+
+<p>Clustering figure
+<br>Col1 -> Clustering heatmaps
+<br>Col2 -> chromhmm SA2020
+<br>        PH peaks type SA2020
+<br>        FPKM W18 condition
+<br>Col3 -> STRING network of interacting proteins, colored by cluster
+<br>Col4 -> GO/cluster, depending on PRC1 binding (SA2020 assignment)
+<br>Col5 -> Motif enrichment/cluster, depending on PRC1 binding (SA2020 assignment)</br></p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "300px"
+knitr::include_graphics("pdf/Figures/Clustering_GFP-_system_RNA.pdf")
+end.rcode-->
+
+<p>Plot cluster features depending on PRC1 binding (SA2020 assignment)</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/Cluster_PRC1_bound_unbound_RNA.pdf")
+end.rcode-->
+
+<p>MA plots (diff regions)</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/Cluster_PRC1_bound_unbound_RNA.pdf")
+end.rcode-->
+
+<p><b>4/ RECOVERY vs NO RECOVERY</b>
+<br> Defined as K27me+ & PRC1 bound (SA2020 assignment) &:
+<br> PHD9  -> log2FoldChange_PHD9_vs_PH29<(-1) & padj_PHD9_vs_PH29<(0.05) --> RECOVERY
+<br>          else if log2FoldChange_PHD9_vs_WKD>0 -------------------------> NORECOVERY
+<br> PHD11 -> log2FoldChange_PHD11_vs_PH29<(-1) & padj_PHD11_vs_PH29<(0.05) -> RECOVERY
+<br>          else if log2FoldChange_PHD11_vs_WKD>0 -------------------------> NORECOVERY</br></p>
+<p>Table</p>
+
+<p>FPKM, overlaps between then and with clusters</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/compare_RECOVERY_vs_transcriptome_cl2&5.pdf")
+end.rcode-->
+
+<p>Screenshots CUTNRUN & RNA
+<br>blue: PH18, green: PHD11, magenta: PH29</br></p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/RECOVERY_vs_NOT_screenshot.pdf")
+end.rcode-->
+
+<p>Average tracks PH18/ctl conditions centered on PROMOTERS</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/PH18_CUTNRUN_enrich_revert_vs_not.pdf")
+end.rcode-->
+
+<p>Average tracks PH18/ctl conditions centered on most proximal ATAC peaks (REs)</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/PH18_CUTNRUN_enrich_REs_revert_vs_not.pdf")
+end.rcode-->
+
+<p>Average tracks between conditions centered on promoters</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/compare_CUTNRUN_cditions_revert_vs_not.pdf")
+end.rcode-->
+
+<p>Motif enrichment at proximal ATAC peaks (REs) and PROMOTERS</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/motif_enrich_recovery_vs_no.pdf")
+end.rcode-->
+
+<p><b>5/ cl2 (NO RECOVERY) vs cl5 (RECOVERY)</b>
+<br> In my first attempt in using these clusters, we did not see much difference
+<br> But I did not filter the genes for being PRC1 bound and K27me3+!
+<br> Now it seems promising</br></p>
+
+<p>Average tracks PH18/ctl conditions centered on PROMOTERS</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "300px"
+knitr::include_graphics("pdf/Figures/PH18_CUTNRUN_enrich_cl2_vs_cl5.pdf")
+end.rcode-->
+
+<p>Average tracks PH18/ctl conditions centered on most proximal PH peaks (REs)</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "300px"
+knitr::include_graphics("pdf/Figures/PH18_CUTNRUN_enrich_REs_cl2_vs_cl5.pdf")
+end.rcode-->
+
+<p>Average tracks between conditions centered on promoters</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/compare_CUTNRUN_cditions_cl2_vs_cl5.pdf")
+end.rcode-->
+
+<p>Average tracks between conditions centered on promoters</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/compare_CUTNRUN_cditions_cl2_vs_cl5.pdf")
+end.rcode-->
+
+<p>Motif enrichment at PROMOTERS, proximal ATAC peaks (REs) and proximal PH peaks (ED ChIP-Seq)</p>
+<!--begin.rcode echo=FALSE, out.width = "800px", out.height = "500px"
+knitr::include_graphics("pdf/Figures/motif_enrich_cl2_vs_cl5.pdf")
+end.rcode-->
+
+</body>
+</html>
