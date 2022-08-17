@@ -45,5 +45,6 @@ file.copy("Rdata/RECOVERY_NORECOVERY_genes.txt",
 file.copy("db/FC_tables/CUTNRUN_table_AMM.txt",
           "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/CUTNRUN/CUTNRUN_table_AMM.txt", overwrite = T)
 
-file.copy("git_epiCancer/presentation.html",
-          paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/Presentations/presentation_", Sys.Date(), ".html"), overwrite = T)
+# The presentation!
+file.copy("git_epiCancer/epiCancer_presentation.html",
+          paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/Presentations/epiCancer_presentation_", Sys.Date(), ".html"), overwrite = T)
