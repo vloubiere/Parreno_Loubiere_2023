@@ -61,11 +61,23 @@ if(F)
   file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign ATAC, TSS and PH peaks to closest prom -> motif +/-250bp
   
   # Clusters analysis
+  file.edit("git_epiCancer/subscripts/compute_clusters_extra_features.R") # Network, GO, motifs and 
   file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
   
   # Quantif features / cluster (PRC1+/-) -----------------------------------#
   file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_diff.R") # RNA-Seq/CHIP signal per cluster +/- PRC1
   file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_development.R") # Target genes are dev genes? Not convincing
+  
+  ###########################################################################
+  # Cluster 2 vs cluster 5
+  ###########################################################################
+  # Promoters average tracks
+  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_average_tracks_PH18.R")
+  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_average_tracks_compare_conditions.R")
+  # Motifs proximal REs (in this case, PH peaks!)
+  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_REs_motifs.R")
+  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_REs_average_tracks_PH18.R")
+  file.edit("git_epiCancer/subscripts/cl2_&_cl5_target_genes_ph_peaks_density.R")
   
   ###########################################################################
   # Reverting vs non reverting 
@@ -77,25 +89,12 @@ if(F)
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_average_tracks_PH18.R")
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_average_tracks_compare_conditions.R")
   # Motifs proximal REs
-  
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_REs_motifs.R")
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_REs_average_tracks_PH18.R")
   # FC during development (not used)
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_FC_development.R")
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_FPKM_FLYBASE_development.R")
   file.edit("git_epiCancer/subscripts/Overlap_with_APF_induced_genes.R")
-  
-  ###########################################################################
-  # Cluster 2 vs cluster 5
-  ###########################################################################
-  file.edit("git_epiCancer/subscripts/define_cl2_&_cl5_target_genes.R")
-  # Promoters average tracks
-  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_average_tracks_PH18.R")
-  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_average_tracks_compare_conditions.R")
-  # Motifs proximal REs (in this case, PH peaks!)
-  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_REs_motifs.R")
-  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_REs_average_tracks_PH18.R")
-  file.edit("git_epiCancer/subscripts/cl2_&_cl5_target_genes_ph_peaks_density.R")
   
   ###########################################################################
   # Tables / Figures for AMM  ----------------------------------------------#

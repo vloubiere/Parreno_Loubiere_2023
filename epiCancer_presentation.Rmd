@@ -103,12 +103,6 @@ Plot cluster features depending on PRC1 binding (SA2020 assignment)
 knitr::include_graphics("../pdf/Figures/Cluster_PRC1_bound_unbound_RNA.pdf")
 ```
 
-MA plots (diff regions)
-
-```{r}
-knitr::include_graphics("../pdf/Figures/Cluster_PRC1_bound_unbound_RNA.pdf")
-```
-
 4/ RECOVERY vs NO RECOVERY</b>
 Defined as K27me+ & PRC1 bound (SA2020 assignment) &:
 PHD9  -> log2FoldChange_PHD9_vs_PH29<(-1) & padj_PHD9_vs_PH29<(0.05) --> RECOVERY

@@ -31,7 +31,7 @@ gtf[, end:= start]
 tab <- gtf[tab, on= "FBgn"]
 # Add clusters --------------------------------------------#
 cl <- readRDS("Rdata/clustering_RNA.rds")
-tab[cl$data, RNA_cluster:= i.cl, on="FBgn"]
+tab[data.table(FBgn= rownames(cl$data[[1]]), cl= cl$unit.classif), RNA_cluster:= i.cl, on="FBgn"]
 recov <- fread("Rdata/RECOVERY_NORECOVERY_genes.txt")[, .(FBgn, PHD9_RECOVERY, PHD11_RECOVERY)]
 tab <- recov[tab, on="FBgn"]
 # Add PRC1 binding ----------------------------------------#

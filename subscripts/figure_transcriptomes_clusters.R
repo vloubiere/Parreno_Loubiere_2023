@@ -3,42 +3,15 @@ require(vlfunctions)
 require(data.table)
 
 #############################
-# Import and compute features
+# Import clustering data and extra features
 #############################
-# Import data
-dat <- fread("Rdata/final_gene_features_table.txt")
+dat <- fread("Rdata/final_gene_features_table.txt") # RNA
 dat <- dat[!is.na(cl)]
-motifs <- fread("Rdata/final_RE_motifs_table.txt")
-motifs <- dat[motifs, on="FBgn", nomatch= NULL]
-
-# Compute gene network
-sizes <- apply(dat[, ..cols], 1, function(x) max(abs(x), na.rm=T))
-sizes[sizes>quantile(sizes, 0.99)] <- quantile(sizes, 0.99)
-net <-vl_STRING_interaction(symbols = dat$symbol,
-                      species = "Dm",
-                      col= dat$col,
-                      size = sizes*1.75,
-                      cex.label = sizes/8,
-                      plot= F)
-# Compute GO enrich
-GO_all <- vl_GO_enrich(split(dat$FBgn, 
-                             dat$cl),
-                        species = "Dm", 
-                        plot= F)
-GO_PRC1 <- vl_GO_enrich(split(dat$FBgn, 
-                              dat[, .(cl, ifelse(PRC1_bound, "PRC1+", "PRC1-"))]),
-                        species = "Dm", 
-                        plot= F)
-
-# Compute motif enrichments
-groups <- split(motifs, motifs$group)
-cols <- grep("_mot$", names(motifs), value = T)
-enr <- lapply(groups, function(x) {
-  vl_motif_cl_enrich(counts_matrix = as.matrix(x[, ..cols]),
-                     cl_IDs = x[, paste0(cl, ifelse(PRC1_bound, " PRC1+", " PRC1-"))],
-                     auto_margins= F, 
-                     plot= F)
-})
+obj <- readRDS("Rdata/clustering_RNA_features.rds") # Extra
+net <- obj$net
+GO_all <- obj$GO_all
+GO_PRC1 <- obj$GO_PRC1
+enr <- obj$enr
 
 #################################
 # PLOT
@@ -50,7 +23,8 @@ layout(mat,
        widths = c(1.5,2,2,2.25,1.5,1.5,1.5))
 
 # Heatmap
-par(mar= c(7,10,2,10))
+par(mar= c(7,10,2,10),
+    las= 2)
 cols <- c("log2FoldChange_PH29", "log2FoldChange_PHD9", "log2FoldChange_PHD11")
 pl <- vl_heatmap(dat[, ..cols], 
                  row_clusters = dat$cl,
@@ -78,8 +52,8 @@ par(mar= c(0,0,1,0),
     las= 0)
 set.seed(1)
 plot(net,
-     score_cutoff= 600, 
-     top_N= 1000)
+     score_cutoff= 900, 
+     top_N= 500)
 
 leg <- unique(dat[, .(cl, col)])
 legend("topleft",
@@ -101,11 +75,11 @@ title("GOs enrichment per cluster")
 par(las= 2,
     mar= c(4,20,1,8),
     mgp= c(3,0,0))
-plot(GO,
+plot(GO_PRC1,
      padj_cutoff = 0.05, 
      top_enrich = 5, 
      auto_margins= F,
-     cex.balloons= 0.4)
+     cex.balloons= 0.6)
 title("GOs enrichment per cluster +/- PRC1")
 
 # Motifs
@@ -117,8 +91,6 @@ for(i in seq(enr))
        auto_margins= F, 
        top_enrich= c(5, 4, 5)[i], 
        cex.balloons= c(1.5, 0.5, 1)[i])
-  title(main= names(groups)[i])
+  title(main= names(enr)[i])
 }
-
 dev.off()
-

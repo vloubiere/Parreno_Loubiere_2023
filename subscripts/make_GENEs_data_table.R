@@ -24,24 +24,40 @@ som <- readRDS("Rdata/clustering_RNA.rds")
 dat[data.table(FBgn= rownames(som$data[[1]]), cl= som$unit.classif), cl:= i.cl, on= "FBgn"]
 
 ##########################################################
+# Add FPKMs
+##########################################################
+dds <- readRDS("db/dds/RNA/epiCancer_ED_GFP-_system_RNA_dds.rds")
+fpkms <- as.data.table(DESeq2::fpkm(dds), keep.rownames = "FBgn")
+fpkms <- melt(fpkms, id.vars = "FBgn")
+fpkms[, variable:= tstrsplit(variable, "_", keep=1)]
+fpkms <- fpkms[, .(FPKM= mean(value)), .(variable, FBgn)]
+fpkms <- dcast(fpkms, FBgn~variable, value.var = "FPKM")
+setnames(fpkms, 
+         c("PH18", "PH29", "PHJ11", "PHJ9", "W18", "W29", "WKD"), 
+         c("FPKM_PH18", "FPKM_PH29", "FPKM_PHD11", "FPKM_PHD9", "FPKM_W18", "FPKM_W29", "FPKM_WKD"))
+dat <- fpkms[dat, on= "FBgn"]
+
+##########################################################
 # Add gene symbols
 ##########################################################
 gtf <- rtracklayer::import("/mnt/d/_R_data/genomes/dm6/dmel-all-r6.36.gtf")
 GenomeInfoDb::seqlevelsStyle(gtf) <- "UCSC"
-gtf <- as.data.table(gtf)[type=="gene"]
-gtf <- gtf[dat$FBgn, on= "gene_id"]
-dat[, symbol:= gtf$gene_symbol]
+gtf <- as.data.table(gtf)
+gtf <- as.data.table(gtf)[type=="gene", .(FBgn= gene_id, symbol= gene_symbol, seqnames, start, end, strand)]
+dat <- gtf[dat, on= "FBgn"]
 dat[, col:= vl_palette_few_categ(max(cl, na.rm = T))[cl]]
 
 ##########################################################
 # PRC1 and K27me3 binding
 ##########################################################
-# PRC1
-PRC1 <- vl_importBed("external_data/PRC1_summits_SA2020_aax4001_table_s3.txt")
-dat[, PRC1_bound:= vl_covBed(vl_resizeBed(gtf, "start", upstream = 2500, downstream = gtf$width+1), PRC1)>0]
+PRC1 <- unlist(get(load("external_data/SA2020_cl.list"))$genes)
+dat[, PRC1_bound:= symbol %in% PRC1]
 # K27me3
 K27me3 <- vl_importBed("db/peaks/cutnrun/H3K27me3_PH18_confident_peaks.bed")
-dat[, K27me3_bound:= vl_covBed(vl_resizeBed(gtf, "start", upstream = 2500, downstream = gtf$width+1), K27me3)>0]
+dat[, K27me3_bound:= vl_covBed(vl_resizeBed(data.table(seqnames, start, end), 
+                                            "start", 
+                                            upstream = 2500,
+                                            downstream = end-start+1), K27me3)>0]
 
 ##########################################################
 # Add RECOVERY
@@ -57,20 +73,30 @@ files <- list.files("db/bw/cutnrun/", "_merge.bw", full.names = T)
 files <- c(files,
            list.files("db/bw/SA_2020/", "PC_ED|PH_ED|SUZ12_ED", full.names = T))
 .n <- gsub("_merge.bw", "", basename(files))
-TSSs <- vl_resizeBed(gtf, "start", upstream = 500, downstream = 500)
+TSSs <- vl_resizeBed(dat[, .(seqnames, start, end)], 
+                     "start", 
+                     upstream = 500, 
+                     downstream = 500)
 dat[, paste0(.n, "_TSS"):= lapply(files, function(x) vl_bw_coverage(TSSs, x))]
-BODYs <- vl_resizeBed(gtf, "start", upstream = 2500, downstream = gtf$width+1)
+BODYs <- vl_resizeBed(dat[, .(seqnames, start, end)], 
+                      "start", 
+                      upstream = 2500, 
+                      downstream = dat[, end-start+1])
 dat[, paste0(.n, "_BODY"):= lapply(files, function(x) vl_bw_coverage(BODYs, x))]
 
 ##########################################################
 # Add chromatin types SA2020
 ##########################################################
 chromhmm <- vl_importBed("external_data/chromatin_types_SA2020_table_s1.txt")
-gtf[chromhmm, chromhmm:= i.name, on= c("seqnames", "start<=end", "start>=start"), mult= "first"]
-dat$chromhmm <- gtf$chromhmm
+TSSs <- vl_resizeBed(dat[, .(seqnames, start, end)], 
+                     "start", 
+                     upstream = 0, 
+                     downstream = 0)
+TSSs[chromhmm, chromhmm:= i.name, on= c("seqnames", "start<=end", "start>=start"), mult= "first"]
+dat$chromhmm <- TSSs$chromhmm
 
-setcolorder(dat, 
-            c("FBgn", "symbol", "PRC1_bound", "K27me3_bound", "cl", "recovery", "chromhmm", "col"))
+setcolorder(dat,
+            c("FBgn", "symbol", "PRC1_bound", "K27me3_bound", "cl", "recovery", "chromhmm", "col", "seqnames", "start", "end", "strand"))
 fwrite(dat,
        "Rdata/final_gene_features_table.txt", 
        sep= "\t",

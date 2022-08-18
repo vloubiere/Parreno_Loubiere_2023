@@ -4,41 +4,44 @@ require(GenomicRanges)
 require(vlfunctions)
 
 # Make dat object
-dat <- data.table(track= c("db/bw/SA_2020/PC_ED_merge.bw",
-                           "db/bw/SA_2020/PSC_ED_merge.bw",
-                           "db/bw/SA_2020/PH_ED_merge.bw",
-                           "db/bw/cutnrun/PH_PH18_rep1.bw",
-                           "db/bw/cutnrun/H3K27Ac_PH18_merge.bw",
-                           "db/bw/cutnrun/H2AK118Ub_PH18_merge.bw",
-                           "db/bw/cutnrun/H3K27me3_PH18_merge.bw",
-                           "db/bw/cutnrun/H3K36me3_PH18_merge.bw",
-                           "db/bw/cutnrun/H3K4me1_PH18_merge.bw",
-                           "db/bw/cutnrun_EcR/EcR_-6hAPF_merge.bw",
-                           "db/bw/cutnrun_EcR/EcR_+6hAPF_merge.bw"))
-dat <- dat[, fread("Rdata/cl2_cl5_RECOVERY_genes.txt"), (dat)]
+dat <- fread("Rdata/final_gene_features_table.txt")
+dat <- dat[!is.na(recovery), .(recovery, seqnames, start, end, strand)]
+dat <- dat[, .(track= c("db/bw/SA_2020/PC_ED_merge.bw",
+                        "db/bw/SA_2020/PSC_ED_merge.bw",
+                        "db/bw/SA_2020/PH_ED_merge.bw",
+                        "db/bw/cutnrun/PH_PH18_rep1.bw",
+                        "db/bw/cutnrun/H3K27Ac_PH18_merge.bw",
+                        "db/bw/cutnrun/H2AK118Ub_PH18_merge.bw",
+                        "db/bw/cutnrun/H3K27me3_PH18_merge.bw",
+                        "db/bw/cutnrun/H3K36me3_PH18_merge.bw",
+                        "db/bw/cutnrun/H3K4me1_PH18_merge.bw",
+                        "db/bw/cutnrun_EcR/EcR_-6hAPF_merge.bw",
+                        "db/bw/cutnrun_EcR/EcR_+6hAPF_merge.bw")), (dat)]
 dat[, cdition:= gsub("_merge.bw|_rep1.bw", "", basename(track)), track]
 dat[, protein:= grepl("^PC|^PH|^PSC|^EcR", cdition)]
-# Add prom coor
-genes <- rtracklayer::import("../../genomes/dm6/dmel-all-r6.36.gtf")
-seqlevelsStyle(genes) <- "UCSC"
-genes <- as.data.table(genes)
-genes <- genes[type=="gene", .(FBgn= gene_id, seqnames, start, end, strand, symbol= gene_symbol)]
-proms <- vl_resizeBed(genes, "start", 0, 0)
-dat <- proms[dat, on= "FBgn"]
 # Quantif tracks
 dat[, quantif:= {
-  coor <- data.table(seqnames, start, end, strand)
   if(protein)
-    coor <- vl_resizeBed(coor, "center", upstream = 1000, downstream = 1000) else
-      coor <- vl_resizeBed(coor, "center", upstream = 2500, downstream = 10000)
-    vl_bw_coverage(coor, track)
+  {
+    upstream <- 250
+    downstream <- 250
+  }else
+  {
+    upstream <- 2500
+    downstream <- 10000
+  }
+  vl_bw_coverage(vl_resizeBed(data.table(seqnames, start, end, strand), 
+                              "start", 
+                              upstream = upstream, 
+                              downstream = downstream), 
+                 track)
 }, .(track, protein)]
 
 #-----------------------------------------#
 # Plot
 #-----------------------------------------#
 pdf("pdf/Figures/PH18_CUTNRUN_enrich_cl2_vs_cl5.pdf",
-    height = 5, 
+    height = 5,
     width = 30)
 layout(matrix(1:(6*4), nrow=2, byrow = T), 
        widths= rep(c(1,0.5), 12))
@@ -48,9 +51,9 @@ par(mar= c(5,4,2,1),
     tcl= -0.2)
 dat[, {
   # Plot average track for each class
-  .q <- vl_bw_average_track(bed= data.table(seqnames, start, end), 
+  .q <- vl_bw_average_track(bed= data.table(seqnames, start, end= start, strand), 
                             tracks= track,
-                            set_IDs = RECOVERY,
+                            set_IDs = recovery,
                             upstream = 2500,
                             downstream = 10000,
                             stranded = T,
@@ -65,7 +68,7 @@ dat[, {
                bty= "n")]
   title(main= cdition)
   # Boxplot
-  x <- split(quantif, RECOVERY)
+  x <- split(quantif, recovery)
   vl_boxplot(x,
              boxcol= vl_palette_few_categ(2),
              ylab= "Enrichment", 
