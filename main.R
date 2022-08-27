@@ -13,6 +13,7 @@ if(F)
   # RNA analyses
   ###########################################################################
   # Process RNA-Seq data ---------------------------------------------------#
+  file.edit("git_epiCancer/subscripts/benchmark_transcriptomes_processing.R")
   file.edit("git_epiCancer/subscripts/transcriptomes_processing.R")
   file.edit("git_epiCancer/subscripts/GFP_counting_RNASeq.R")
   

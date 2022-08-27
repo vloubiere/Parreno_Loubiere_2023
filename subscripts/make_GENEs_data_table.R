@@ -8,7 +8,7 @@ require(BSgenome.Dmelanogaster.UCSC.dm6)
 ##########################################################
 # Import RNA-Seq data
 ##########################################################
-meta <- fread("Rdata/processed_metadata_RNA.txt")
+meta <- fread("Rdata/processed_metadata_RNA_align.txt")
 meta <- meta[DESeq2_object=="epiCancer_ED_GFP-_system_RNA" & FC_file!="NA"]
 meta[, cdition:= gsub("RNA_", "", cdition)]
 meta[, cdition:= factor(cdition, c("PH18", "PHD11", "PHD9", "PH29"))]
@@ -20,13 +20,13 @@ dat <- dcast(dat,
 ##########################################################
 # Add RNA clusters
 ##########################################################
-som <- readRDS("Rdata/clustering_RNA.rds")
+som <- readRDS("Rdata/clustering_RNA_align.rds")
 dat[data.table(FBgn= rownames(som$data[[1]]), cl= som$unit.classif), cl:= i.cl, on= "FBgn"]
 
 ##########################################################
 # Add FPKMs
 ##########################################################
-dds <- readRDS("db/dds/RNA/epiCancer_ED_GFP-_system_RNA_dds.rds")
+dds <- readRDS("db/dds_align/epiCancer_ED_GFP-_system_RNA_dds.rds")
 fpkms <- as.data.table(DESeq2::fpkm(dds), keep.rownames = "FBgn")
 fpkms <- melt(fpkms, id.vars = "FBgn")
 fpkms[, variable:= tstrsplit(variable, "_", keep=1)]
@@ -53,8 +53,8 @@ dat[, col:= vl_palette_few_categ(max(cl, na.rm = T))[cl]]
 PRC1 <- unlist(get(load("external_data/SA2020_cl.list"))$genes)
 dat[, PRC1_bound:= symbol %in% PRC1]
 # K27me3
-K27me3 <- vl_importBed("db/peaks/cutnrun/H3K27me3_PH18_confident_peaks.bed")
-dat[, K27me3_bound:= vl_covBed(vl_resizeBed(data.table(seqnames, start, end), 
+K27me3 <- vl_importBed("db/peaks/cutnrun/H3K27me3_PH18_confident_peaks.broadPeak", specialFormat = "broadPeak")
+dat[, K27me3_bound:= vl_covBed(vl_resizeBed(data.table(seqnames, start, end, strand), 
                                             "start", 
                                             upstream = 2500,
                                             downstream = end-start+1), K27me3)>0]
@@ -98,7 +98,7 @@ dat$chromhmm <- TSSs$chromhmm
 setcolorder(dat,
             c("FBgn", "symbol", "PRC1_bound", "K27me3_bound", "cl", "recovery", "chromhmm", "col", "seqnames", "start", "end", "strand"))
 fwrite(dat,
-       "Rdata/final_gene_features_table.txt", 
+       "Rdata/final_gene_features_table_align.txt", 
        sep= "\t",
        quote= F,
        na= NA)
