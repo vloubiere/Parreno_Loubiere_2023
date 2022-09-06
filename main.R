@@ -3,41 +3,35 @@ setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 if(F)
 {
   ###########################################################################
-  # Available data
+  # DATA processing
   ###########################################################################
-  # Process public data and identify/classify ED REs -----------------------#
-  file.edit("git_epiCancer/subscripts/ED_REs_characterization.R")
-  file.edit("git_epiCancer/subscripts/count_promoter_motifs.R")
+  # Trim/align/count/diff. analysis. ---------------------------------------#
+  file.edit("git_epiCancer/subscripts/ATAC_Seq_processing.R")
+  file.edit("git_epiCancer/subscripts/transcriptomes_processing.R")
+  file.edit("git_epiCancer/subscripts/cutnrun_processing.R")
+  file.edit("git_epiCancer/subscripts/ecdysone_cutnrun_processing.R")
   
   ###########################################################################
   # RNA analyses
   ###########################################################################
-  # Process RNA-Seq data ---------------------------------------------------#
-  file.edit("git_epiCancer/subscripts/benchmark_transcriptomes_processing.R")
-  file.edit("git_epiCancer/subscripts/transcriptomes_processing.R")
-  file.edit("git_epiCancer/subscripts/GFP_counting_RNASeq.R")
-  
-  # Bulk analyses ----------------------------------------------------------#
-  file.edit("git_epiCancer/subscripts/alignment_statistics.R")
+  file.edit("git_epiCancer/subscripts/alignment_statistics.R") #QC
   file.edit("git_epiCancer/subscripts/GFP_reads_barplot.R") # Validate genetic system
-  file.edit("git_epiCancer/subscripts/transcriptomes_correlations.R") # not used
+  file.edit("git_epiCancer/subscripts/transcriptomes_correlations.R") # PCC between replicates
   file.edit("git_epiCancer/subscripts/PCA_counts_transriptomes.R") # Compare replicates
   file.edit("git_epiCancer/subscripts/PCA_log2FC_transriptomes.R") # Compare conditions
-  file.edit("git_epiCancer/subscripts/PCA_tissues_vs_transplants.R") # not used
   file.edit("git_epiCancer/subscripts/MA_plots.R") # Check up down genes
   file.edit("git_epiCancer/subscripts/alluvial_plot_affected_genes.R") # Transitions timecourse
   file.edit("git_epiCancer/subscripts/upset_plot_overlapping_genes_transriptomes.R") # Overlaps between conditions
+  file.edit("git_epiCancer/subscripts/compare_GFP_noGFP.R") # Overlaps between systems
   file.edit("git_epiCancer/subscripts/heatmap_FC_GOF.R") # heatmap FC genes of interest
   file.edit("git_epiCancer/subscripts/GO_up_down_genes.R") # For each RNAi cdition, up/down PRC1+/1 GOs
+  
+  file.edit("git_epiCancer/subscripts/PCA_tissues_vs_transplants.R") # not used
   
   ###########################################################################
   # Cut N run
   ###########################################################################
-  # Processing and QC ------------------------------------------------------#
-  file.edit("git_epiCancer/subscripts/cutnrun_processing.R")
-  file.edit("git_epiCancer/subscripts/ecdysone_cutnrun_processing.R")
-  
-  # QC checks --------------------------------------------------------------#
+  file.edit("git_epiCancer/subscripts/Alignment_statistics.R") # Not used
   file.edit("git_epiCancer/subscripts/spike-in_perc.R") # Not used
   file.edit("git_epiCancer/subscripts/cutnrun_screenshots.R") # Just to check
   file.edit("git_epiCancer/subscripts/cutnrun_PCC_replicates.R") # PCC reps
@@ -46,7 +40,6 @@ if(F)
   file.edit("git_epiCancer/subscripts/cutnrun_MA_plots.R")
   
   # Not used ---------------------------------------------------------------#
-  file.edit("git_epiCancer/subscripts/compare_vl_gonza_cutnrun_tracks.R") # Gonzalo's files removed
   file.edit("git_epiCancer/subscripts/cutnrun_target_genes_analysis.R") # Not finished
   file.edit("git_epiCancer/subscripts/cutnrun_clustering_DESeq2.R") # Not used
   file.edit("git_epiCancer/subscripts/cutnrun_clustering_peaks.R") # Not used

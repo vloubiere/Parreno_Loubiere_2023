@@ -3,104 +3,116 @@ require(vlfunctions)
 require(GenomicRanges)
 require(readxl)
 
+#----------------------------------------------------------#
+# Import metadata
+#----------------------------------------------------------#
 meta <- as.data.table(read_xlsx("Rdata/metadata_RNA.xlsx"))
-meta <- meta[DESeq2_object %in% c("epiCancer_ED_GFP+_system_RNA", 
-                                  "epiCancer_ED_GFP-_system_RNA",
-                                  "RNA_development_Public",
-                                  "RNA_mutants_SA2020_ED_Martinez",
-                                  "RNA_Paro_2018_Paro",
-                                  "RNA_phRNAi_SA2020_ED_Loubiere")]
-# Retrieve fq files starting with local, then external drive (in case where both exist, local will take over)
-hdir <- "/mnt/f/_R_data/projects/epigenetic_cancer/db/"
+# meta <- meta[!is.na(DESeq2_object)]
+meta <- meta[DESeq2_object %in% c("epiCancer_GFP", "epiCancer_noGFP")]
+# Retrieve fq files 
 meta[, c("fq1", "fq2"):= lapply(.SD, function(x){
-  list.files(paste0(hdir, "fastq/", project), 
+  list.files(paste0("/mnt/f/_R_data/projects/epigenetic_cancer/db/fastq/", project), 
              paste0("^", x, "$"), 
              recursive= T,
              full.names = T)
 }), by= .(fq1, fq2, project), .SDcols= c("fq1", "fq2")]
 
 #----------------------------------------------------------#
-# Output files
-#----------------------------------------------------------#
-meta[, bam:= paste0(hdir, "bam/", project, "/", prefix_output, ".bam"), .(project, prefix_output)]
-meta[, dds_file:= paste0("db/dds/RNA/", DESeq2_object, "_dds.rds"), DESeq2_object]
-
-#----------------------------------------------------------#
-# ALIGNMENT
+# BUILD dm6 index with GFP sequences
 #----------------------------------------------------------#
 # Build dm6 index
 if(!file.exists("/mnt/d/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index.log"))
 {
-  ref <- "/mnt/d/_R_data/genomes/dm6/Sequence/WholeGenomeFasta/genome.fa"
-  buildindex(basename= "/mnt/d/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index", reference= ref)
+  ref <- seqinr::read.fasta("/mnt/d/_R_data/genomes/dm6/Sequence/WholeGenomeFasta/genome.fa",
+                            as.string = T)
+  ref <- lapply(ref, as.character)
+  ref <- c(ref, 
+           GFP= "gtgagcaagggcgagaagctgttcaccggggtggtgcccatcctggtcgagctggacggcgacgtaaacggccacaagttcagcgtgtccggcgagggcgagggcgatgccacctacggcaagatgtccctgaagttcatctgcaccaccggcaagctgcccgtgccctggcccaccctcaaaaccaccctgacctggggcatgcagtgcttcgcccgctaccccgaccacatgaagcagcacgacttcttcaagtccgccatgcccgaaggctacgtccaggagcgcaccatcttcttcaaggacgacggcaactacaagacccgcgccgaggtgaagttcgagggcgacaccctggtgaaccgcatcgagctgaagggcgtcgacttcaaggaggacggcaacatcctggggcacaagctggagtacaacgccatcagcggcaacgccaatatcaccgccgacaagcagaagaacggcatcaaggcctacttcacgatccgccacgacgtcgaggacggcagcgtgctgctcgccgaccactaccagcagaacacccccatcggcgacggccccgtgctgctgcccgacaaccactacctgagcacccagtccaagcagagcaaagaccccaacgagaagcgcgatcacatggtcctgctggagttcgtgaccgccgccgggatccctctcggcgcggacgagctgtacaag",
+           EGFP= "ATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCTGCACCACCGGCAAGCTGCCCGTGCCCTGGCCCACCCTCGTGACCACCCTGACCTACGGCGTGCAGTGCTTCAGCCGCTACCCCGACCACATGAAGCAGCACGACTTCTTCAAGTCCGCCATGCCCGAAGGCTACGTCCAGGAGCGCACCATCTTCTTCAAGGACGACGGCAACTACAAGACCCGCGCCGAGGTGAAGTTCGAGGGCGACACCCTGGTGAACCGCATCGAGCTGAAGGGCATCGACTTCAAGGAGGACGGCAACATCCTGGGGCACAAGCTGGAGTACAACTACAACAGCCACAACGTCTATATCATGGCCGACAAGCAGAAGAACGGCATCAAGGTGAACTTCAAGATCCGCCACAACATCGAGGACGGCAGCGTGCAGCTCGCCGACCACTACCAGCAGAACACCCCCATCGGCGACGGCCCCGTGCTGCTGCCCGACAACCACTACCTGAGCACCCAGTCCGCCCTGAGCAAAGACCCCAACGAGAAGCGCGATCACATGGTCCTGCTGGAGTTCGTGACCGCCGCCGGGATCACTCTCGGCATGGACGAGCTGTACAAGTAA",
+           mRFP1= "ATGGCCTCCTCCGAGGACGTCATCAAGGAGTTCATGCGCTTCAAGGTGCGCATGGAGGGCTCCGTGAACGGCCACGAGTTCGAGATCGAGGGCGAGGGCGAGGGCCGCCCCTACGAGGGCACCCAGACCGCCAAGCTGAAGGTGACCAAGGGCGGCCCCCTGCCCTTCGCCTGGGACATCCTGTCCCCTCAGTTCCAGTACGGCTCCAAGGCCTACGTGAAGCACCCCGCCGACATCCCCGACTACTTGAAGCTGTCCTTCCCCGAGGGCTTCAAGTGGGAGCGCGTGATGAACTTCGAGGACGGCGGCGTGGTGACCGTGACCCAGGACTCCTCCCTGCAGGACGGCGAGTTCATCTACAAGGTGAAGCTGCGCGGCACCAACTTCCCCTCCGACGGCCCCGTAATGCAGAAGAAGACCATGGGCTGGGAGGCCTCCACCGAGCGGATGTACCCCGAGGACGGCGCCCTGAAGGGCGAGATCAAGATGAGGCTGAAGCTGAAGGACGGCGGCCACTACGACGCCGAGGTCAAGACCACCTACATGGCCAAGAAGCCCGTGCAGCTGCCCGGCGCCTACAAGACCGACATCAAGCTGGACATCACCTCCCACAACGAGGACTACACCATCGTGGAACAGTACGAGCGCGCCGAGGGCCGCCACTCCACCGGCGCCTAA")
+  ref <- lapply(ref, tolower)
+  seqinr::write.fasta(sequences = ref, 
+                      names= names(ref), 
+                      "/mnt/d/_R_data/genomes/dm6_GFP/dm6_GFP.fa", 
+                      as.string = T)
+  buildindex(basename= "/mnt/d/_R_data/genomes/dm6_GFP/subreadr_index/subreadr_dm6_GFP_index", 
+             reference= "/mnt/d/_R_data/genomes/dm6_GFP/dm6_GFP.fa")
 }
-# Align
+
+#----------------------------------------------------------#
+# ALIGNMENT
+#----------------------------------------------------------#
+meta[, bam:= paste0("/mnt/f/_R_data/projects/epigenetic_cancer/db/bam/", project, "/",
+                    DESeq2_object, "_", cdition, "_rep", rep, ".bam"), .(DESeq2_object, cdition, rep)]
 meta[, {
   if(!file.exists(bam))
   {
     print(paste0("START...", bam))
-    subjunc(index= "/mnt/d/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index",
-            readfile1= fq1,
-            readfile2= ifelse(is.na(fq2), NULL, fq2),
-            maxMismatches = 6,
-            nthreads = 10,
-            unique = T,
-            output_file= bam)
+    align(index= "/mnt/d/_R_data/genomes/dm6_GFP/subreadr_index/subreadr_dm6_GFP_index",
+          readfile1= fq1,
+          readfile2= ifelse(is.na(fq2), NULL, fq2),
+          maxMismatches = 6,
+          nthreads = 10,
+          unique = T,
+          output_file= bam)
   }
   print(paste(bam, "--> DONE!"))
 }, .(bam, fq1, fq2)]
 
 #----------------------------------------------------------#
-# BW files
+# GFP SAF file
 #----------------------------------------------------------#
-meta[DESeq2_object=="epiCancer_ED_GFP-_system_RNA", bw_file:= paste0("db/bw/RNA-Seq/", gsub(".bam", ".bw", basename(bam)))]
-meta[!is.na(bw_file), {
-  if(!file.exists(bw_file))
+fwrite(data.table(GeneID= c("GFP", "EGFP", "mRFP1"), 
+                  Chr=  c("GFP", "EGFP", "mRFP1"),
+                  start= 1,
+                  end= 800,
+                  Strand= "+"),
+       file = "db/saf/GFP_genes.saf",
+       col.names = T,
+       sep= "\t",
+       quote= F)
+
+#----------------------------------------------------------#
+# Counts
+#----------------------------------------------------------#
+meta[, read_counts:= paste0("db/counts/RNA/", DESeq2_object, "_read_counts.rds"), DESeq2_object]
+meta[, GFP_counts:= paste0("db/counts/RNA/", DESeq2_object, "_GFP_counts.rds"), DESeq2_object]
+meta[, {
+  if(!file.exists(read_counts))
   {
-    bed <- fread(cmd= paste0("bamToBed -i ", bam), 
-                 fill= T, 
-                 sep= "\t",
-                 sel= c(1,2,3,5,6),
-                 col.names= c("seqnames", "start", "end", "mapq", "strand"))
-    bed <- bed[mapq>=10]
-    bed[strand=="+" & (end-start+1)>150, end:= start+149]
-    bed[strand=="-" & (end-start+1)>150, start:= end-149]
-    bed <- GRanges(bed)
-    cov <- coverage(bed)/length(bed)*1e6
-    rtracklayer::export.bw(GRanges(cov), 
-                           con= bw_file)
-    print("done")
+    .c <- featureCounts(bam, # count reads
+                        annot.ext= "../../genomes/dm6/dmel-all-r6.36.gtf",
+                        isGTFAnnotationFile = T,
+                        isPairedEnd = layout=="PAIRED",
+                        nthreads = 8)
+    saveRDS(.c, read_counts)
   }
-}, bw_file]
-meta[DESeq2_object=="epiCancer_ED_GFP-_system_RNA", bw_merge:= paste0("db/bw/RNA-Seq/", cdition, "_log2_merge.bw")]
-meta[!is.na(bw_merge), {
-  if(!file.exists(bw_merge))
-    vl_bw_merge(bw_file, 
-                output = bw_merge, 
-                genome = "dm6", 
-                scoreFUN = function(x) {
-                  x <- x/length(unique(bw_file))
-                  ifelse(x==0, x, log2(x))
-                })
-  print("done")
-}, bw_merge]
+  if(!file.exists(GFP_counts))
+  {
+    .c <- featureCounts(bam, # count reads
+                        annot.ext= "db/saf/GFP_genes.saf",
+                        isGTFAnnotationFile = F,
+                        isPairedEnd = layout=="PAIRED",
+                        nthreads = 8)
+    saveRDS(.c, GFP_counts)
+  }
+}, .(read_counts, GFP_counts, layout)]
 
 #----------------------------------------------------------#
 # DESeq2
 #----------------------------------------------------------#
+meta[, dds_file:= paste0("db/dds/RNA/", DESeq2_object, "_dds.rds"), DESeq2_object]
 FC <- meta[, {
   if(!file.exists(dds_file))
   {
     # SampleTable and DF
-    sampleTable <- .SD[, .(check= .N>1, rep= paste0("rep", rep), bam, paired= !is.na(fq2)), cdition][(check)]
-    .c <- featureCounts(sampleTable$bam, # count reads
-                        annot.ext= "../../genomes/dm6/dmel-all-r6.36.gtf",
-                        isGTFAnnotationFile = T,
-                        isPairedEnd = sampleTable$paired,
-                        nthreads = 10)
+    .c <- readRDS(read_counts)
     DF <- as.data.frame(.c[[1]])
-    sampleTable <- data.frame(sampleTable[, .(cdition, rep)], 
-                              row.names = basename(sampleTable$bam))
+    DF <- DF[order(rownames(DF)),]
+    colnames(DF) <- paste0(cdition, "_rep", rep)
+    sampleTable <- as.data.frame(setNames(tstrsplit(names(DF), "_"),
+                                          c("cdition", "rep")),
+                                 row.names = names(DF))
     # Filter low read genes
     DF <- DF[rowSums(DF)>10, ] # filter low read genes + N
     # dds
@@ -115,18 +127,17 @@ FC <- meta[, {
     saveRDS(dds, dds_file)
   }else
     dds <- readRDS(dds_file)
-  FC <- CJ(as.character(dds$cdition),
-           as.character(dds$cdition), 
-           unique = T)
-  FC <- FC[V1!=V2]
-}, .(DESeq2_object, dds_file)]
+  CJ(as.character(dds$cdition),
+     as.character(dds$cdition), 
+     unique = T)[V1!=V2]
+}, .(read_counts, dds_file, DESeq2_object)]
 
 #----------------------------------------------------------#
 # FC tables
 #----------------------------------------------------------#
 cditions_table <- read_xlsx("Rdata/RNA_dds_conditions.xlsx")
 setkeyv(FC, c("V1", "V2"))
-FC <- FC[as.data.table(cditions_table)]
+FC <- FC[as.data.table(cditions_table), on= c("V1==condition", "V2==control"), nomatch= NULL]
 FC[, FC_file:= paste0("db/FC_tables/RNA/", DESeq2_object, "_", V1, "_vs_", V2, ".txt"), .(DESeq2_object, V1, V2)]
 FC[, {
   dds <- readRDS(dds_file)
@@ -150,15 +161,36 @@ FC[, {
     print("DONE")
   }, .(V1, V2, FC_file)]
   print("DONE")
-}, .(dds_file)]
+}, dds_file]
+# Add to meta
+meta[FC, FC_file:= i.FC_file, on= c("cdition==V1", "dds_file")]
 
-# PH29 comparisons
-meta[FC[V2!="RNA_PH29"], FC_file:= i.FC_file, on= c("DESeq2_object", "cdition==V1")]
-meta[FC[V2=="RNA_PH29"], FC_file_PH29:= i.FC_file, on= c("DESeq2_object", "cdition==V1")]
+#----------------------------------------------------------#
+# BW files
+#----------------------------------------------------------#
+meta[DESeq2_object=="epiCancer_noGFP", bw_merge:= paste0("db/bw/RNA/", DESeq2_object, "_", cdition, "_merge.bw")]
+meta[DESeq2_object=="epiCancer_noGFP", {
+  if(!file.exists(bw_merge))
+  {
+    bed <- fread(cmd= paste0("bamToBed -i ", bam),
+                 fill= T,
+                 sep= "\t",
+                 sel= c(1,2,3,5),
+                 col.names= c("seqnames", "start", "end", "mapq"))
+    bed <- GRanges(bed)
+    cov <- coverage(bed)/length(bed)*1e6
+    rtracklayer::export.bw(GRanges(cov),
+                           con= bw_merge)
+  }
+  print("done")
+}, bw_merge]
 
 #----------------------------------------------------------#
 # SAVE
 #----------------------------------------------------------#
+meta[DESeq2_object=="epiCancer_GFP", system:= "GFP"]
+meta[DESeq2_object=="epiCancer_noGFP", system:= "noGFP"]
 fwrite(meta, 
        "Rdata/processed_metadata_RNA.txt",
        na = NA)
+  

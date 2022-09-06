@@ -4,9 +4,9 @@ require(readxl)
 
 # Import metadata
 meta <- fread("Rdata/processed_metadata_RNA.txt")
-meta <- meta[project=="RNA_epiCancer"]
 
 pdf("pdf/Figures/PCC_replicates_RNA.pdf")
+par(las= 2)
 meta[, {
     dds <- readRDS(dds_file)
     counts <- log2(counts(dds)+1)

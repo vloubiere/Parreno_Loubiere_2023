@@ -4,28 +4,31 @@ require(vlfunctions)
 
 # Import data
 meta <- fread("Rdata/processed_metadata_RNA.txt")
-dds <- meta[DESeq2_object=="epiCancer_ED_GFP-_system_RNA", unique(dds_file)]
-mat <- counts(readRDS(dds))
-mat <- t(log2(mat+1))
-pca <- as.data.table(prcomp(mat)$x, keep.rownames = "cdition")
-pca[, cdition:= tstrsplit(cdition, "_", keep= 1)]
-pca[, col:= vl_palette_many_categ(.NGRP)[.GRP], cdition]
+dat <- meta[, as.data.table(counts(readRDS(dds_file))), .(dds_file, system)]
+dat <- dat[, {
+  mat <- t(log2(.SD+1))
+  as.data.table(prcomp(mat)$x, keep.rownames = "cdition")
+}, .(dds_file, system)]
+dat[, cdition:= gsub("_rep1|_rep2|_rep3", "", cdition)]
+dat[, col:= rainbow(.NGRP)[.GRP], cdition]
 
 pdf("pdf/Figures/PCA_counts_RNA.pdf",
     width = 5,
     height = 5.5)
 par(las= 1)
-pca[, {
+dat[, {
   plot(PC1, 
        PC2, 
        col= adjustcolor(col, 0.6), 
        pch= 16,
-       cex= 2)
-  legend("topright",
+       cex= 2,
+       main= system)
+  legend(c("bottomright", "topright")[.GRP],
          unique(cdition),
          col= adjustcolor(unique(col), 0.6),
          pch= 16,
          bty= "n",
          pt.cex= 2)
-}]
+  print("")
+}, system]
 dev.off()

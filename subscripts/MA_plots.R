@@ -4,12 +4,11 @@ require(readxl)
 
 # Import metadata
 meta <- fread("Rdata/processed_metadata_RNA.txt")
-meta <- meta[project=="RNA_epiCancer"]
-meta <- unique(meta[FC_file!="NA", .(DESeq2_object, cdition, FC_file)])
-dat <- meta[, fread(FC_file), (meta)]
+dat <- meta[!is.na(FC_file), fread(FC_file), .(FC_file, cdition, system)]
 dat[, cdition:= factor(cdition, 
-                        levels= c("RNA_PH18", "RNA_PHD11", "RNA_PHD9", "RNA_PH29"))]
-setorderv(dat, c("DESeq2_object", "cdition"))
+                        levels= c("PH18", "PHD11", "PHD9", "PH29"))]
+setorderv(dat, 
+          c("system", "cdition"))
 dat[, col:= switch(diff, "up"= "red", "down"= "blue", "unaffected"= "lightgrey"), diff]
 dat <- dat[order(col=="lightgrey", decreasing= T)]
 
@@ -26,9 +25,7 @@ dat[, {
        ylab= "log2FoldChange", 
        xlab= "baseMean",
        las= 1)
-  title(main= paste(cdition,
-                    fcase(grepl("GFP+", fixed = T, DESeq2_object), "GFP+",
-                          grepl("GFP-", fixed = T, DESeq2_object), "GFP-")))
+  title(main= paste(cdition, system))
   leg <- c(paste(sum(col=="red"), "Up"), 
            paste(sum(col=="blue"), "Down"), "(p<0.05, |log2FC|>1)")
   legend("topright", 
@@ -37,5 +34,5 @@ dat[, {
          text.col = c("red", "blue", "black"), 
          cex = 0.5)
   print("DONE")
-}, .(DESeq2_object, cdition, FC_file)]
+}, .(system, cdition, FC_file)]
 dev.off()

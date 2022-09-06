@@ -2,18 +2,23 @@ setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(data.table)
 require(vlfunctions)
 
-counts <- fread("db/counts/GFP_RFP/GFP_RFP_counts_epiCancer_RNA.txt")
-counts <- counts[, .N, .(cdition, dds_file, DESeq2_object, bam, V1)]
-sizeFactors <- counts[, as.data.table(readRDS(dds_file)$sizeFactor, keep.rownames = T), dds_file]
-sizeFactors[, V1:= gsub(".bam", "_GFP.bam", V1)]
-counts[, bam_basename:= basename(bam)]
-counts[sizeFactors, sizeFactor:= i.V2, on= c("bam_basename==V1", "dds_file")]
-counts <- na.omit(counts[, .(norm_counts= .(N/sizeFactor),
-                             mean= mean(N/sizeFactor)), .(DESeq2_object, cdition, V1)])
-counts[, genotype:= fcase(grepl("GFP\\+", DESeq2_object), "GFP+ genotype",
-                          grepl("GFP-", DESeq2_object), "GFP- genotype"), DESeq2_object]
-counts[, col:= fcase(grepl("GFP", V1), "limegreen",
-                     grepl("RFP", V1), "tomato"), DESeq2_object]
+# Import counts from featureCounts file!
+meta <- fread("Rdata/processed_metadata_RNA.txt")
+counts <- meta[, {
+    .c <- readRDS(GFP_counts)
+    res <- as.data.table(.c[[1]], keep.rownames = "rn")
+    res <- melt(res, id.vars = "rn")
+    tot <- as.matrix(.c[[4]][,-1], 1)
+    res[, tot:= sum(tot[, variable]), variable]
+    res
+}, .(system, GFP_counts)]
+counts[, cdition:= tstrsplit(variable, "[.]", keep= 3)]
+# libsize norm
+counts[, norm_counts:= value/tot*1e6]
+# Select GFP form
+counts <- counts[(system=="GFP" & rn!="GFP") | (system=="noGFP" & rn=="GFP")]
+counts <- counts[, .(mean= mean(value), value= list(value)), .(rn, system, cdition)]
+counts[, col:= fcase(rn=="mRFP1", "tomato", default= "limegreen")]
 
 pdf("pdf/Figures/GFP_norm_counts.pdf", 
     width = 2.1,
@@ -27,14 +32,14 @@ counts[, {
                  las= 2,
                  names.arg = cdition,
                  col= col, 
-                 main = genotype,
-                 ylab= paste0(V1,  " normalized counts"),
-                 ylim= c(0, c(1e4, 1e5, 2.5e4)[.GRP]))
+                 main = system,
+                 ylab= paste0(rn,  " normalized counts"),
+                 ylim= c(0, c(8e3, 1e5, 2e4)[.GRP]))
   points(rep(bar, each= 3),
-         unlist(norm_counts),
+         unlist(value),
          xpd= T,
          pch= 16,
          col= "darkgrey",
          cex= 0.7)
-}, .(DESeq2_object, genotype, V1, col)]
+}, .(rn, system)]
 dev.off()

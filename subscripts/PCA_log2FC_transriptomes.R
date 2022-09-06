@@ -2,52 +2,35 @@ setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(vlfunctions)
 require(readxl)
 
-# Import metadata
+# Import data
 meta <- fread("Rdata/processed_metadata_RNA.txt")
-meta <- meta[DESeq2_object %in% c("epiCancer_ED_GFP-_system_RNA", "RNA_phRNAi_SA2020_ED_Loubiere")]
-meta <- na.omit(meta[, .(cdition= gsub("^RNA_", "", cdition), FC_file)])
-meta <- unique(meta)
-meta[cdition=="PHRNAI_ED", cdition:= "PH25"]
-dat <- meta[, fread(FC_file), (meta)]
-mat <- dcast(dat, 
-             FBgn~cdition, 
-             value.var = "log2FoldChange")
-mat <- t(as.matrix(na.omit(mat), 1))
-pca <- as.data.table(prcomp(mat)$x, keep.rownames = "cdition")
-pca[, col:= vl_palette_few_categ(.NGRP)[.GRP], cdition]
-pca <- pca[order(factor(cdition, c("PH18", "PHD9", "PHD11", "PH29", "PH25")))]
-
+dat <- meta[!is.na(FC_file), fread(FC_file), .(cdition, FC_file, dds_file, system)]
+dat[, cdition:= paste0(cdition, "_", system)]
+mat <- as.matrix(dcast(dat, FBgn~cdition, value.var = "log2FoldChange"), 1)
+mat <- na.omit(mat)
+mat <- as.data.table(prcomp(t(mat))$x, keep.rownames = "cdition")
+mat[, c("cdition", "system"):= tstrsplit(cdition, "_")]
+mat[, col:= vl_palette_few_categ(.NGRP)[.GRP], cdition]
+mat[, pch:= c(16, 15)[.GRP], system]
 
 pdf("pdf/Figures/PCA_log2FC_RNA.pdf",
     width = 5,
     height = 5.5)
 par(las= 1)
-pca[, {
+mat[, {
   plot(PC1, 
        PC2, 
        col= adjustcolor(col, 0.6), 
-       pch= 16,
+       pch= pch,
        cex= 2,
-       ylim= c(-40, 50))
+       main= "PCA compare GFP/noGFP systems")
   legend("topleft",
-         unique(cdition),
-         col= adjustcolor(unique(col), 0.6),
-         pch= 16,
+         paste0(cdition, "_", system),
+         col= adjustcolor(col, 0.6),
+         pch= pch,
          bty= "n",
-         pt.cex= 2)
-}]
-pca[cdition!="PH25", {
-  plot(PC1, 
-       PC2, 
-       col= adjustcolor(col, 0.6), 
-       pch= 16,
-       cex= 2,
-       ylim= c(-40, 45))
-  legend("topleft",
-         unique(cdition),
-         col= adjustcolor(unique(col), 0.6),
-         pch= 16,
-         bty= "n",
-         pt.cex= 2)
+         pt.cex= 1,
+         cex= 0.8)
+  print("")
 }]
 dev.off()
