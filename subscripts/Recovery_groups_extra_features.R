@@ -8,6 +8,8 @@ require(data.table)
 # Import data
 dat <- fread("Rdata/final_gene_features_table.txt")
 dat <- dat[!is.na(cl)]
+dat <- dat[!is.na(recovery)]
+dat[, col:= ifelse(recovery=="Recovery", "palegreen3", "rosybrown1")]
 motifs <- fread("Rdata/final_RE_motifs_table.txt")
 motifs <- dat[motifs, on="FBgn", nomatch= NULL]
 
@@ -24,25 +26,52 @@ net <- vl_STRING_interaction(symbols = dat$symbol,
                              plot= F)
 
 # Compute GO enrich
-GO_all <- vl_GO_enrich(split(dat$FBgn, 
-                             dat$cl),
-                       species = "Dm", 
-                       plot= F)
-GO_PRC1 <- vl_GO_enrich(split(dat$FBgn, 
-                              dat[, .(cl, ifelse(PRC1_bound, "PRC1+", "PRC1-"))]),
-                        species = "Dm", 
-                        plot= F)
+GO <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat$recovery), 
+                   species = "Dm", 
+                   plot= F)
 
 # Compute motif enrichments
 groups <- split(motifs, motifs$group)
 mot <- names(motifs)[names(motifs) %in% vl_Dmel_motifs_DB_full$motif]
 enr <- lapply(groups, function(x) {
-  vl_motif_cl_enrich(counts_matrix = as.matrix(x[, ..mot]),
-                     cl_IDs = x[, paste0(cl, ifelse(PRC1_bound, " PRC1+", " PRC1-"))],
-                     plot= F)
+  vl_motif_enrich(counts = as.matrix(x[recovery=="Recovery", ..mot]),
+                  control_counts = as.matrix(x[recovery!="Recovery", ..mot]),
+                  plot= F)
 })
+
 saveRDS(list(net= net, 
-             GO_all= GO_all,
-             GO_PRC1= GO_PRC1,
+             GO= GO,
              enr= enr), 
-        "Rdata/clustering_RNA_features.rds")
+        "Rdata/recovery_group_features.rds")
+
+#############################
+# PLOT
+#############################
+pdf("pdf/Figures/recovery_groups_features.pdf", 7, 5)
+par(mar= c(3,31,3,7),
+    las= 1,
+    cex= 0.8)
+# GOs
+plot(GO, 
+     padj_cutoff = 1e-5, 
+     top_enrich = 20, 
+     cex.balloons= 0.5)
+
+# Network
+par(mar= c(1,1,1,1))
+set.seed(1)
+plot(net)
+legend("topleft",
+       fill= c("palegreen3", "rosybrown1"),
+       legend= c("Recovery", "No recovery"),
+       bty= "n")
+# Motifs
+par(mar= c(4,25,3,22),
+    cex= 0.5)
+for(i in seq(enr))
+{
+  plot(enr[[i]],
+       top_enrich= 40)
+  title(main= paste0("Motif enrichment ", names(enr)[i], " Recovery/No recovery"))
+}
+dev.off()

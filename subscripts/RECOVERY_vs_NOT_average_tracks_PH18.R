@@ -3,37 +3,34 @@ require(data.table)
 require(GenomicRanges)
 require(vlfunctions)
 
-# Make dat object
-dat <- data.table(track= c("db/bw/SA_2020/PC_ED_merge.bw",
-                           "db/bw/SA_2020/PSC_ED_merge.bw",
-                           "db/bw/SA_2020/PH_ED_merge.bw",
-                           "db/bw/cutnrun/PH_PH18_rep1.bw",
-                           "db/bw/cutnrun/H3K27Ac_PH18_merge.bw",
-                           "db/bw/cutnrun/H2AK118Ub_PH18_merge.bw",
-                           "db/bw/cutnrun/H3K27me3_PH18_merge.bw",
-                           "db/bw/cutnrun/H3K36me3_PH18_merge.bw",
-                           "db/bw/cutnrun/H3K4me1_PH18_merge.bw",
-                           "db/bw/cutnrun_EcR/EcR_-6hAPF_merge.bw",
-                           "db/bw/cutnrun_EcR/EcR_+6hAPF_merge.bw"))
-dat <- dat[, fread("Rdata/RECOVERY_NORECOVERY_genes.txt"), (dat)]
-dat <- melt(dat,
-            id.vars = c("seqnames", "start", "end", "strand", "track"),
-            measure.vars = patterns("_RECOVERY$"), 
-            value.name = "recovery")
-dat[, cdition:= gsub("_merge.bw|_rep1.bw", "", basename(track)), track]
-dat[, protein:= grepl("^PC|^PH|^PSC|^EcR", cdition)]
-# Quantif tracks
-dat[, quantif:= {
-  coor <- data.table(seqnames, start, end, strand)
-  if(protein)
-    coor <- vl_resizeBed(coor, "center", upstream = 1000, downstream = 1000) else
-      coor <- vl_resizeBed(coor, "center", upstream = 2500, downstream = 10000)
-    vl_bw_coverage(coor, track)
-}, .(track, protein)]
+# Import data
+dat <- fread("Rdata/final_gene_features_table.txt")
+dat <- dat[!is.na(recovery)]
+
+# Melt
+.m <- melt(dat, id.vars = "recovery", measure.vars = patterns("_body$|_prom$"))
+.m <- .m[grepl("PH18|ED", variable)]
+.m[, variable:= gsub("_body$|_prom$", "", variable)]
+.m[, track:= list.files("db/bw/cutnrun/", 
+                        paste0(variable, "_merge"), 
+                        full.names = T), variable]
+.m[is.na(track), track := list.files("db/bw/SA_2020/", 
+                                     paste0(gsub("_body$|_prom$", "", variable), "_merge"), 
+                                     full.names = T), variable]
+
+# Average tracks window
+gtf <- import("../../genomes/dm6/dmel-all-r6.36.gtf")
+seqlevelsStyle(gtf) <- "UCSC"
+gtf <- as.data.table(gtf)[type=="gene"]
+TSS <- vl_resizeBed(gtf, "start", 0, 0)
+TSS[dat, recovery:= i.recovery, on="gene_id==FBgn"]
+TSS <- na.omit(TSS[, .(seqnames, start, end, strand, recovery)])
+TSS[, recovery:= factor(recovery, c("Recovery", "noRecovery"))]
 
 #-----------------------------------------#
 # Plot
 #-----------------------------------------#
+Cc <- c("palegreen3", "rosybrown1")
 pdf("pdf/Figures/PH18_CUTNRUN_enrich_revert_vs_not.pdf",
     height = 5, 
     width = 30)
@@ -43,30 +40,33 @@ par(mar= c(5,4,2,1),
     las= 1,
     mgp= c(2.5,0.5,0),
     tcl= -0.2)
-dat[, {
+.m[, {
   # Plot average track for each class
-  .q <- vl_bw_average_track(bed= data.table(seqnames, start, end), 
+  .q <- vl_bw_average_track(bed= TSS, 
                             tracks= track,
-                            set_IDs = recovery,
+                            set_IDs = TSS$recovery,
                             upstream = 2500,
                             downstream = 10000,
                             stranded = T,
                             center_label = "TSS", 
                             legend.cex = 0.6, 
-                            legend= F)
+                            legend= F,
+                            col = Cc)
+  
   # Legend
-  leg <- .q[, .(N= length(unique(region_ID))), .(set_IDs, col)]
-  leg[, legend("topright",
-               legend = paste0(ifelse(set_IDs, "RECOVERY (", "NO RECOVERY ("), N, ")"),
-               fill= col,
-               bty= "n")]
-  title(main= paste(cdition, variable))
+  legend("topright",
+         legend = c(paste0("Recovery (", sum(recovery=="Recovery"), " genes)"),
+                    paste0("No recovery (", sum(recovery=="noRecovery"), " genes)")),
+         fill= Cc,
+         bty= "n")
+  title(main= variable)
+  
   # Boxplot
-  x <- split(quantif, recovery)
-  vl_boxplot(x,
-             boxcol= vl_palette_few_categ(2),
+  vl_boxplot(value~recovery,
+             col= Cc,
              ylab= "Enrichment", 
-             compute_pval= list(c(1,2)))
+             compute_pval= list(c(1,2)),
+             tilt.names= T)
   print(".")
-}, .(variable, track, cdition)]
+}, .(variable, track)]
 dev.off()

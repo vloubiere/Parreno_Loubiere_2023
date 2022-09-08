@@ -10,7 +10,6 @@ if(F)
   file.edit("git_epiCancer/subscripts/cutnrun_processing.R")
   file.edit("git_epiCancer/subscripts/ATAC_Seq_processing.R")
   file.edit("git_epiCancer/subscripts/ecdysone_cutnrun_processing.R")
-  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign ATAC, TSS and PH peaks to closest prom -> motif +/-250bp
   
   ###########################################################################
   # RNA analyses
@@ -26,6 +25,7 @@ if(F)
   file.edit("git_epiCancer/subscripts/compare_GFP_noGFP.R") # Overlaps between systems
   file.edit("git_epiCancer/subscripts/heatmap_FC_GOF.R") # heatmap FC genes of interest
   file.edit("git_epiCancer/subscripts/GO_up_down_genes.R") # For each RNAi cdition, up/down PRC1+/1 GOs
+  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign ATAC, TSS and PH peaks to closest prom -> motif +/-250bp
   
   file.edit("git_epiCancer/subscripts/PCA_tissues_vs_transplants.R") # not used
   
@@ -44,43 +44,27 @@ if(F)
   ###########################################################################
   # Clustering
   ###########################################################################
-  # Clustering -------------------------------------------------------------#
   file.edit("git_epiCancer/subscripts/clustering_transcriptomes.R") # SOM
   file.edit("git_epiCancer/subscripts/make_GENEs_data_table.R") # For each gene, retrieve RNA-Seq and compute features 
-  file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
-  
-  
   file.edit("git_epiCancer/subscripts/compute_clusters_extra_features.R") # Network, GO, motifs and 
-  
-  
-  
-  
-  
-  # Clusters analysis
-  
-  # Quantif features / cluster (PRC1+/-) -----------------------------------#
+  file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
+  file.edit("git_epiCancer/subscripts/network_per_clusters.R") # Clusters networks
   file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_diff.R") # RNA-Seq/CHIP signal per cluster +/- PRC1
   file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_development.R") # Target genes are dev genes? Not convincing
   
   ###########################################################################
-  # Cluster 2 vs cluster 5
-  ###########################################################################
-  # Promoters average tracks
-  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_average_tracks_PH18.R")
-  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_average_tracks_compare_conditions.R")
-  # Motifs proximal REs (in this case, PH peaks!)
-  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_REs_motifs.R")
-  file.edit("git_epiCancer/subscripts/cl2_vs_cl5_REs_average_tracks_PH18.R")
-  file.edit("git_epiCancer/subscripts/cl2_&_cl5_target_genes_ph_peaks_density.R")
-  
-  ###########################################################################
   # Reverting vs non reverting 
   ###########################################################################
-  file.edit("git_epiCancer/subscripts/define_RECOVERY_&_NORECOVERY_genes.R")
-  file.edit("git_epiCancer/subscripts/compare_RECOVERY_vs_transcriptome_clusters_2&5.R")
+  file.edit("git_epiCancer/subscripts/Characterization_recovery_groups.R")
+  file.edit("git_epiCancer/subscripts/Recovery_groups_extra_features.R")
+  file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_average_tracks_PH18.R")
+  
+  
+  
+  
+  # -----------------------
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_screenshots.R")
   # Promoters average tracks
-  file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_average_tracks_PH18.R")
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_average_tracks_compare_conditions.R")
   # Motifs proximal REs
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_REs_motifs.R")

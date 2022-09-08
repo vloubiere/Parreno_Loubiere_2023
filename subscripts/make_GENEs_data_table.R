@@ -53,18 +53,21 @@ dat[, PRC1_bound:= symbol %in% PRC1]
 K27me3 <- vl_importBed("db/peaks/cutnrun/H3K27me3_PH18_confident_peaks.broadPeak", 
                        extraCols = "broadPeak")
 K27me3 <- K27me3[signalValue>2]
-dat[, K27me3_bound:= vl_covBed(dat, K27me3)>0]
+# Retrieve genes with TSS<=2.5from K27me3
+ext_genes <- vl_resizeBed(dat, "start", 2500, dat[, end-start+1]) 
+sel <- ext_genes$FBgn[vl_covBed(ext_genes, K27me3)>0]
+dat[, K27me3_bound:= FBgn %in% sel]
 
 ##########################################################
 # Add RECOVERY
 ##########################################################
-dat[, unaffected_PH18:= (is.na(padj_PH18) | padj_PH18>0.05)]
-dat[, up_PH29:= padj_PH29<0.05 & log2FoldChange_PH29>(log2(1.5))]
-dat[, up_PHD9:= padj_PHD9<0.05 & log2FoldChange_PHD9>(log2(1.5))]
-dat[, up_PHD11:= padj_PHD11<0.05 & log2FoldChange_PHD11>(log2(1.5))]
+dat[, unaffected_PH18:= padj_PH18>0.05] # Strict
+dat[, up_PH29:= padj_PH29<0.05 & log2FoldChange_PH29>(log2(1.5))] # Strict
+dat[, up_PHD9:= padj_PHD9<0.05 & log2FoldChange_PHD9>0] # Lose
+dat[, up_PHD11:= padj_PHD11<0.05 & log2FoldChange_PHD11>0] # Lose
 dat[K27me3_bound
     & unaffected_PH18
-    & up_PH29, recovery:= ifelse(up_PHD9 | up_PHD11, FALSE, TRUE)]
+    & up_PH29, recovery:= ifelse(up_PHD9 | up_PHD11, "noRecovery", "Recovery")]
 dat$unaffected_PH18 <- dat$up_PH29 <- dat$up_PHD9 <- dat$up_PHD11 <- NULL
 
 ##########################################################
@@ -88,10 +91,11 @@ prom <- vl_resizeBed(dat,
                      upstream = 750, 
                      downstream = 250, 
                      genome = "dm6")
-files <- list.files("db/bw/SA_2020/", "PC_ED|PH_ED|SUZ12_ED", full.names = T)
+files <- list.files("db/bw/SA_2020/", "PC_ED|PH_ED|PSC_ED|SUZ12_ED", full.names = T)
+files <- c(files, "db/bw/ATAC/ATAC_merged.bw")
 files <- c(files,
            list.files("db/bw/cutnrun/", "^PH.*merge|^H3K27Ac.*merge", full.names = T))
-.n <- paste0(gsub("_merge.bw$", "", basename(files)), "_prom")
+.n <- paste0(gsub("_merge.bw$|_merged.bw$", "", basename(files)), "_prom")
 dat[, (.n):= lapply(files, function(x) vl_bw_coverage(prom, x))]
 
 ##########################################################
