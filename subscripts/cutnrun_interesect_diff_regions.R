@@ -4,6 +4,19 @@ require(data.table)
 # Import
 meta <- fread("Rdata/processed_metadata_CUTNRUN.txt")
 dat <- meta[!is.na(FC_peaks), fread(FC_peaks), .(ChIP, cdition, FC_peaks)]
+dat[padj<0.05 & abs(log2FoldChange)>1, change:= paste0(ChIP, "_", cdition, "_",  ifelse(log2FoldChange>0, "up", "down")), .(cdition, ChIP)]
+dat <- dat[grepl("H3K27me3.*down|H3K27Ac.*up|H3K4me1.*up", change)]
+dat <- vl_importBed(dat[, c("seqnames", "start", "end"):= tstrsplit(ID, "_|:|-", keep= 2:4)])
+
+.m <- vl_collapseBed(dat)
+dat[.m, idx:= i.idx, on= c("seqnames", "start<=end", "end>=start")]
+categ <- split(dat$idx, dat$change)
+
+vl_upset_plot(pl[grep("PH29", names(categ), value = T)])
+vl_upset_plot(pl[grep("H3K27me3", names(categ), value = T)])
+vl_upset_plot(pl[grep("H3K27Ac", names(categ), value = T)])
+vl_upset_plot(pl[grep("H3K4me1", names(categ), value = T)])
+
 
 pdf("pdf/cutnrun/MA_plots.pdf",
     height = 5.5)

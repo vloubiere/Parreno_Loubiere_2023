@@ -2,7 +2,7 @@ setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(data.table)
 require(gridExtra)
 
-stats <- fread("Rdata/processed_metadata_CUTNRUN.txt")
+stats <- fread("Rdata/processed_metadata_RNA.txt")
 stats <- stats[, fread(gsub(".bam$", ".bam.summary", bam)), .(bam, cdition, rep, system)]
 stats <- dcast(stats[V1 %in% c("Total_fragments", "Uniquely_mapped_fragments")], 
                cdition+rep+system~V1, 

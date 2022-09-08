@@ -5,10 +5,10 @@ require(vlfunctions)
 # Import
 meta <- fread("Rdata/processed_metadata_CUTNRUN.txt")
 bins <- vl_binBSgenome("dm6", 
-                       bins_width = 25e3, 
-                       steps_width = 25e3, 
+                       bins_width = 5e3, 
+                       steps_width = 5e3, 
                        restrict_seqnames = c("chr2L", "chr2R", "chr3L", "chr3R", "chr4", "chrX", "chrY"))
-dat <- meta[, .(score= vl_bw_coverage(bins, bw)), .(ChIP, cdition, rep)]
+dat <- meta[!is.na(bw_file), .(score= vl_bw_coverage(bins, bw_file)), .(ChIP, cdition, rep)]
 dat[, idx:= seq(.N), setdiff(names(dat), "score")]
 mat <- dcast(dat,
              idx~ChIP+cdition+rep,

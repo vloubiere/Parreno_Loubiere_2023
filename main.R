@@ -6,15 +6,16 @@ if(F)
   # DATA processing
   ###########################################################################
   # Trim/align/count/diff. analysis. ---------------------------------------#
-  file.edit("git_epiCancer/subscripts/ATAC_Seq_processing.R")
   file.edit("git_epiCancer/subscripts/transcriptomes_processing.R")
   file.edit("git_epiCancer/subscripts/cutnrun_processing.R")
+  file.edit("git_epiCancer/subscripts/ATAC_Seq_processing.R")
   file.edit("git_epiCancer/subscripts/ecdysone_cutnrun_processing.R")
+  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign ATAC, TSS and PH peaks to closest prom -> motif +/-250bp
   
   ###########################################################################
   # RNA analyses
   ###########################################################################
-  file.edit("git_epiCancer/subscripts/alignment_statistics.R") #QC
+  file.edit("git_epiCancer/subscripts/Alignment_statistics_RNA.R") #QC
   file.edit("git_epiCancer/subscripts/GFP_reads_barplot.R") # Validate genetic system
   file.edit("git_epiCancer/subscripts/transcriptomes_correlations.R") # PCC between replicates
   file.edit("git_epiCancer/subscripts/PCA_counts_transriptomes.R") # Compare replicates
@@ -31,20 +32,14 @@ if(F)
   ###########################################################################
   # Cut N run
   ###########################################################################
-  file.edit("git_epiCancer/subscripts/Alignment_statistics.R") # Not used
+  file.edit("git_epiCancer/subscripts/Alignment_statistics_cutnrun.R") # Not used
+  file.edit("git_epiCancer/subscripts/cutnrun_PCC_replicates.R") # PCC reps
   file.edit("git_epiCancer/subscripts/spike-in_perc.R") # Not used
   file.edit("git_epiCancer/subscripts/cutnrun_screenshots.R") # Just to check
-  file.edit("git_epiCancer/subscripts/cutnrun_PCC_replicates.R") # PCC reps
   
   # Analyses ---------------------------------------------------------------#
-  file.edit("git_epiCancer/subscripts/cutnrun_MA_plots.R")
-  
-  # Not used ---------------------------------------------------------------#
-  file.edit("git_epiCancer/subscripts/cutnrun_target_genes_analysis.R") # Not finished
-  file.edit("git_epiCancer/subscripts/cutnrun_clustering_DESeq2.R") # Not used
-  file.edit("git_epiCancer/subscripts/cutnrun_clustering_peaks.R") # Not used
-  file.edit("git_epiCancer/subscripts/cutnrun_K27_changes_volcano_plot.R") # Not used
-  file.edit("git_epiCancer/subscripts/cutnrun_differential_peak_calling.R") # Not used
+  file.edit("git_epiCancer/subscripts/cutnrun_MA_plots.R") # based on peaks
+  file.edit("git_epiCancer/subscripts/cutnrun_interesect_diff_regions.R") # Collapsed diff regions -> overlap?
   
   ###########################################################################
   # Clustering
@@ -52,11 +47,16 @@ if(F)
   # Clustering -------------------------------------------------------------#
   file.edit("git_epiCancer/subscripts/clustering_transcriptomes.R") # SOM
   file.edit("git_epiCancer/subscripts/make_GENEs_data_table.R") # For each gene, retrieve RNA-Seq and compute features 
-  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign ATAC, TSS and PH peaks to closest prom -> motif +/-250bp
+  file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
+  
+  
+  file.edit("git_epiCancer/subscripts/compute_clusters_extra_features.R") # Network, GO, motifs and 
+  
+  
+  
+  
   
   # Clusters analysis
-  file.edit("git_epiCancer/subscripts/compute_clusters_extra_features.R") # Network, GO, motifs and 
-  file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
   
   # Quantif features / cluster (PRC1+/-) -----------------------------------#
   file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_diff.R") # RNA-Seq/CHIP signal per cluster +/- PRC1
