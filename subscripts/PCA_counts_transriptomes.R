@@ -1,10 +1,11 @@
 setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+require(DESeq2)
 require(data.table)
 require(vlfunctions)
 
 # Import data
 meta <- fread("Rdata/processed_metadata_RNA.txt")
-dat <- meta[, as.data.table(counts(readRDS(dds_file))), .(dds_file, system)]
+dat <- meta[, as.data.table(counts(readRDS(dds_file), normalized= T)), .(dds_file, system)]
 dat <- dat[, {
   mat <- t(log2(.SD+1))
   as.data.table(prcomp(mat)$x, keep.rownames = "cdition")

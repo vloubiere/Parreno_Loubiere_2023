@@ -10,6 +10,7 @@ if(F)
   file.edit("git_epiCancer/subscripts/cutnrun_processing.R")
   file.edit("git_epiCancer/subscripts/ATAC_Seq_processing.R")
   file.edit("git_epiCancer/subscripts/ecdysone_cutnrun_processing.R")
+  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign ATAC, TSS and PH peaks to closest prom -> motif +/-250bp
   
   ###########################################################################
   # RNA analyses
@@ -25,7 +26,6 @@ if(F)
   file.edit("git_epiCancer/subscripts/compare_GFP_noGFP.R") # Overlaps between systems
   file.edit("git_epiCancer/subscripts/heatmap_FC_GOF.R") # heatmap FC genes of interest
   file.edit("git_epiCancer/subscripts/GO_up_down_genes.R") # For each RNAi cdition, up/down PRC1+/1 GOs
-  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign ATAC, TSS and PH peaks to closest prom -> motif +/-250bp
   
   file.edit("git_epiCancer/subscripts/PCA_tissues_vs_transplants.R") # not used
   
@@ -39,7 +39,7 @@ if(F)
   
   # Analyses ---------------------------------------------------------------#
   file.edit("git_epiCancer/subscripts/cutnrun_MA_plots.R") # based on peaks
-  file.edit("git_epiCancer/subscripts/cutnrun_interesect_diff_regions.R") # Collapsed diff regions -> overlap?
+  file.edit("git_epiCancer/subscripts/cutnrun_interesect_diff_regions.R") # Based on collapsed diff peaks -> overlap?
   
   ###########################################################################
   # Clustering
@@ -50,29 +50,31 @@ if(F)
   file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
   file.edit("git_epiCancer/subscripts/network_per_clusters.R") # Clusters networks
   file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_diff.R") # RNA-Seq/CHIP signal per cluster +/- PRC1
-  file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_development.R") # Target genes are dev genes? Not convincing
+  file.edit("git_epiCancer/subscripts/cluster_genes_tissue_specificity.R") # Based on encode method
   
   ###########################################################################
   # Reverting vs non reverting 
   ###########################################################################
-  file.edit("git_epiCancer/subscripts/Characterization_recovery_groups.R")
-  file.edit("git_epiCancer/subscripts/Recovery_groups_extra_features.R")
-  file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_average_tracks_PH18.R")
+  file.edit("git_epiCancer/subscripts/Characterization_recovery_groups.R") # Overlap RNA clusters and FC
+  file.edit("git_epiCancer/subscripts/Recovery_groups_extra_features.R") # GO, network and motifs recov vs no recov
+  file.edit("git_epiCancer/subscripts/recovery_average_tracks.R") # average tracks in control and between cditions
+  file.edit("git_epiCancer/subscripts/recovery_ChIP_FC_cditions.R") # ChIP FC per condition
+  file.edit("git_epiCancer/subscripts/recovery_ChIP_percentage_cditions.R") # Similar to previous one, but with % of WT coverage
+  file.edit("git_epiCancer/subscripts/recovery_FPKM_cditions.R")
+  file.edit("git_epiCancer/subscripts/recovery_K36me3_enrich.R")
   
-  
-  
-  
-  # -----------------------
+  # Not used --------------------------------------------------------------#
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_screenshots.R")
-  # Promoters average tracks
-  file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_average_tracks_compare_conditions.R")
-  # Motifs proximal REs
-  file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_REs_motifs.R")
-  file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_REs_average_tracks_PH18.R")
-  # FC during development (not used)
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_FC_development.R")
-  file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_FPKM_FLYBASE_development.R")
   file.edit("git_epiCancer/subscripts/Overlap_with_APF_induced_genes.R")
+  
+  ###########################################################################
+  # Genomic DNA
+  ###########################################################################
+  file.edit("git_epiCancer/subscripts/gDNA_final_table.R")
+  file.edit("git_epiCancer/subscripts/gDNA_allele_frequency.R")
+  file.edit("git_epiCancer/subscripts/gDNA_hotspots.R")
+  file.edit("git_epiCancer/subscripts/gDNA_alt_extra_features.R")
   
   ###########################################################################
   # Tables / Figures for AMM  ----------------------------------------------#

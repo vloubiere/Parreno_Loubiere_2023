@@ -8,33 +8,15 @@ dat[padj<0.05 & abs(log2FoldChange)>1, change:= paste0(ChIP, "_", cdition, "_", 
 dat <- dat[grepl("H3K27me3.*down|H3K27Ac.*up|H3K4me1.*up", change)]
 dat <- vl_importBed(dat[, c("seqnames", "start", "end"):= tstrsplit(ID, "_|:|-", keep= 2:4)])
 
-.m <- vl_collapseBed(dat)
-dat[.m, idx:= i.idx, on= c("seqnames", "start<=end", "end>=start")]
+coll <- vl_collapseBed(dat)
+dat[coll, idx:= i.idx, on= c("seqnames", "start<=end", "end>=start")]
 categ <- split(dat$idx, dat$change)
 
-vl_upset_plot(pl[grep("PH29", names(categ), value = T)])
-vl_upset_plot(pl[grep("H3K27me3", names(categ), value = T)])
-vl_upset_plot(pl[grep("H3K27Ac", names(categ), value = T)])
-vl_upset_plot(pl[grep("H3K4me1", names(categ), value = T)])
-
-
-pdf("pdf/cutnrun/MA_plots.pdf",
-    height = 5.5)
-par(mfrow=c(2,3))
-dat[, {
-  # MA plot
-  Cc <- fcase(padj<0.05 & log2FoldChange>1, "tomato",
-              padj<0.05 & log2FoldChange<(-1), "cornflowerblue",
-              default= "lightgrey")
-  plot(log2(baseMean),
-       log2FoldChange, 
-       pch= 19,
-       col= adjustcolor(Cc, 0.5),
-       cex= 0.7,
-       ylim= c(-3.5, 3.5),
-       las= 1,
-       main= paste(ChIP, cdition))
-  abline(h=0, lty= "11")
-  print("")
-}, .(ChIP, cdition)]
+pdf("pdf/Figures/cuntrun_intersect_diff_regions.pdf", 10, 7)
+par(mfrow= c(2,2),
+    mar= c(2,2,2,2))
+vl_upset_plot(categ[grep("PH29", names(categ), value = T)])
+vl_upset_plot(categ[grep("H3K27me3", names(categ), value = T)])
+vl_upset_plot(categ[grep("H3K27Ac", names(categ), value = T)])
+vl_upset_plot(categ[grep("H3K4me1", names(categ), value = T)])
 dev.off()

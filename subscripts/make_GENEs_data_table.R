@@ -80,7 +80,7 @@ gene_body <- vl_resizeBed(dat,
                           downstream = dat[, end-start+1], 
                           genome = "dm6")
 files <- list.files("db/bw/cutnrun/", 
-                    "^H2AK118Ub.*merge|^H3K27me3.*merge|^H3K36me3.*merge|^H3K4me1.*merge", 
+                    "^H2AK118Ub.*merge|^H3K27me3.*merge|^H3K4me1.*merge", 
                     full.names = T)
 .n <- paste0(gsub("_merge.bw$", "", basename(files)), "_body")
 dat[, (.n):= lapply(files, function(x) vl_bw_coverage(gene_body, x))]
@@ -96,6 +96,18 @@ files <- c(files, "db/bw/ATAC/ATAC_merged.bw")
 files <- c(files,
            list.files("db/bw/cutnrun/", "^PH.*merge|^H3K27Ac.*merge", full.names = T))
 .n <- paste0(gsub("_merge.bw$|_merged.bw$", "", basename(files)), "_prom")
+dat[, (.n):= lapply(files, function(x) vl_bw_coverage(prom, x))]
+
+# TTS marks
+TTS <- vl_resizeBed(dat, 
+                    center = "end", 
+                    upstream = 2500, 
+                    downstream = 1000, 
+                    genome = "dm6")
+files <- list.files("db/bw/cutnrun/", 
+                    "^H3K36me3.*merge", 
+                    full.names = T)
+.n <- paste0(gsub("_merge.bw$|_merged.bw$", "", basename(files)), "_TTS")
 dat[, (.n):= lapply(files, function(x) vl_bw_coverage(prom, x))]
 
 ##########################################################

@@ -26,10 +26,10 @@ cols <- c("log2FoldChange_PH18",
           "H3K4me1_PH29_body",
           "H3K4me1_PHD9_body",
           "H3K4me1_PHD11_body",
-          "H3K36me3_PH18_body",
-          "H3K36me3_PH29_body",
-          "H3K36me3_PHD9_body",
-          "H3K36me3_PHD11_body",
+          "H3K36me3_PH18_TTS",
+          "H3K36me3_PH29_TTS",
+          "H3K36me3_PHD9_TTS",
+          "H3K36me3_PHD11_TTS",
           "H3K27Ac_PH18_prom",
           "H3K27Ac_PH29_prom",
           "H3K27Ac_PHD9_prom",
@@ -55,13 +55,16 @@ cols <- c("log2FoldChange_PH18",
                   default= "Enrichment")]
 .m[, c("ymin", "ymax"):= as.list(vl_boxplot(value~PRC1_bound+cl,
                                             .SD,
-                                            compute_pval = list(c(1,2), c(3,4), c(5,6), c(7,8), c(9,10), c(11,12)),
+                                            compute_pval = list(c(1,2), c(3,4), c(5,6), c(7,8), c(9,10), c(11,12), c(13, 14)),
                                             plot= F)$ylim), variable]
 .m[, ymin:= min(ymin), cdition]
 .m[, ymax:= max(ymax), cdition]
 .m[, variable:= factor(variable, cols)]
 setkeyv(.m, "variable")
 
+##############################################
+# PLOT
+##############################################
 pdf("pdf/Figures/Cluster_PRC1_bound_unbound_RNA.pdf",
     width= 9,
     height= 6)
@@ -74,7 +77,7 @@ par(las= 2,
   vl_boxplot(value~PRC1_bound+cl,
              .SD,
              col= c("lightgrey", "tomato"),
-             compute_pval = list(c(1,2), c(3,4), c(5,6), c(7,8), c(9,10), c(11,12)),
+             compute_pval = list(c(1,2), c(3,4), c(5,6), c(7,8), c(9,10), c(11,12), c(13,14)),
              xaxt= "n",
              ylim= c(ifelse(ymin<0, ymin, 0), ymax),
              ylab= ylab,

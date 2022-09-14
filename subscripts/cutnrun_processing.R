@@ -242,12 +242,12 @@ if(any(!file.exists(c("db/saf/promoters_750_250.saf",
   gtf <- rtracklayer::import("../../genomes/dm6/dmel-all-r6.36.gtf")
   seqlevelsStyle(gtf) <- "UCSC"
   gtf <- as.data.table(gtf)
+  genes <- gtf[type=="gene" & gene_id %in% gtf[type %in% c("mRNA", "ncRNA"), gene_id]]
   # Promoters
   if(!file.exists("db/saf/promoters_750_250.saf"))
   {
-    proms <- gtf[type %in% c("mRNA", "ncRNA")]
-    proms <- vl_resizeBed(proms, center = "start", upstream = 750, downstream = 250, genome = "dm6")
-    proms <- proms[, .(GeneID= paste0("TSS_", seqnames, ":", start, "-", end, ":", strand, "_", gene_id),
+    proms <- vl_resizeBed(genes, center = "start", upstream = 750, downstream = 250, genome = "dm6")
+    proms <- proms[, .(GeneID= gene_id,
                        Chr= seqnames,
                        Start= start,
                        End= end,
@@ -259,22 +259,33 @@ if(any(!file.exists(c("db/saf/promoters_750_250.saf",
   # Gene body
   if(!file.exists("db/saf/geneBody_1000_end.saf"))
   {
-    genes <- gtf[type=="gene"]
-    genes <- vl_resizeBed(genes, center = "start", upstream = 1000, downstream = genes[, end-start+1], genome = "dm6")
-    genes <- genes[, .(GeneID= paste0("BODY_", seqnames, ":", start, "-", end, ":", strand, "_", gene_id),
-                       Chr= seqnames,
-                       Start= start,
-                       End= end,
-                       Strand= strand)]
-    fwrite(unique(genes), 
+    bodies <- vl_resizeBed(genes, center = "start", upstream = 1000, downstream = genes[, end-start+1], genome = "dm6")
+    bodies <- bodies[, .(GeneID= gene_id,
+                         Chr= seqnames,
+                         Start= start,
+                         End= end,
+                         Strand= strand)]
+    fwrite(unique(bodies), 
            "db/saf/geneBody_1000_end.saf", 
+           sep= "\t")
+  }
+  # TTS
+  if(!file.exists("db/saf/TTSs_2500_1000.saf"))
+  {
+    TTSs <- vl_resizeBed(genes, center = "end", upstream = 2500, downstream = 1000, genome= "dm6")
+    TTSs <- TTSs[, .(GeneID= gene_id,
+                     Chr= seqnames,
+                     Start= start,
+                     End= end,
+                     Strand= strand)]
+    fwrite(unique(TTSs), 
+           "db/saf/TTSs_2500_1000.saf", 
            sep= "\t")
   }
   # TSS
   if(!file.exists("db/saf/TSSs_0_0.saf"))
   {
-    TSSs <- gtf[type %in% c("mRNA", "ncRNA")]
-    TSSs <- vl_resizeBed(TSSs, center = "start", upstream = 0, downstream = 0, genome= "dm6")
+    TSSs <- vl_resizeBed(genes, center = "start", upstream = 0, downstream = 0, genome= "dm6")
     TSSs <- TSSs[, .(GeneID= gene_id,
                      Chr= seqnames,
                      Start= start,
@@ -337,6 +348,7 @@ count_FUN <- function(saf, output, bam)
                       isGTFAnnotationFile = F,
                       isPairedEnd = T,
                       nthreads = 8)
+                      # allowMultiOverlap = F -> NOT USED, SHOULD BE CONSIDERED?
   saveRDS(.c, output)
 }
 
@@ -361,12 +373,19 @@ meta[ChIP %in% c("PH", "H3K27Ac"), {
   print("done")
 }, prom_counts]
 
-meta[ChIP %in% c("H3K27me3", "H2AK118Ub", "H3K36me3", "H3K4me1"), body_counts:= paste0("db/counts/cutnrun/", ChIP, "_body_counts.txt")]
-meta[ChIP %in% c("H3K27me3", "H2AK118Ub", "H3K36me3", "H3K4me1"), {
+meta[ChIP %in% c("H3K27me3", "H2AK118Ub", "H3K4me1"), body_counts:= paste0("db/counts/cutnrun/", ChIP, "_body_counts.txt")]
+meta[ChIP %in% c("H3K27me3", "H2AK118Ub", "H3K4me1"), {
   if(!file.exists(body_counts))
     count_FUN("db/saf/geneBody_1000_end.saf", body_counts, bam= bam)
   print("done")
 }, body_counts]
+
+meta[ChIP=="H3K36me3", TTS_counts:= paste0("db/counts/cutnrun/", ChIP, "_TTS_counts.txt")]
+meta[ChIP=="H3K36me3", {
+  if(!file.exists(TTS_counts))
+    count_FUN("db/saf/TTSs_2500_1000.saf", TTS_counts, bam= bam)
+  print("done")
+}, TTS_counts]
 
 #--------------------------------------------------------------#
 # DESeq2 analysis
@@ -381,7 +400,7 @@ dds[, feature:= gsub("_counts$", "", feature)]
 dds[, dds_file:= paste0("db/dds/cutnrun/", ChIP, "_", feature, ".dds")]
 dds <- dds[, CJ(meta$cdition, "PH18", unique = T), (dds)]
 dds <- dds[V1!="PH18"]
-dds[, FC_file:= paste0("db/FC_tables/cutnrun/", ChIP, "_", V1, "_vs_", V2, ".txt")]
+dds[, FC_file:= paste0("db/FC_tables/cutnrun/", ChIP, "_", feature, "_", V1, "_vs_", V2, ".txt")]
 dds[, {
   if(!file.exists(dds_file))
   {
@@ -426,7 +445,6 @@ dds[, {
   }, .(V1, V2, FC_file)]
   print("DONE")
 }, .(ChIP, counts, dds_file)]
-
 
 #--------------------------------------------------------------#
 # Add files to meta
