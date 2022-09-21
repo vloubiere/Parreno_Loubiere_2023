@@ -333,6 +333,7 @@ meta[!is.na(merged_file), {
            peaks_saf, 
            sep= "\t")
   }
+  print("done")
 }, .(merged_file, peaks_saf, broad)]
 
 #--------------------------------------------------------------#

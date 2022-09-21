@@ -10,7 +10,7 @@ if(F)
   file.edit("git_epiCancer/subscripts/cutnrun_processing.R")
   file.edit("git_epiCancer/subscripts/ATAC_Seq_processing.R")
   file.edit("git_epiCancer/subscripts/ecdysone_cutnrun_processing.R")
-  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign ATAC, TSS and PH peaks to closest prom -> motif +/-250bp
+  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign TSS/ATAC/PH peaks to closest prom -> motif +/-250bp
   
   ###########################################################################
   # RNA analyses
@@ -32,10 +32,10 @@ if(F)
   ###########################################################################
   # Cut N run
   ###########################################################################
-  file.edit("git_epiCancer/subscripts/Alignment_statistics_cutnrun.R") # Not used
   file.edit("git_epiCancer/subscripts/cutnrun_PCC_replicates.R") # PCC reps
-  file.edit("git_epiCancer/subscripts/spike-in_perc.R") # Not used
   file.edit("git_epiCancer/subscripts/cutnrun_screenshots.R") # Just to check
+  file.edit("git_epiCancer/subscripts/Alignment_statistics_cutnrun.R") # Not used
+  file.edit("git_epiCancer/subscripts/spike-in_perc.R") # Not used
   
   # Analyses ---------------------------------------------------------------#
   file.edit("git_epiCancer/subscripts/cutnrun_MA_plots.R") # based on peaks
