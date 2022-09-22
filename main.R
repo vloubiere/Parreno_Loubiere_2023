@@ -72,9 +72,10 @@ if(F)
   # Genomic DNA
   ###########################################################################
   file.edit("git_epiCancer/subscripts/gDNA_final_table.R")
+  file.edit("git_epiCancer/subscripts/gDNA_overlaps_conditions.R")
+  file.edit("git_epiCancer/subscripts/gDNA_mut_counts.R")
   file.edit("git_epiCancer/subscripts/gDNA_allele_frequency.R")
   file.edit("git_epiCancer/subscripts/gDNA_hotspots.R")
-  file.edit("git_epiCancer/subscripts/gDNA_alt_extra_features.R")
   
   ###########################################################################
   # Tables / Figures for AMM  ----------------------------------------------#

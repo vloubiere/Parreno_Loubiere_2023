@@ -58,6 +58,7 @@ dat[, class:= cut(NORMAL_alt_freq,
                   c(-Inf, 0, Inf), 
                   c("Tumor specific", "Tumor enriched"))]
 dat[, col:= c("darkorange2", "dodgerblue1")[class]]
+dat[!(PH18), occurence:= ifelse(.N>1, "shared among several conditions", "single condition"), id]
 
 # SAVE
 fwrite(dat,
