@@ -16,7 +16,7 @@ enr <- obj$enr
 #################################
 # PLOT
 #################################
-pdf("pdf/Figures/Clustering_GFP-_system_RNA.pdf", 
+pdf("pdf/cluster_GFP-_system_RNA.pdf", 
     width= 30)
 mat <- matrix(1:7, nrow= 1, byrow = T)
 layout(mat, 
@@ -55,7 +55,7 @@ leg[, {
 
 # GOs
 par(las= 2,
-    mar= c(4,20,1,12),
+    mar= c(20,20,3,12),
     mgp= c(3,0.75,0))
 plot(GO_all,
      padj_cutoff = 0.05, 
@@ -63,7 +63,7 @@ plot(GO_all,
      cex.balloons= 0.6)
 title("GOs enrichment per cluster")
 par(las= 2,
-    mar= c(4,20,1,8))
+    mar= c(5,20,3,8))
 plot(GO_PRC1,
      padj_cutoff = 0.05, 
      top_enrich = 5,
@@ -71,13 +71,13 @@ plot(GO_PRC1,
 title("GOs enrichment per cluster +/- PRC1")
 
 # Motifs
-par(mar= c(4,6,1,8))
+par(mar= c(5,6,3,8))
 for(i in seq(enr))
 {
   plot(enr[[i]],
        padj_cutoff= 0.05,
-       top_enrich= c(5, 4, 5)[i], 
-       cex.balloons= c(1.4, 0.4, 0.8)[i])
-  title(main= names(enr)[i])
+       top_enrich= 4, 
+       cex.balloons= c(1.4, 0.5, 1.4)[i])
+  title(main= paste(names(enr)[i], "motifs"))
 }
 dev.off()

@@ -18,11 +18,11 @@ pl <- dcast(pl,
 setorderv(pl, c("group", "symbol", "FBgn"))
 mat <- as.matrix(pl[, .(symbol, PH18, PH29, PHD9, PHD11)], 1)
 
-pdf("pdf/Figures/Heatmap_FC_GOF.pdf", 
+pdf("pdf/RNA_heatmap_FC_GOF.pdf", 
     height = 50,
     width = 4)
 par(mar= c(7,7,3,6),
-    las= 1)
+    las= 2)
 .c <- vl_heatmap(mat, 
                  row_clusters = pl$group,
                  cluster_rows= F,

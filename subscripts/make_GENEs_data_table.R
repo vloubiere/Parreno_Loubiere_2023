@@ -47,16 +47,21 @@ dat[gtf[type=="gene"], c("symbol", "seqnames", "start", "end", "strand"):=
 ##########################################################
 # PRC1 and K27me3 binding
 ##########################################################
-PRC1 <- unlist(get(load("external_data/SA2020_cl.list"))$genes)
-dat[, PRC1_bound:= symbol %in% PRC1]
-# K27me3
-K27me3 <- vl_importBed("db/peaks/cutnrun/H3K27me3_PH18_confident_peaks.broadPeak", 
-                       extraCols = "broadPeak")
-K27me3 <- K27me3[signalValue>2]
-# Retrieve genes with TSS<=2.5from K27me3
-ext_genes <- vl_resizeBed(dat, "start", 2500, dat[, end-start+1]) 
-sel <- ext_genes$FBgn[vl_covBed(ext_genes, K27me3)>0]
+PH <- vl_importBed("db/peaks/cutnrun/PH_PH18_confident_peaks.narrowPeak")
+cl <- vl_closestBed(dat, PH)
+bound <- cl[between(dist, -2500, 0), FBgn]
+dat[, PRC1_bound:= FBgn %in% bound]
+# Retrieve genes whose TSS overlaps K27me3
+K27me3 <- vl_importBed("db/peaks/cutnrun/H3K27me3_PH18_confident_peaks.broadPeak")
+K27me3 <- vl_collapseBed(K27me3, mingap = 2500)
+TSS <- vl_resizeBed(dat, "start", 0, 0)
+sel <- TSS$FBgn[vl_covBed(TSS, K27me3)>0]
 dat[, K27me3_bound:= FBgn %in% sel]
+# Retrieve genes whose TSS overlaps K118Ub
+K118Ub <- vl_importBed("db/peaks/cutnrun/H2AK118Ub_PH18_confident_peaks.broadPeak")
+K118Ub <- vl_collapseBed(K118Ub, mingap = 2500)
+sel <- TSS$FBgn[vl_covBed(TSS, K118Ub)>0]
+dat[, K118Ub_bound:= FBgn %in% sel]
 
 ##########################################################
 # Add RECOVERY
@@ -91,11 +96,11 @@ prom <- vl_resizeBed(dat,
                      upstream = 750, 
                      downstream = 250, 
                      genome = "dm6")
-files <- list.files("db/bw/SA_2020/", "PC_ED|PH_ED|PSC_ED|SUZ12_ED", full.names = T)
+files <- list.files("db/bw/SA_2020/", "PC_ED|PH_ED|PSC_ED|SUZ12_ED|PHO_CNSID", full.names = T)
 files <- c(files, "db/bw/ATAC/ATAC_merged.bw")
 files <- c(files,
            list.files("db/bw/cutnrun/", "^PH.*merge|^H3K27Ac.*merge", full.names = T))
-.n <- paste0(gsub("_merge.bw$|_merged.bw$", "", basename(files)), "_prom")
+.n <- paste0(gsub("_merge.bw$|_merged.bw", "", basename(files)), "_prom")
 dat[, (.n):= lapply(files, function(x) vl_bw_coverage(prom, x))]
 
 # TTS marks
@@ -115,7 +120,6 @@ dat[, (.n):= lapply(files, function(x) vl_bw_coverage(prom, x))]
 ##########################################################
 chromhmm <- vl_importBed("external_data/chromatin_types_SA2020_table_s1.txt")
 dat[chromhmm, chromhmm:= i.name, .EACHI, on= c("seqnames", "start<=end", "start>=start")]
-
 
 ##########################################################
 # Save

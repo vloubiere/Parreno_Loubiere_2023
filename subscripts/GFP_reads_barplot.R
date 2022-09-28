@@ -20,7 +20,7 @@ counts <- counts[(system=="GFP" & rn!="GFP") | (system=="noGFP" & rn=="GFP")]
 counts <- counts[, .(mean= mean(value), value= list(value)), .(rn, system, cdition)]
 counts[, col:= fcase(rn=="mRFP1", "tomato", default= "limegreen")]
 
-pdf("pdf/Figures/GFP_norm_counts.pdf", 
+pdf("pdf/RNA_GFP_norm_counts.pdf", 
     width = 2.1,
     height= 9)
 par(mfrow= c(3,1),

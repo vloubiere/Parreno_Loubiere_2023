@@ -24,7 +24,7 @@ dat[dev_hk, score:= i.score, on="FBgn"]
 ###########################################
 # PLOT
 ###########################################
-pdf("pdf/Figures/Cluster_PRC1_bound_unbound_tissue_specifity.pdf",
+pdf("pdf/cluster_PRC1_bound_unbound_tissue_specifity.pdf",
     width= 9,
     height= 6)
 par(las= 2,
@@ -33,9 +33,10 @@ par(las= 2,
     tcl= -0.2,
     mfrow= c(3,4))
 # Dev hk example
-vl_genes_set[dat, score:= i.score, on= "FBgn"]
+ex <- data.table::copy(vl_genes_set)
+ex[dat, score:= i.score, on= "FBgn"]
 vl_boxplot(score~GO,
-           vl_genes_set)
+           ex)
 # clusters
 vl_boxplot(score~PRC1_bound+cl,
            dat,

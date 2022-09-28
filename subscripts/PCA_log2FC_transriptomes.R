@@ -13,7 +13,7 @@ mat[, c("cdition", "system"):= tstrsplit(cdition, "_")]
 mat[, col:= vl_palette_few_categ(.NGRP)[.GRP], cdition]
 mat[, pch:= c(16, 15)[.GRP], system]
 
-pdf("pdf/Figures/PCA_log2FC_RNA.pdf",
+pdf("pdf/RNA_PCA_log2FC.pdf",
     width = 5,
     height = 5.5)
 par(las= 1)

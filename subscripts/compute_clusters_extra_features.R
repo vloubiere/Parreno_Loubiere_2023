@@ -24,12 +24,13 @@ net <- vl_STRING_interaction(symbols = dat$symbol,
                              plot= F)
 
 # Compute GO enrich
-GO_all <- vl_GO_enrich(split(dat$FBgn, 
-                             dat$cl),
+GO_all <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat$cl),
+                       geneUniverse_IDs = fread("Rdata/final_gene_features_table.txt")$FBgn,
                        species = "Dm", 
                        plot= F)
-GO_PRC1 <- vl_GO_enrich(split(dat$FBgn, 
+GO_PRC1 <- vl_GO_enrich(geneIDs = split(dat$FBgn, 
                               dat[, .(cl, ifelse(PRC1_bound, "PRC1+", "PRC1-"))]),
+                        geneUniverse_IDs = fread("Rdata/final_gene_features_table.txt")$FBgn,
                         species = "Dm", 
                         plot= F)
 
@@ -38,6 +39,7 @@ groups <- split(motifs, motifs$group)
 mot <- names(motifs)[names(motifs) %in% vl_Dmel_motifs_DB_full$motif]
 enr <- lapply(groups, function(x) {
   vl_motif_cl_enrich(counts_matrix = as.matrix(x[, ..mot]),
+                     collapse_clusters = vl_Dmel_motifs_DB_full[mot, Dmel, on= "motif"],
                      cl_IDs = x[, paste0(cl, ifelse(PRC1_bound, " PRC1+", " PRC1-"))],
                      plot= F)
 })

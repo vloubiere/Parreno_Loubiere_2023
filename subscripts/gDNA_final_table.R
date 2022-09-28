@@ -8,7 +8,8 @@ import_vcf <- function(vcf_file,
   # Import vcf
   vcf <- vcfR::read.vcfR(vcf_file)
   dat <- as.data.table(vcfR::getFIX(vcf))
-  dat <- dat[, .(id= paste0(CHROM, ":", POS, ":", REF, "_", ALT), filter= FILTER=="PASS")]
+  dat <- dat[, .(id= paste0("chr", CHROM, ":", POS, "-", as.numeric(POS)+nchar(REF), ":", REF, "_", ALT), 
+                 filter= FILTER=="PASS")]
   
   # Extract allele counts and fraction
   # vcfR::queryMETA(vcf, element = 'AD')
@@ -33,6 +34,7 @@ import_vcf <- function(vcf_file,
   
   # Extract annotation
   annot <- fread(annotation_file, col.names = c("annotation", "FBtr"), sel= 1:2, fill = T)
+  annot[, FBtr:= lapply(strsplit(FBtr, ",|;"), function(x) sapply(strsplit(x, "\\("), "[", 1))]
   
   # Extract funciton
   type <- fread(exonic_function_file, sel= 1:2, col.names = c("line", "type"), fill= T)
@@ -54,14 +56,37 @@ dat <- dat[, import_vcf(list.files("db/DNA_analysis_novogene/", paste0(pattern, 
 # PH18
 dat[, PH18:= any(grepl("PH18", cdition)), id]
 # Define tumor specific vs enriched
-dat[, class:= cut(NORMAL_alt_freq, 
+cols <- c("NORMAL_alt_freq", "TUMOR_alt_freq")
+dat[, (paste0(cols, "_max")):= lapply(.SD, max), id, .SDcols= cols]
+dat[, class:= cut(NORMAL_alt_freq_max, 
                   c(-Inf, 0, Inf), 
                   c("Tumor specific", "Tumor enriched"))]
 dat[, col:= c("darkorange2", "dodgerblue1")[class]]
-dat[!(PH18), occurence:= ifelse(.N>1, "shared among several conditions", "single condition"), id]
+# Mutations present in different conditions
+dat[!(PH18), occurence:= ifelse(.N>1, "shared >=1 conditions", "single condition"), id]
+dat[, occurence:= factor(occurence,
+                         c("single condition",
+                           "shared >=1 conditions"))]
+# Retrieve target genes for coding mutations
+genes <- import("../../genomes/dm6/dmel-all-r6.36.gtf")
+seqlevelsStyle(genes) <- "UCSC"
+genes <- as.data.table(genes)
+genes <- genes[!is.na(transcript_id)]
+setkeyv(genes, "transcript_id")
+dat[, FBgn:= lapply(FBtr, function(x) unique(genes[x, gene_id]))]
+dat[, symbol:= lapply(FBtr, function(x) unique(genes[x, gene_symbol]))]
 
 # SAVE
-fwrite(dat,
-       "Rdata/gDNA_final_table.txt",
-       sep= "\t",
-       na= NA)
+saveRDS(dat, "Rdata/gDNA_final_table.rds")
+
+# Save bed files
+dat[, c("seqnames", "start", "end"):= tstrsplit(id, ":|-", keep= 1:3)]
+dat[, {
+  path <- paste0("db/bed/mutations/", cdition, "_", class, ".bed")
+  path <- gsub(" ", "_", path)
+  rtracklayer::export(.SD, path)
+  print("")
+}, .(cdition, class), .SDcols= c("seqnames", "start", "end")]
+
+
+

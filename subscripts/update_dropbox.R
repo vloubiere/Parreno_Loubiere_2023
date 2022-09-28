@@ -2,49 +2,34 @@ setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(data.table)
 require(vlfunctions)
 
-# 1st colum -> local folder | 2nd -> remote folder
-dat <- matrix(c("db/dds/RNA/", # dds RNA
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/RNA/dds/",
-                "db/dds/cutnrun/", # dds CUTNRUN
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/CUTNRUN/dds/",
-                "db/FC_tables/RNA/", # FC RNA
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/RNA/FC_tables/",
-                "db/FC_tables/cutnrun/", # FC CUTNRUN
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/CUTNRUN/FC_tables/",
-                "db/bw/RNA-Seq/", # bw RNA
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/RNA/bw/",
-                "db/bw/cutnrun/", # bw CUTNRUN
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/CUTNRUN/bw/",
-                "db/peaks/cutnrun_merged_peaks/", # merged peaks CUTNRUN
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/CUTNRUN/merged_peaks_changes/", 
-                "db/peaks/cutnrun/", #  peaks CUTNRUN
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/CUTNRUN/peaks/", 
-                "pdf/", # All PDFs
-                "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/pdf/"), 
-              ncol= 2, 
-              byrow = T)
-dat <- as.data.table(dat)
-setnames(dat, c("local", "dropbox"))
-dat[, {
-  file.remove(list.files(dropbox, 
-                         full.names = T, 
-                         recursive= T))
-  file.copy(list.files(local, 
-                       full.names = T, 
-                       recursive= T),
-            dropbox, 
-            recursive = T)
-  print(".")
-}, (dat)]
+# pdf and data file
+dat <- data.table(file= c(list.files("db", recursive = T, full.names = T),
+                          list.files("pdf", recursive = T, full.names = T)))
+dat[, dir:= dirname(file)]
+dat[dir %in% c("db/peaks/ATAC", "db/peaks/cutnrun"), file:= ifelse(grepl("confident", file), file, NA)]
+dat[dir %in% c("db/bed/ATAC/", "db/bed/cutnrun_EcR/"), file:= NA]
+dat <- na.omit(dat)
+dat[, dir.create(paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/", dir), recursive = T), dir]
+dat[, file.copy(normalizePath(file), 
+                paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/", file),
+                overwrite = T)]
 
-# Indidivual files
-file.copy("db/FC_tables/RNA_table_AMM.txt",
-          "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/RNA/RNA_table_AMM.txt", overwrite = T)
-file.copy("Rdata/RECOVERY_NORECOVERY_genes.txt",
-          "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/RNA/RECOVERY_NORECOVERY_genes.txt", overwrite = T)
-file.copy("db/FC_tables/CUTNRUN_table_AMM.txt",
-          "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/CUTNRUN/CUTNRUN_table_AMM.txt", overwrite = T)
-
-# The presentation!
+# master tables
+file.copy("Rdata/final_gene_features_table.txt",
+          "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/db/final_gene_features_table.txt", 
+          overwrite = T)
+file.copy("Rdata/list_genes_interest_heatmaps.txt",
+          "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/db/list_genes_interest_heatmaps.txt",
+          overwrite = T)
+file.copy("Rdata/mutated_gene_counts.txt",
+          "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/db/mutated_gene_counts.txt",
+          overwrite = T)
+file.copy("Rdata/genes_overlapping_highly_mutated_regions.txt",
+          "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/db/genes_overlapping_highly_mutated_regions.txt",
+          overwrite = T)
 file.copy("git_epiCancer/epiCancer_presentation.html",
-          paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/Presentations/epiCancer_presentation_", Sys.Date(), ".html"), overwrite = T)
+          paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/Presentations/", Sys.Date(), "_presentation.html"),
+          overwrite = T)
+file.copy("git_epiCancer/styles.css",
+          paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/Presentations/styles.css"),
+          overwrite = T)

@@ -110,7 +110,7 @@ MACS <- function(bam_ChIP,
 }
 # Separated replicates
 meta[!is.na(input), peaks_rep:= paste0('db/peaks/cutnrun/', paste0(ChIP, "_", cdition, "_", rep))]
-meta[!is.na(input), broad:= ChIP %in% c("H3K27me3", "H2AK118Ub", "H3K36me3", "H3K4me1")]
+meta[!is.na(input), broad:= ChIP %in% c("H3K27me3", "H2AK118Ub", "H3K4me1")]
 meta[!is.na(input), {
   if(!file.exists(paste0(peaks_rep, "_peaks.xls")))
   {
@@ -148,12 +148,25 @@ meta[!is.na(input), filtered_peaks:= paste0("db/peaks/cutnrun/", ChIP, "_", cdit
                                             ifelse(broad, 
                                                    "_confident_peaks.broadPeak", 
                                                    "_confident_peaks.narrowPeak"))]
+meta[ChIP=="H3K27me3", dist_cutoff:= 2500]
+meta[ChIP=="H2AK118Ub", dist_cutoff:= 2500]
+meta[ChIP=="H3K27Ac", dist_cutoff:= 250]
+meta[ChIP=="H3K36me3", dist_cutoff:= 250]
+meta[ChIP=="H3K4me1", dist_cutoff:= 250]
+meta[ChIP=="PH", dist_cutoff:= 250]
 meta[!is.na(input), {
   if(!file.exists(filtered_peaks))
   {
-    .c <- vl_importBed(peaks_merge, extraCols= ifelse(broad, "broadPeak", "narrowPeak"))
+    .c <- vl_importBed(peaks_merge)
+    .c <- .c[signalValue>2 & qValue>2]
     .c <- .c[vl_covBed(.c, unique(peaks_rep[rep=="rep1"]))>0]
     .c <- .c[vl_covBed(.c, unique(peaks_rep[rep=="rep2"]))>0]
+    .c$idx <- vl_collapseBed(.c, 
+                             mingap = dist_cutoff, 
+                             return_idx_only = T)
+    .c[, c("start", "end"):= .(min(start), max(end)), idx]
+    .c$idx <- NULL
+    .c <- .c[, .SD[which.max(qValue)], .(seqnames, start, end)]
     fwrite(.c,
            filtered_peaks,
            sep= "\t",
@@ -162,24 +175,17 @@ meta[!is.na(input), {
            col.names= F)
   }
   print("DONE")
-}, .(broad, filtered_peaks, peaks_merge)]
+}, .(filtered_peaks, peaks_merge, dist_cutoff)]
 
 #--------------------------------------------------------------#
 # Merged_peaks
 #--------------------------------------------------------------#
-meta[ChIP=="H3K27me3", c("enr_cutoff", "dist_cutoff"):= .(2, 2500)]
-meta[ChIP=="H2AK118Ub", c("enr_cutoff", "dist_cutoff"):= .(2, 2500)]
-meta[ChIP=="H3K27Ac", c("enr_cutoff", "dist_cutoff"):= .(2, 250)]
-meta[ChIP=="H3K36me3", c("enr_cutoff", "dist_cutoff"):= .(3, 250)]
-meta[ChIP=="H3K4me1", c("enr_cutoff", "dist_cutoff"):= .(3, 250)]
-meta[ChIP=="PH", c("enr_cutoff", "dist_cutoff"):= .(3, 250)]
 meta[!is.na(input), merged_file:= paste0("db/peaks/cutnrun_merged_peaks/", ChIP, "_merged_peaks", 
                                          ifelse(broad, ".broadPeak", ".narrowPeak"))]
 meta[!is.na(input), {
   if(!file.exists(merged_file))
   {
-    .c <- vl_importBed(unique(filtered_peaks), extraCols= ifelse(broad, "broadPeak", "narrowPeak"))
-    .c <- .c[signalValue>enr_cutoff & qValue>2]
+    .c <- vl_importBed(unique(filtered_peaks))
     .c$idx <- vl_collapseBed(.c, 
                              mingap = dist_cutoff, 
                              return_idx_only = T)
@@ -194,7 +200,7 @@ meta[!is.na(input), {
            col.names= F)
   }
   print("DONE")
-}, .(merged_file, enr_cutoff, dist_cutoff, broad)]
+}, .(merged_file, dist_cutoff)]
 
 #--------------------------------------------------------------#
 # bw files
@@ -232,7 +238,7 @@ meta[!is.na(peaks_rep), {
 }, .(peaks_rep, bw_file, broad)]
 
 #--------------------------------------------------------------#
-# Compute SAF files
+# Compute features SAF files
 #--------------------------------------------------------------#
 if(any(!file.exists(c("db/saf/promoters_750_250.saf",
                       "db/saf/geneBody_1000_end.saf",
@@ -298,7 +304,7 @@ if(any(!file.exists(c("db/saf/promoters_750_250.saf",
   # ATAC peaks
   if(!file.exists("db/saf/ATAC_peaks.saf"))
   {
-    ATAC <- vl_importBed("db/peaks/ATAC/ATAC_confident_peaks.narrowPeak", extraCols= "narrowPeak")
+    ATAC <- vl_importBed("db/peaks/ATAC/ATAC_confident_peaks.narrowPeak")
     TSSs <- fread("db/saf/TSSs_0_0.saf", col.names = c("gene_id", "seqnames", "start", "end", "strand"))
     cl <- vl_closestBed(a = ATAC, b= TSSs)
     ATAC[cl, gene_id:= gene_id.b, on= c("seqnames", "start", "end"), mult= "first"]
@@ -320,7 +326,7 @@ meta[!is.na(merged_file), peaks_saf:= paste0("db/saf/", ChIP, "_", "peaks.saf"),
 meta[!is.na(merged_file), {
   if(any(!file.exists(peaks_saf)))
   {
-    .c <- vl_importBed(merged_file, extraCols= ifelse(broad, "broadPeak", "narrowPeak"))
+    .c <- vl_importBed(merged_file)
     TSSs <- fread("db/saf/TSSs_0_0.saf", col.names = c("gene_id", "seqnames", "start", "end", "strand"))
     cl <- vl_closestBed(a = .c, b= TSSs)
     .c[cl, gene_id:= gene_id.b, on= c("seqnames", "start", "end"), mult= "first"]

@@ -59,13 +59,15 @@ cols <- c("log2FoldChange_PH18",
                                             plot= F)$ylim), variable]
 .m[, ymin:= min(ymin), cdition]
 .m[, ymax:= max(ymax), cdition]
+.m[variable=="PH_PH18_prom", ymax:= 90]
+.m[variable=="PH_PH29_prom", ymax:= 90]
 .m[, variable:= factor(variable, cols)]
 setkeyv(.m, "variable")
 
 ##############################################
 # PLOT
 ##############################################
-pdf("pdf/Figures/Cluster_PRC1_bound_unbound_RNA.pdf",
+pdf("pdf/cluster_PRC1_bound_unbound_RNA.pdf",
     width= 9,
     height= 6)
 par(las= 2,

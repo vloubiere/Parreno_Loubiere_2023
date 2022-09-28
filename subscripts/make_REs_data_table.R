@@ -14,20 +14,20 @@ gtf[, seqnames:= paste0("chr", seqnames)]
 proms <- vl_resizeBed(gtf, "start", 200, 50)
 
 # ATAC
-enh <- vl_importBed("db/peaks/ATAC/ATAC_confident_peaks.narrowPeak", extraCols= "narrowPeak")
+enh <- vl_importBed("db/peaks/ATAC/ATAC_confident_peaks.narrowPeak")
 enh <- enh[signalValue>2 & qValue>20]
 enh[, start:= start+peak]
 enh[, end:= start]
 TSS <- vl_resizeBed(gtf, "start", 0, 0)
 cl <- vl_closestBed(enh, TSS)
 enh[cl, gene_id:= i.gene_id.b, on= "name", mult= "first"]
-enh <- vl_resizeBed(enh, "start", 125, 125)
+enh <- vl_resizeBed(enh, "center", 125, 125)
 
-# PH peask from SA2020
-PH <- vl_importBed("external_data/PRC1_summits_SA2020_aax4001_table_s3.txt")
+# PH peaks PH18
+PH <- vl_importBed("db/peaks/cutnrun/PH_PH18_confident_peaks.narrowPeak")
 cl <- vl_closestBed(PH, TSS)
 PH[cl, gene_id:= i.gene_id.b, on= "name", mult= "first"]
-PH <- vl_resizeBed(PH, "start", 125, 125)
+PH <- vl_resizeBed(PH, "center", 125, 125)
 
 #############################
 # Merge

@@ -1,184 +1,253 @@
 ---
 title: "Epignetic Cancer project"
-output: html_document
+output:                                                                    
+  html_document:                                                           
+    toc: true                                                              
+    number_sections: true                                                  
+    code_folding: "hide"                                                   
+    toc_float:                                                             
+      collapse: false                                                      
+      smooth_scroll: false
+    css: styles.css 
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, out.width = "800px", out.height = "500px")
+knitr::opts_chunk$set(echo = FALSE, out.width = "1250px", out.height = "625px")
 ```
 
-## 1/ RNA-Seq (only focused on GFP- system for now!)
-Alignment statistics
+
+
+
+# RNA-Seq
+## Quality checks
+### Alignment statistics
+```{r}
+knitr::include_graphics("../pdf/RNA_alignment_statistics.pdf")
+```
+### PCC replicates
+```{r}
+knitr::include_graphics("../pdf/RNA_PCC_replicates.pdf")
+```
+### PCA replicates (using norm counts)
+```{r}
+knitr::include_graphics("../pdf/RNA_PCA_counts.pdf")
+```
+### GFP reads (genetic system validation)
+```{r}
+knitr::include_graphics("../pdf/RNA_GFP_norm_counts.pdf")
+```
+## Compare GFP and noGFP systems
+### PCA between conditions (using log2FC)
+```{r}
+knitr::include_graphics("../pdf/RNA_PCA_log2FC.pdf")
+```
+### Overlaps between up and down genes 
+```{r}
+knitr::include_graphics("../pdf/RNA_chisq_overlap_GFP_noGFP_systems.pdf")
+```
+## MA plots
+RNA-Seq differentially expressed genes
 
 ```{r}
-knitr::include_graphics("../pdf/Figures/Alignment_statistics_RNA.pdf")
+knitr::include_graphics("../pdf/RNA_MA_plots_RNA.pdf")
 ```
 
-GFP reads (genetic system validation)
+## FC up vs down genes per cdition
+```{r}
+knitr::include_graphics("../pdf/RNA_boxplot_FC_up_down_genes.pdf")
+```
+
+## Alluvial plots
+Visualize transitions between conditions
 
 ```{r}
-knitr::include_graphics("../pdf/Figures/GFP_norm_counts.pdf")
+knitr::include_graphics("../pdf/RNA_alluvial_plot_timecourse_RNA.pdf")
+```
+## Gene overlaps between conditions
+```{r}
+knitr::include_graphics("../pdf/RNA_upsetplot_overlapping_genes.pdf")
+```
+## Heatmap logFC genes of interest
+```{r}
+knitr::include_graphics("../pdf/RNA_heatmap_FC_GOF.pdf")
+```
+## GO up and down genes per condition
+```{r}
+knitr::include_graphics("../pdf/RNA_GO_up_down_genes_GFP-.pdf")
 ```
 
-PCC replicates
+
+
+
+# RNA-Seq clusters analyses
+## Cluster figure (heatmap, STRING network, GO, motifs)
+```{r}
+knitr::include_graphics("../pdf/cluster_GFP-_system_RNA.pdf")
+```
+## STRING newtork per cluster
+```{r}
+knitr::include_graphics("../pdf/cluster_network_per_cluster.pdf")
+```
+## Boxplot quantif FPKM and enrichments 
+Stratified per cluster and PRC1 binding
 
 ```{r}
-knitr::include_graphics("../pdf/Figures/PCC_replicates_RNA.pdf")
+knitr::include_graphics("../pdf/cluster_PRC1_bound_unbound_RNA.pdf")
+```
+## Check percentage of PRC1 bound genes
+```{r}
+knitr::include_graphics("../pdf/cluster_percentage_PRC1_bound_genes.pdf")
 ```
 
-PCA replicates (QC, norm counts)
+## Tissue specificity score 
+Stratified per cluster and PRC1 binding
 
 ```{r}
-knitr::include_graphics("../pdf/Figures/PCA_counts_RNA.pdf")
+knitr::include_graphics("../pdf/cluster_PRC1_bound_unbound_tissue_specifity.pdf")
 ```
 
-PCA conditions (compare conditions, log2FC)
+
+
+
+# CUTNRUN
+## Quality Checks
+### Alignment statistics
+```{r}
+knitr::include_graphics("../pdf/cutnrun_alignment_statistics_cutnrun.pdf")
+```
+### PCC between replicates
+```{r}
+knitr::include_graphics("../pdf/cutnrun_intersect_diff_regions.pdf")
+```
+### PCC between replicates
+```{r}
+knitr::include_graphics("../pdf/cutnrun_PCC_replicates.pdf")
+```
+## MA plots (DESeq2)
+```{r, , out.height = "1800px"} 
+knitr::include_graphics("../pdf/cutnrun_MA_plots.png")
+```
+
+
+
+
+# Reverting vs non reverting genes
+## Defining characteristics
+### FC between conditions
+```{r}
+knitr::include_graphics("../pdf/recovery_FC_conditions.pdf")
+```
+### Overlap with RNA clusters
+```{r}
+knitr::include_graphics("../pdf/recovery_overlap_RNA_clusters.pdf")
+```
+### Chromhmm classes
+```{r}
+knitr::include_graphics("../pdf/recovery_chromhmm_class.pdf")
+```
+### Overlap with K27 and K118 domains
+```{r}
+knitr::include_graphics("../pdf/recovery_overlap_K27_K118_domains.pdf")
+```
+### Size of overlapping K27 domains
+```{r}
+knitr::include_graphics("../pdf/recovery_size_K27_domains.pdf")
+```
+### FPKMs between cditions and percentile 
+```{r}
+knitr::include_graphics("../pdf/recovery_groups_FPKMs.pdf")
+```
+### GO
+```{r}
+knitr::include_graphics("../pdf/recovery_GOs.pdf")
+```
+### STRING network
+```{r}
+knitr::include_graphics("../pdf/recovery_STRING_network.pdf")
+```
+### Motifs enrichment
+```{r}
+knitr::include_graphics("../pdf/recovery_motifs_enrichment.pdf")
+```
+## Average tracks 
+### Gene promoters PH18/WT conditions
+```{r}
+knitr::include_graphics("../pdf/recovery_ph18_average_tracks.pdf")
+```
+### Gene promoters between RNAi condition
+```{r}
+knitr::include_graphics("../pdf/recovery_cditions_average_tracks.pdf")
+```
+### PH assigned peaks 
+PH peaks assigned to their closest gene -> split between recovery & noRecovery
 
 ```{r}
-knitr::include_graphics("../pdf/Figures/PCA_log2FC_RNA.pdf")
+knitr::include_graphics("../pdf/recovery_ph18_average_tracks_PH_peaks.pdf")
 ```
 
-MA plots (diff genes)
-
+## Cutnrun FC between KD and PH18
+### Using DESeq2 log2FC
 ```{r}
-knitr::include_graphics("../pdf/Figures/MA_plots_RNA.pdf")
+knitr::include_graphics("../pdf/recovery_ChIP_FC_cditions.pdf")
 ```
-
-Alluvial plots (transitions between conditions)
-
+### Expressed as % of PH18 enrichment
 ```{r}
-knitr::include_graphics("../pdf/Figures/alluvial_plot_timecourse_RNA.pdf")
+knitr::include_graphics("../pdf/recovery_ChIP_percentage_cditions.pdf")
 ```
-
-Gene overlaps between conditions
-
+## K36me3 at noRecovery vs activity matched genes
 ```{r}
-knitr::include_graphics("../pdf/Figures/upsetplot_overlapping_genes_RNA.pdf")
+knitr::include_graphics("../pdf/recovery_H3K36me3_noRecovery_genes.pdf")
 ```
 
-Heatmap logFC genes of interest
 
+
+
+
+# gDNA mutations
+## Global overview
+### Overlaps between conditions
 ```{r}
-knitr::include_graphics("../pdf/Figures/Heatmap_FC_GOF.pdf")
+knitr::include_graphics("../pdf/gDNA_conditions_overlaps.pdf")
 ```
-
-GO up and down genes per condition
-
+### Mutation counts per condition and between conditions
 ```{r}
-knitr::include_graphics("../pdf/Figures/GO_up_down_genes_GFP-.pdf")
+knitr::include_graphics("../pdf/gDNA_mutations_counts.pdf")
 ```
-
-## 2/ CUTNRUN
-
-PCC between replicates (QC)
-
+## Allele frequency (specific vs enriched)
 ```{r}
-knitr::include_graphics("../pdf/cutnrun/PCC_cutnrun_replicates.pdf")
+knitr::include_graphics("../pdf/gDNA_allele_freq_scatterplots.pdf")
 ```
-
-MA plots (diff regions)
-
+## Overlaps between mutations shared between several conditions
 ```{r}
-knitr::include_graphics("../pdf/cutnrun/MA_plots.pdf")
+knitr::include_graphics("../pdf/gDNA_overlaps_mutation_shared_several_conditions.pdf")
 ```
-
-## 3/ Clustering based on RNA-Seq
-
-Clustering figure
-Col1 -> Clustering heatmaps
-Col2 -> chromhmm SA2020
-        PH peaks type SA2020
-        FPKM W18 condition
-Col3 -> STRING network of interacting proteins, colored by cluster
-Col4 -> GO/cluster, depending on PRC1 binding (SA2020 assignment)
-Col5 -> Motif enrichment/cluster, depending on PRC1 binding (SA2020 assignment)
-
+## Mutations features
+### All mutations features
 ```{r}
-knitr::include_graphics("../pdf/Figures/Clustering_GFP-_system_RNA.pdf")
+knitr::include_graphics("../pdf/gDNA_mut_features.pdf")
 ```
-
-Plot cluster features depending on PRC1 binding (SA2020 assignment)
-
+### Exonic mutations features
 ```{r}
-knitr::include_graphics("../pdf/Figures/Cluster_PRC1_bound_unbound_RNA.pdf")
+knitr::include_graphics("../pdf/gDNA_exonic_mut_features.pdf")
 ```
-
-4/ RECOVERY vs NO RECOVERY</b>
-Defined as K27me+ & PRC1 bound (SA2020 assignment) &:
-PHD9  -> log2FoldChange_PHD9_vs_PH29<(-1) & padj_PHD9_vs_PH29<(0.05) --> RECOVERY
-         else if log2FoldChange_PHD9_vs_WKD>0 -------------------------> NORECOVERY
-PHD11 -> log2FoldChange_PHD11_vs_PH29<(-1) & padj_PHD11_vs_PH29<(0.05) -> RECOVERY
-         else if log2FoldChange_PHD11_vs_WKD>0 -------------------------> NORECOVERY
-Table
-
-FPKM, overlaps between then and with clusters
-
+## Gene centric analysis
+### Overlapping mutant genes across conditions
 ```{r}
-knitr::include_graphics("../pdf/Figures/compare_RECOVERY_vs_transcriptome_cl2&5.pdf")
+knitr::include_graphics("../pdf/gDNA_mutant_genes_overlap.pdf")
 ```
-
-Screenshots CUTNRUN & RNA
-blue: PH18, green: PHD11, magenta: PH29
-
+### Go of mutated genes (exonic mutations)
 ```{r}
-knitr::include_graphics("../pdf/Figures/RECOVERY_vs_NOT_screenshot.pdf")
+knitr::include_graphics("../pdf/gDNA_mutant_genes_GO.pdf")
 ```
-
-Average tracks PH18/ctl conditions centered on PROMOTERS
-
+### Mutations impact on FC
 ```{r}
-knitr::include_graphics("../pdf/Figures/PH18_CUTNRUN_enrich_revert_vs_not.pdf")
+knitr::include_graphics("../pdf/gDNA_mutations_impact_FC.pdf")
 ```
-
-Average tracks PH18/ctl conditions centered on most proximal ATAC peaks (REs)
-
+## Mutations hotspots
 ```{r}
-knitr::include_graphics("../pdf/Figures/PH18_CUTNRUN_enrich_REs_revert_vs_not.pdf")
+knitr::include_graphics("../pdf/gDNA_hostspots.pdf")
 ```
 
-Average tracks between conditions centered on promoters
 
-```{r}
-knitr::include_graphics("../pdf/Figures/compare_CUTNRUN_cditions_revert_vs_not.pdf")
-```
 
-Motif enrichment at proximal ATAC peaks (REs) and PROMOTERS
 
-```{r}
-knitr::include_graphics("../pdf/Figures/motif_enrich_recovery_vs_no.pdf")
-```
-
-## 5/ cl2 (NO RECOVERY) vs cl5 (RECOVERY)
-In my first attempt in using these clusters, we did not see much difference
-But I did not filter the genes for being PRC1 bound and K27me3+!
-Now it seems promising
-
-Average tracks PH18/ctl conditions centered on PROMOTERS
-
-```{r}
-knitr::include_graphics("../pdf/Figures/PH18_CUTNRUN_enrich_cl2_vs_cl5.pdf")
-```
-
-Average tracks PH18/ctl conditions centered on most proximal PH peaks (REs)
-
-```{r}
-knitr::include_graphics("../pdf/Figures/PH18_CUTNRUN_enrich_REs_cl2_vs_cl5.pdf")
-```
-
-Average tracks between conditions centered on promoters
-
-```{r}
-knitr::include_graphics("../pdf/Figures/compare_CUTNRUN_cditions_cl2_vs_cl5.pdf")
-```
-
-Average tracks between conditions centered on promoters
-
-```{r}
-knitr::include_graphics("../pdf/Figures/compare_CUTNRUN_cditions_cl2_vs_cl5.pdf")
-```
-
-Motif enrichment at PROMOTERS, proximal ATAC peaks (REs) and proximal PH peaks (ED ChIP-Seq)
-
-```{r}
-knitr::include_graphics("../pdf/Figures/motif_enrich_cl2_vs_cl5.pdf")
-```

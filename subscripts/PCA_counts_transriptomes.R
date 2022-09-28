@@ -13,7 +13,7 @@ dat <- dat[, {
 dat[, cdition:= gsub("_rep1|_rep2|_rep3", "", cdition)]
 dat[, col:= rainbow(.NGRP)[.GRP], cdition]
 
-pdf("pdf/Figures/PCA_counts_RNA.pdf",
+pdf("pdf/RNA_PCA_counts.pdf",
     width = 5,
     height = 5.5)
 par(las= 1)

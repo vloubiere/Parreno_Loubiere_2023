@@ -11,13 +11,14 @@ dat <- dcast(dat,
              system+FBgn~cdition, 
              value.var = "diff")
 
-pdf("pdf/Figures/alluvial_plot_timecourse_RNA.pdf", 
-    width = 4, 
+pdf("pdf/RNA_alluvial_plot_timecourse_RNA.pdf", 
+    width = 3, 
     height = 2.5)
 par(cex= 0.7,
     las= 2,
     mar= c(4,5,1,6),
     tcl= -0.2,
+    lend= 1,
     mgp= c(3,0.5,0),
     lwd= 0.5)
 dat[, {
@@ -31,6 +32,6 @@ dat[, {
        y,
        c(vars),
        xpd= T,
-       cex= 1)
+       cex= 0.6)
 }, system]
 dev.off()

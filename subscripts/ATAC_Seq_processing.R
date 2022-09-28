@@ -60,7 +60,7 @@ if(!file.exists("db/peaks/ATAC/ATAC_merged_peaks.narrowPeak"))
 
 if(!file.exists("db/peaks/ATAC/ATAC_confident_peaks.narrowPeak"))
 {
-  conf <- vl_importBed("db/peaks/ATAC/ATAC_merged_peaks.narrowPeak", extraCols= "narrowPeak")
+  conf <- vl_importBed("db/peaks/ATAC/ATAC_merged_peaks.narrowPeak")[signalValue>2 & qValue>2]
   rep_peaks <- rbindlist(lapply(meta$peaks_file, vl_importBed, extraCols= "narrowPeak"), idcol = T)
   conf <- conf[rep_peaks[conf, .N, .EACHI, on= c("seqnames", "start<=end", "end>=start")]$N>=10]
   fwrite(conf[order(seqnames, start)],

@@ -17,7 +17,7 @@ HTM[, perc:= value.y/value.x*100]
 HTM <- HTM[, .(perc= mean(perc)), .(FBgn, ChIP, recovery, cdition= variable.y)]
 HTM[, cdition:= factor(cdition, c("PH29", "PHD9", "PHD11"))]
 
-pdf("pdf/Figures/recovery_ChIP_percentage_cditions.pdf", 
+pdf("pdf/recovery_ChIP_percentage_cditions.pdf", 
     width= 8,
     height= 2.5)
 par(las= 2,

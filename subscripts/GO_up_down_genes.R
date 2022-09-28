@@ -5,39 +5,15 @@ require(readxl)
 require(GenomicRanges)
 require(BSgenome.Dmelanogaster.UCSC.dm6)
 
-loadRData <- function(fileName){
-  load(fileName)
-  get(ls()[ls() != "fileName"])
-}
-
-###################################################
-# Format dat
-###################################################
 # Import
-meta <- fread("Rdata/processed_metadata_RNA.txt")
-meta <- meta[DESeq2_object=="epiCancer_noGFP"]
-meta <- na.omit(meta[, .(cdition= gsub("^RNA_", "", cdition), FC_file)])
-meta[, cdition:= factor(cdition, 
-                        levels= c("PH18", "PH29", "PHD9", "PHD11"))]
-dat <- meta[, fread(FC_file), (meta)]
-dat <- dat[diff!="unaffected"]
-symbols <- as.data.table(rtracklayer::import("/mnt/d/_R_data/genomes/dm6/dmel-all-r6.36.gtf"))
-symbols <- unique(symbols[, .(FBgn= gene_id, symbol= gene_symbol)])
-dat <- symbols[dat, on= "FBgn", nomatch= NULL]
-
-# Select diff genes no diff in PH18
-dat <- dat[diff!="unaffected"]
-diff_18 <- dat["PH18", FBgn, on= "cdition"]
-dat <- dat[!(FBgn %in% diff_18) & cdition!="PH18"]
-
-# Split PRC1 +/-
-PRC1 <- loadRData("external_data/SA2020_cl.list")
-PRC1 <- rbindlist(lapply(PRC1$genes, function(x) data.table(symbol= x)), idcol = "PRC1_cluster")
-dat[, class:= paste(diff, ifelse(symbol %in% PRC1$symbol, "PRC1+", "PRC1-"))]
-
+dat <- fread("Rdata/final_gene_features_table.txt")
+PH18 <- dat[diff_PH18!="unaffected", FBgn]
+dat <- melt(dat, id.vars = c("FBgn", "PRC1_bound"), measure.vars = patterns("diff"= "^diff"))
+dat <- dat[value!="unaffected" & !(FBgn %in% PH18)]
+dat[, cdition:= gsub("diff_", "", variable)]
 # GOs
 GO <- dat[, {
-  vl_GO_enrich(geneIDs = split(FBgn, class), 
+  vl_GO_enrich(geneIDs = split(FBgn, list(value, ifelse(PRC1_bound, "PRC1+", "PRC1-")), sep= " "),
                species = "Dm", 
                plot = F)
 }, cdition]
@@ -45,10 +21,10 @@ GO <- dat[, {
 ###################################################
 # plot
 ###################################################
-pdf("pdf/Figures/GO_up_down_genes_GFP-.pdf", 
-    width = 10, 
+pdf("pdf/RNA_GO_up_down_genes_GFP-.pdf", 
+    width = 7.5, 
     height = 10)
-par(mar= c(8, 35, 4.1, 10),
+par(mar= c(8, 27, 4.1, 7),
     las= 2,
     mgp= c(2,0.5,0))
 GO[, {

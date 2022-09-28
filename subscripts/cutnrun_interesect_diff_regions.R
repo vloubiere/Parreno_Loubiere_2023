@@ -12,9 +12,9 @@ coll <- vl_collapseBed(dat)
 dat[coll, idx:= i.idx, on= c("seqnames", "start<=end", "end>=start")]
 categ <- split(dat$idx, dat$change)
 
-pdf("pdf/Figures/cuntrun_intersect_diff_regions.pdf", 10, 7)
+pdf("pdf/cutnrun_intersect_diff_regions.pdf", 10, 7)
 par(mfrow= c(2,2),
-    mar= c(2,2,2,2))
+    mar= c(7,18,2,2))
 vl_upset_plot(categ[grep("PH29", names(categ), value = T)])
 vl_upset_plot(categ[grep("H3K27me3", names(categ), value = T)])
 vl_upset_plot(categ[grep("H3K27Ac", names(categ), value = T)])

@@ -31,7 +31,7 @@ net1 <- lapply(g1, function(x) {
 #----------------------------------------------------#
 # PLOT
 #----------------------------------------------------#
-pdf("pdf/Figures/network_per_cluster.pdf", height = 5, width = 5)
+pdf("pdf/cluster_network_per_cluster.pdf", height = 5, width = 5)
 par(mar= c(2,2,2,2))
 lapply(seq(net1), function(i)
 {

@@ -12,7 +12,7 @@ setorderv(dat,
 dat[, col:= switch(diff, "up"= "red", "down"= "blue", "unaffected"= "lightgrey"), diff]
 dat <- dat[order(col=="lightgrey", decreasing= T)]
 
-pdf("pdf/Figures/MA_plots_RNA.pdf", 10, 8.5)
+pdf("pdf/RNA_MA_plots_RNA.pdf", 10, 8.5)
 par(mfrow=c(3,4))
 dat[, {
   plot(baseMean, 

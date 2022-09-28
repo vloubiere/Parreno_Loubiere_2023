@@ -4,7 +4,7 @@ require(vlfunctions)
 ######################################################################
 # Import data
 ######################################################################
-dat <- fread("wip/gDNA_final_table.txt")
+dat <- readRDS("Rdata/gDNA_final_table.rds")
 dat[cdition=="PH18_2", cdition:= "PH18"]
 dat[, cdition:= gsub("_", "_rep", cdition)]
 dat[, cdition:= factor(cdition, 
@@ -17,16 +17,14 @@ dat[, cdition:= factor(cdition,
                          "PHD11_rep2"))]
 setorderv(dat, "cdition")
 
-pdf("wip/gDNA_conditions_overlaps.pdf", 
+pdf("pdf/gDNA_conditions_overlaps.pdf", 
     30, 
     4.5)
-par(cex= 0.6)
+par(cex= 0.6,
+    mar= c(12,15,2,2))
 dat[, {
   pl <- split(id, cdition)
   vl_upset_plot(pl)
   title(main=  alt_class)
 }, alt_class]
 dev.off()
-
-
-

@@ -15,7 +15,7 @@ dat <- fread("Rdata/final_gene_features_table.txt")[!is.na(recovery), .(FBgn, re
 dat <- FC[dat, on= "ID==FBgn"]
 dat[, cdition:= factor(cdition, c("PH29", "PHD9", "PHD11"))]
 
-pdf("pdf/Figures/recovery_ChIP_FC_cditions.pdf", 
+pdf("pdf/recovery_ChIP_FC_cditions.pdf", 
     width= 8,
     height= 2.5)
 par(las= 2,

@@ -4,7 +4,7 @@ require(vlfunctions)
 ######################################################################
 # Import data
 ######################################################################
-dat <- fread("wip/gDNA_final_table.txt")
+dat <- readRDS("Rdata/gDNA_final_table.rds")
 dat <- dat[!(PH18)]
 dat[, cdition:= gsub("_", "_rep", cdition)]
 dat[, cdition:= factor(cdition, 
@@ -16,10 +16,10 @@ dat[, cdition:= factor(cdition,
                          "PHD11_rep2"))]
 setorderv(dat, "cdition")
 
-pdf("wip/gDNA_mutations_counts.pdf")
+pdf("pdf/gDNA_mutations_counts.pdf", 4, 4)
 dat[, {
   vl_plot_table(.SD[, .(Count= .N), cdition])
-  title(main= alt_class)
+  title(main= paste0(alt_class, "\n(not found in PH18)"))
 }, alt_class]
 dat[, {
   total <- length(unique(id))
@@ -29,7 +29,7 @@ dat[, {
   }, occurence]
   vl_plot_table(rbind(counts,
                       data.table(occurence= "Total", Count= total)))
-  title(main= alt_class)
+  title(main= paste0(alt_class, "\n(not found in PH18)"))
 }, alt_class]
 dev.off()
 

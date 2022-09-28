@@ -13,7 +13,7 @@ stats[, (cols):= lapply(.SD, formatC, big.mark = ",", format = "d"), .SDcols= co
 setkeyv(stats, c("system", "cdition", "rep"))
 setcolorder(stats, "system")
 
-pdf("pdf/Figures/Alignment_statistics_RNA.pdf", 
+pdf("pdf/RNA_alignment_statistics.pdf", 
     height = 12, 
     width = 10)
 grid.table(stats)

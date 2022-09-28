@@ -1,45 +1,61 @@
 setwd("/mnt/d/_R_data/projects/epigenetic_cancer")
-require(data.table)
+require(vlfunctions)
+require(GenomicRanges)
 
 ######################################################################
 # Import data
 ######################################################################
-dat <- fread("Rdata/gDNA_final_table.txt")
-# dat <- dat[!(PH18)]
+dat <- readRDS("Rdata/gDNA_final_table.rds")
 dat[, c("seqnames", "start"):= tstrsplit(id, ":|-", keep= c(1,2))]
-dat[, seqnames:= paste0("chr", seqnames)]
 dat[, start:= as.numeric(start)]
 dat[, total:= .N, .(cdition, class, alt_class)]
 
 bins <- vl_binBSgenome("dm6", 
-                       bins_width = 25e3, 
+                       bins_width = 1e5, 
                        restrict_seqnames = c("chr2L", "chr2R", "chr3L", "chr3R", "chr4","chrX","chrY"))
-
+# counts hits per bin
 counts <- dat[, {
   .SD[bins, .(count= .N), .EACHI, on= c("seqnames", "start>=start", "start<=end")]
 }, .(cdition, total, class, alt_class)]
 setnames(counts, make.unique(names(counts)))
-counts$start.1 <- NULL
-counts <- merge(counts[cdition!="PH18_2"],
+setnames(counts, "start.1", "end")
+counts <- merge(counts[cdition!="PH18_2", !"end"],
                 counts[cdition=="PH18_2", !"cdition"],
                 by= c("class", "alt_class", "seqnames", "start"),
                 suffixes= c("_mut", "_ctl"))
-counts[, pval:= {
+counts[, c("OR", "pval"):= {
   fisher.test(matrix(c(count_mut,
                        total_mut-count_mut,
                        count_ctl, 
-                       total_ctl-count_ctl), 2, 2), alternative='greater')$p.value
+                       total_ctl-count_ctl), 2, 2), 
+              alternative='greater')[c("estimate", "p.value")]
 }, .(count_mut, total_mut, count_ctl, total_ctl)]
 counts[, fdr:= p.adjust(pval, "fdr"), .(cdition, alt_class)]
-counts[fdr<0.1]
+final <- vl_collapseBed(counts[fdr<0.1])
 
-pdf("pdf/Figures/gDNA_hostspots.pdf", 
-    15, 
+# Overlapping genes
+genes <- import("../../genomes/dm6/dmel-all-r6.36.gtf")
+seqlevelsStyle(genes) <- "UCSC"
+genes <- as.data.table(genes)[type=="gene"]
+ov <- vl_intersectBed(genes, final)[, .(gene_id, gene_symbol, seqnames, start, end)]
+fwrite(ov,
+       "Rdata/genes_overlapping_highly_mutated_regions.txt",
+       sep= "\t",
+       quote= F,
+       na= NA)
+
+# Plot
+beds <- list.files("db/bed/mutations/", 
+                   full.names = T)
+
+pdf("pdf/gDNA_hostspots.pdf", 
+    20, 
     4.5)
-par(cex= 0.6)
-counts[, {
-  ids <- split(id, cdition)
-  vl_upset_plot(ids)
-  title(main= paste(class, alt_class))
-}, .(class, alt_class)]
+par(mar= c(5,10,5,2))
+final[, {
+  vl_screenshot(.SD,
+                beds,
+                genome= "dm6")
+  title(main= paste0(.SD, collapse = "_"))
+}, idx]
 dev.off()

@@ -2,9 +2,10 @@ setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(data.table)
 require(vlfunctions)
 
+# Import
 gf <- fread("Rdata/final_gene_features_table.txt")
 
-# Select activity matched controls
+# Format
 .m <- melt(gf, 
             id.vars = c("FBgn", "recovery"), 
             measure.vars = patterns("FPKM"= "^FPKM_PH"), 
@@ -45,26 +46,32 @@ dat <- merge(dat, TTS, by.x= "FBgn", by.y= "gene_id")
 dat[, recovery:= factor(recovery, c("control", "noRecovery"))]
 
 # PLOT
-Cc <- rev(vl_palette_few_categ(2))
-pdf("pdf/Figures/H3K36me3_noRecovery_genes.pdf", height = 9, width = 5)
-layout(matrix(1:12, 4, 3, byrow = T), widths = c(0.35,0.35,1))
+Cc <- c("lightgrey", "rosybrown1")
+
+pdf("pdf/recovery_H3K36me3_noRecovery_genes.pdf", height = 9, width = 5)
+layout(matrix(1:12, 4, 3, byrow = T), 
+       widths = c(0.35,0.35,1))
 par(mar= c(5,3,2,1),
+    mgp= c(1.5,0.5,0),
+    tcl= -0.2,
     las= 1)
 dat[, {
   vl_boxplot(FPKM~recovery,
              tilt.names= T,
              compute_pval= list(c(1,2)),
              main= cdition,
-             col= Cc)
+             col= Cc,
+             ylab= "FPKM")
   vl_boxplot(K36me3~recovery,
              tilt.names= T,
              compute_pval= list(c(1,2)),
              main= cdition,
-             col= Cc)
+             col= Cc,
+             ylab= "Enrichment")
   vl_bw_average_track(bed = .SD, 
                       tracks = track, 
                       upstream = 10000,
-                      downstream = 2500,
+                      downstream = 10000,
                       set_IDs = recovery, 
                       stranded = T, 
                       center_label = "TTS", 
