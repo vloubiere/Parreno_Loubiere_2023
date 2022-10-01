@@ -9,7 +9,9 @@ dat[, dir:= dirname(file)]
 dat[dir %in% c("db/peaks/ATAC", "db/peaks/cutnrun"), file:= ifelse(grepl("confident", file), file, NA)]
 dat[dir %in% c("db/bed/ATAC/", "db/bed/cutnrun_EcR/"), file:= NA]
 dat <- na.omit(dat)
-dat[, dir.create(paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/", dir), recursive = T), dir]
+dat[, dir.create(paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/", dir), 
+                 recursive = T, 
+                 showWarnings = F), dir]
 dat[, file.copy(normalizePath(file), 
                 paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/", file),
                 overwrite = T)]

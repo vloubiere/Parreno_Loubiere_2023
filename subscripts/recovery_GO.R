@@ -19,12 +19,12 @@ GO <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat$recovery),
 #############################
 # PLOT
 #############################
-pdf("pdf/recovery_GOs.pdf", 4, 5)
-par(mar= c(3,31,3,7),
-    las= 1,
+pdf("pdf/recovery_GOs.pdf", 4, 30)
+par(mar= c(5,31,3,7),
+    las= 2,
     cex= 0.5)
 plot(GO, 
      padj_cutoff = 0.05, 
-     top_enrich = 40, 
+     top_enrich = 200, 
      cex.balloons= 0.4)
 dev.off()

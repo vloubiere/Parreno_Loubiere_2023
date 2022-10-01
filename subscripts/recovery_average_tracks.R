@@ -29,7 +29,6 @@ dat <- merge(dat, TSS, by.x= "FBgn", by.y= "gene_id")
 dat[, recovery:= factor(recovery, c("Recovery", "noRecovery"))]
 dat[, c("variable", "cdition"):= tstrsplit(variable, "_")]
 dat[variable=="ATAC", cdition:= "ED"]
-dat[, cdition:= factor(cdition, c("PH18", "PH29", "PHD9", "PHD11", "ED", "CNSID"))]
 
 #-----------------------------------------#
 # Plot 1
@@ -47,10 +46,9 @@ par(mar= c(5,4,2,1),
     tcl= -0.2)
 dat[!(cdition %in% c("PH29", "PHD9", "PHD11")), {
   # Plot average track for each class
-  .c <- unique(.SD)
-  .q <- vl_bw_average_track(bed= .c, 
+  .q <- vl_bw_average_track(bed= .SD, 
+                            set_IDs = recovery,
                             tracks= track,
-                            set_IDs = .c$recovery,
                             upstream = 2500,
                             downstream = 10000,
                             stranded = T,
@@ -60,11 +58,11 @@ dat[!(cdition %in% c("PH29", "PHD9", "PHD11")), {
                             col = Cc)
   
   # Legend
-  leg <- .c[, .(legend= paste0(recovery, " (", .N, " genes)")), keyby= recovery]
-  legend("topright",
-         legend = leg$legend,
-         fill= Cc,
-         bty= "n")
+  leg <- unique(.q[, .(set_IDs, col)])
+  leg[, legend("topright",
+               legend = set_IDs,
+               fill= col,
+               bty= "n")]
   title(main= paste(variable, cdition))
   
   # Boxplot
@@ -74,13 +72,16 @@ dat[!(cdition %in% c("PH29", "PHD9", "PHD11")), {
              compute_pval= list(c(1,2)),
              tilt.names= T)
   print(".")
-}, .(variable, cdition, track), .SDcols= c("seqnames", "start", "end", "strand", "recovery")]
+}, .(variable, cdition, track)]
 dev.off()
 
 #-----------------------------------------#
 # Plot 2
 #-----------------------------------------#
-Cc <- c("chartreuse3", "chocolate1", "darkorchid2", "brown2")
+Cc <- c("chartreuse3", "brown2", "chocolate1", "darkorchid2")
+sub <- dat[cdition %in% c("PH18", "PH29", "PHD9", "PHD11")]
+sub[, cdition:= factor(cdition, c("PH18", "PH29", "PHD9", "PHD11"))]
+setorderv(sub, "cdition")
 
 pdf("pdf/recovery_cditions_average_tracks.pdf",
     height = 5, 
@@ -91,37 +92,34 @@ par(mar= c(5,4,2,1),
     las= 1,
     mgp= c(2.5,0.5,0),
     tcl= -0.2)
-dat[cdition %in% c("PH18", "PH29", "PHD9", "PHD11"), {
+sub[, {
   # Plot average track for each class
-  .c <- unique(.SD)
-  .c[, cdition:= factor(cdition, c("PH18", "PH29", "PHD9", "PHD11"))]
-  setorderv(.c, "cdition")
-  vl_bw_average_track(bed= .c, 
-                      set_IDs = .c$cdition,
-                      tracks= unique(track),
-                      upstream = 2500,
-                      downstream = 10000,
-                      stranded = T,
-                      center_label = "TSS", 
-                      legend.cex = 0.6, 
-                      col = Cc,
-                      legend= F,
-                      col.adj= c(0.1,0.3))
+  .q <- vl_bw_average_track(bed= .SD,
+                            tracks= unique(track),
+                            upstream = 2500,
+                            downstream = 10000,
+                            stranded = T,
+                            center_label = "TSS", 
+                            legend.cex = 0.6, 
+                            col = Cc,
+                            legend= F)
   # Legend
-  legend("topright",
-         legend = levels(.c$cdition),
-         fill= Cc,
-         bty= "n",
-         cex= 0.7)
+  leg <- unique(.q[, .(name, col)])
+  leg[, name:= tstrsplit(name, "_", keep= 2)]
+  leg[, legend("topright",
+               legend = name,
+               fill= col,
+               bty= "n",
+               cex= 0.7)]
+  
   title(main= paste(recovery, variable))
   
   # Boxplot
   vl_boxplot(value~cdition,
-             .c,
-             col= adjustcolor(Cc, 0.3),
+             col= adjustcolor(Cc, 0.5),
              ylab= "Enrichment", 
              compute_pval= list(c(1,2), c(1,3), c(1,4)),
              tilt.names= T)
   print(".")
-}, .(recovery, variable), .SDcols= c("seqnames", "start", "end", "strand", "cdition", "track")]
+}, .(recovery, variable)]
 dev.off()
