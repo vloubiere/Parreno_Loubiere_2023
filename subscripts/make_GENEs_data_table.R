@@ -66,15 +66,17 @@ dat[, K118Ub_bound:= FBgn %in% sel]
 ##########################################################
 # Add RECOVERY
 ##########################################################
-dat[, unaffected_PH18:= padj_PH18>0.05] # Strict
-dat[, up_PH29:= padj_PH29<0.05 & log2FoldChange_PH29>(log2(1.5))] # Strict
-dat[, up_PHD9:= padj_PHD9<0.05 & log2FoldChange_PHD9>0] # Lose
-dat[, up_PHD11:= padj_PHD11<0.05 & log2FoldChange_PHD11>0] # Lose
-dat[K27me3_bound
-    & unaffected_PH18
-    & up_PH29, recovery:= ifelse(up_PHD9 | up_PHD11, "noRecovery", "Recovery")]
-dat$unaffected_PH18 <- dat$up_PH29 <- dat$up_PHD9 <- dat$up_PHD11 <- NULL
-
+# dat[, unaffected_PH18:= padj_PH18>0.05] # Strict
+# dat[, up_PH29:= padj_PH29<0.05 & log2FoldChange_PH29>(log2(1.5))] # Strict
+# dat[, up_PHD9:= padj_PHD9<0.05 & log2FoldChange_PHD9>0] # Lose
+# dat[, up_PHD11:= padj_PHD11<0.05 & log2FoldChange_PHD11>0] # Lose
+# dat[K27me3_bound
+#     & unaffected_PH18
+#     & up_PH29, recovery:= ifelse(up_PHD9 | up_PHD11, "noRecovery", "Recovery")]
+# dat$unaffected_PH18 <- dat$up_PH29 <- dat$up_PHD9 <- dat$up_PHD11 <- NULL
+dat[(PRC1_bound | K27me3_bound | K118Ub_bound), recovery:= fcase(cl==2, "noRecovery",
+                                                                 cl==5, "Recovery",
+                                                                 default= NA)]
 ##########################################################
 # Quantif CUTNRUN
 ##########################################################

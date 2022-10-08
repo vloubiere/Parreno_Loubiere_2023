@@ -186,13 +186,8 @@ knitr::include_graphics("../pdf/recovery_ph18_average_tracks_PH_peaks.pdf")
 ```
 
 ## Cutnrun FC between KD and PH18
-### Using DESeq2 log2FC
 ```{r}
 knitr::include_graphics("../pdf/recovery_ChIP_FC_cditions.pdf")
-```
-### Expressed as % of PH18 enrichment
-```{r}
-knitr::include_graphics("../pdf/recovery_ChIP_percentage_cditions.pdf")
 ```
 ## K36me3 at noRecovery vs activity matched genes
 ```{r}

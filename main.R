@@ -71,10 +71,10 @@ if(F)
   file.edit("git_epiCancer/subscripts/recovery_GO.R") # GO
   file.edit("git_epiCancer/subscripts/recovery_STRING_network.R") # Network
   file.edit("git_epiCancer/subscripts/recovery_motifs_enrichment.R") # Motifs enrichment
+  file.edit("git_epiCancer/subscripts/recovery_motifs_counts.R") # Motifs enrichment
   file.edit("git_epiCancer/subscripts/recovery_average_tracks.R") # average tracks in control and between cditions
   file.edit("git_epiCancer/subscripts/recovery_average_tracks_PH_peaks.R") # average tracks centered on assigned PH peaks
   file.edit("git_epiCancer/subscripts/recovery_ChIP_FC_cditions.R") # ChIP FC per condition
-  file.edit("git_epiCancer/subscripts/recovery_ChIP_percentage_cditions.R") # Similar to previous one, but with % of WT coverage
   file.edit("git_epiCancer/subscripts/recovery_K36me3_enrich.R") # No recovery genes abortive transcription?
   
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_screenshots.R") # Not used

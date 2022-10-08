@@ -14,6 +14,7 @@ FC <- meta[, fread(value), .(ChIP, cdition)]
 dat <- fread("Rdata/final_gene_features_table.txt")[!is.na(recovery), .(FBgn, recovery)]
 dat <- FC[dat, on= "ID==FBgn"]
 dat[, cdition:= factor(cdition, c("PH29", "PHD9", "PHD11"))]
+dat <- dat[!is.na(log2FoldChange)]
 
 pdf("pdf/recovery_ChIP_FC_cditions.pdf", 
     width= 8,

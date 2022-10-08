@@ -48,7 +48,7 @@ dat[, recovery:= factor(recovery, c("control", "noRecovery"))]
 # PLOT
 Cc <- c("lightgrey", "rosybrown1")
 
-pdf("pdf/recovery_H3K36me3_noRecovery_genes.pdf", height = 9, width = 5)
+pdf("pdf/recovery_H3K36me3_noRecovery_genes.pdf", 9, 5)
 layout(matrix(1:12, 4, 3, byrow = T), 
        widths = c(0.35,0.35,1))
 par(mar= c(5,3,2,1),

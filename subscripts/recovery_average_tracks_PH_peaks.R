@@ -6,7 +6,7 @@ require(vlfunctions)
 
 # Import data
 dat <- fread("Rdata/final_gene_features_table.txt")
-dat <- dat[!is.na(recovery)]
+dat <- dat[!is.na(recovery) & PRC1_bound]
 dat <- melt(dat, 
             id.vars = c("FBgn", "recovery"), 
             measure.vars = patterns("_body$|_prom$|_TTS$"))
@@ -18,8 +18,9 @@ dat[is.na(track), track := list.files("db/bw/SA_2020/",
                                       paste0(variable, "_merge"), 
                                       full.names = T), variable]
 dat[variable=="ATAC", track:= "db/bw/ATAC/ATAC_merged.bw"]
-# TSS coor
-peaks <- fread("Rdata/final_RE_motifs_table.txt")[group=="PH", .(coor, FBgn)]
+# PH_peaks coor
+peaks <- fread("Rdata/final_RE_motifs_table.txt")
+peaks <- peaks[group=="PH" & between(dist, -5000, 0)]
 peaks[, c("seqnames", "start", "end"):= tstrsplit(coor, ":|-")]
 dat <- merge(dat, peaks, by= "FBgn")
 # Factors
@@ -27,6 +28,7 @@ dat[, recovery:= factor(recovery, c("Recovery", "noRecovery"))]
 dat[, c("variable", "cdition"):= tstrsplit(variable, "_")]
 dat[variable=="ATAC", cdition:= "ED"]
 dat[, cdition:= factor(cdition, c("PH18", "PH29", "PHD9", "PHD11", "ED", "CNSID"))]
+setorderv(dat, "recovery")
 
 #-----------------------------------------#
 # Plot
@@ -51,17 +53,19 @@ dat[!(cdition %in% c("PH29", "PHD9", "PHD11")), {
                             upstream = 2500,
                             downstream = 2500,
                             stranded = T,
-                            center_label = "TSS", 
+                            center_label = "PH peak center", 
                             legend.cex = 0.6, 
                             legend= F,
                             col = Cc)
-  
   # Legend
-  leg <- .c[, .(legend= paste0(recovery, " (", .N, " sites)")), keyby= recovery]
-  legend("topright",
-         legend = leg$legend,
-         fill= Cc,
-         bty= "n")
+  leg <- unique(.q[, .(set_IDs, col)])
+  leg[, {
+    legend("topright",
+           legend = set_IDs,
+           fill= col,
+           bty= "n")
+  }]
+  
   title(main= paste(variable, cdition))
   
   # Boxplot

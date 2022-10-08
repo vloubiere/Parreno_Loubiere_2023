@@ -5,30 +5,43 @@ require(GenomicRanges)
 require(vlfunctions)
 
 # Import data
-dat <- fread("Rdata/final_gene_features_table.txt")
-dat <- dat[!is.na(recovery)]
-dat <- melt(dat, 
-            id.vars = c("FBgn", "recovery"), 
-            measure.vars = patterns("_body$|_prom$|_TTS$"))
-dat[, variable:= gsub("_body$|_prom$|_TTS$", "", variable)]
-dat[, track:= list.files("db/bw/cutnrun/", 
-                         paste0(variable, "_merge"), 
-                         full.names = T), variable]
-dat[is.na(track), track := list.files("db/bw/SA_2020/", 
-                                      paste0(variable, "_merge"), 
-                                      full.names = T), variable]
-dat[variable=="ATAC", track:= "db/bw/ATAC/ATAC_merged.bw"]
-# TSS coor
-gtf <- import("../../genomes/dm6/dmel-all-r6.36.gtf")
-seqlevelsStyle(gtf) <- "UCSC"
-gtf <- as.data.table(gtf)
-TSS <- vl_resizeBed(gtf[type=="gene"], "start", 0, 0)
-TSS <- TSS[, .(seqnames, start, end, strand, gene_id)]
-dat <- merge(dat, TSS, by.x= "FBgn", by.y= "gene_id")
-# Factors
+dat <- fread("Rdata/final_gene_features_table.txt")[, .(seqnames, start, end, strand, recovery)]
+# Select recovery genes whose TSS is bound by PRC1
+dat <- vl_resizeBed(dat[!is.na(recovery)], "start", 0, 0)
+PRC1 <- vl_importBed("db/peaks/cutnrun/PH_PH18_confident_peaks.narrowPeak")
+dat <- vl_intersectBed(dat, PRC1)
+# bw files
+tracks <- data.table(file= c(list.files("db/bw/cutnrun/", "merge", full.names = T),
+                             "db/bw/ATAC/ATAC_merged.bw",
+                             "db/bw/cutnrun_EcR/EcR_-6hAPF_merge.bw",
+                             "db/bw/cutnrun_EcR/EcR_+6hAPF_merge.bw",
+                             "db/bw/SA_2020/PC_ED_merge.bw",
+                             "db/bw/SA_2020/PSC_ED_merge.bw",
+                             "db/bw/SA_2020/PH_ED_merge.bw",
+                             "db/bw/SA_2020/SUZ12_ED_merge.bw",
+                             "db/bw/SA_2020/PHO_CNSID_merge.bw",
+                             "db/bw/SA_2020/COMBGAP_CNSID_RP.bw",
+                             "db/bw/SA_2020/SPPS_CNSID_BL_merge.bw"))
+tracks[, c("variable", "cdition"):= tstrsplit(basename(file), "_", keep= 1:2)]
+tracks[variable=="EcR", c("variable", "cdition"):= .(paste0(variable, cdition), "ED")]
+tracks[variable=="ATAC", cdition:= "ED"]
+tracks[grepl("SA_2020", file), variable:= paste0(variable,"_SciAdv")]
+# Gene body
+tracks[grepl("^H", variable) & variable!="H3K27Ac", c("upstream", "downstream"):= .(1000, 5000)]
+# Gene promoter
+tracks[is.na(upstream), c("upstream", "downstream"):= .(750, 500)]
+# Resize regions
+dat <- tracks[, {
+  vl_resizeBed(dat, 
+               center = "start", 
+               upstream = upstream, 
+               downstream = downstream, 
+               genome = "dm6")
+}, (tracks)]
+# Order before plotting
 dat[, recovery:= factor(recovery, c("Recovery", "noRecovery"))]
-dat[, c("variable", "cdition"):= tstrsplit(variable, "_")]
-dat[variable=="ATAC", cdition:= "ED"]
+dat[, cdition:= factor(cdition, c("PH18", "PH29", "PHD9", "PHD11", "ED", "CNSID"))]
+setorderv(dat, c("recovery", "variable", "cdition"))
 
 #-----------------------------------------#
 # Plot 1
@@ -43,45 +56,44 @@ layout(matrix(1:(6*4), nrow=2, byrow = T),
 par(mar= c(5,4,2,1),
     las= 1,
     mgp= c(2.5,0.5,0),
-    tcl= -0.2)
+    tcl= -0.2,
+    cex.lab= 0.9)
 dat[!(cdition %in% c("PH29", "PHD9", "PHD11")), {
   # Plot average track for each class
-  .q <- vl_bw_average_track(bed= .SD, 
-                            set_IDs = recovery,
-                            tracks= track,
-                            upstream = 2500,
-                            downstream = 10000,
-                            stranded = T,
-                            center_label = "TSS", 
-                            legend.cex = 0.6, 
-                            legend= F,
-                            col = Cc)
-  
-  # Legend
-  leg <- unique(.q[, .(set_IDs, col)])
-  leg[, legend("topright",
-               legend = set_IDs,
-               fill= col,
-               bty= "n")]
+  vl_bw_average_track(bed= .SD, 
+                      set_IDs = recovery,
+                      tracks= file,
+                      upstream = 2500,
+                      downstream = 10000,
+                      stranded = T,
+                      center_label = "TSS",
+                      legend = F,
+                      col = Cc)
+  # Add quantification limits
+  abline(v= c(-upstream, downstream), lty= 2)
   title(main= paste(variable, cdition))
-  
+  legend("topright", 
+         legend= c("Recovery", "noRecovery"), 
+         fill= Cc,
+         bty= "n")
   # Boxplot
+  ylab <- if(upstream==(1000))
+    "Enrichment (TSS -1kb/+5kb)" else
+      "Enrichment (TSS -750/+500bp)"
+  value <- vl_bw_coverage(.SD, file)
   vl_boxplot(value~recovery,
              col= Cc,
-             ylab= "Enrichment", 
+             ylab= ylab, 
              compute_pval= list(c(1,2)),
              tilt.names= T)
   print(".")
-}, .(variable, cdition, track)]
+}, .(variable, cdition, file, upstream, downstream)]
 dev.off()
 
 #-----------------------------------------#
 # Plot 2
 #-----------------------------------------#
 Cc <- c("chartreuse3", "brown2", "chocolate1", "darkorchid2")
-sub <- dat[cdition %in% c("PH18", "PH29", "PHD9", "PHD11")]
-sub[, cdition:= factor(cdition, c("PH18", "PH29", "PHD9", "PHD11"))]
-setorderv(sub, "cdition")
 
 pdf("pdf/recovery_cditions_average_tracks.pdf",
     height = 5, 
@@ -92,34 +104,35 @@ par(mar= c(5,4,2,1),
     las= 1,
     mgp= c(2.5,0.5,0),
     tcl= -0.2)
-sub[, {
+dat[cdition %in% c("PH18", "PH29", "PHD9", "PHD11"), {
   # Plot average track for each class
-  .q <- vl_bw_average_track(bed= .SD,
-                            tracks= unique(track),
-                            upstream = 2500,
-                            downstream = 10000,
-                            stranded = T,
-                            center_label = "TSS", 
-                            legend.cex = 0.6, 
-                            col = Cc,
-                            legend= F)
+  vl_bw_average_track(bed= .SD,
+                      tracks= unique(file),
+                      upstream = 2500,
+                      downstream = 10000,
+                      stranded = T,
+                      center_label = "TSS",
+                      col = Cc,
+                      legend= F)
   # Legend
-  leg <- unique(.q[, .(name, col)])
-  leg[, name:= tstrsplit(name, "_", keep= 2)]
-  leg[, legend("topright",
-               legend = name,
-               fill= col,
-               bty= "n",
-               cex= 0.7)]
-  
+  abline(v= c(-upstream, downstream), lty= 2)
   title(main= paste(recovery, variable))
+  legend("topright", 
+         legend= c("PH18", "PH29", "PHD9", "PHD11"), 
+         fill= Cc,
+         bty= "n")
   
   # Boxplot
-  vl_boxplot(value~cdition,
+  ylab <- if(upstream==(1000))
+    "Enrichment (TSS -1kb/+5kb)" else
+      "Enrichment (TSS -750/+500bp)"
+  value <- lapply(unique(file), function(x) vl_bw_coverage(.SD, x))
+  vl_boxplot(value,
              col= adjustcolor(Cc, 0.5),
-             ylab= "Enrichment", 
              compute_pval= list(c(1,2), c(1,3), c(1,4)),
-             tilt.names= T)
+             tilt.names= T,
+             names= levels(droplevels(cdition)),
+             ylab= ylab)
   print(".")
-}, .(recovery, variable)]
+}, .(recovery, variable, upstream, downstream)]
 dev.off()

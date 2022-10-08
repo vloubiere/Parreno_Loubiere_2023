@@ -9,6 +9,7 @@ require(data.table)
 dat <- fread("Rdata/final_gene_features_table.txt")
 dat <- dat[!is.na(cl)]
 motifs <- fread("Rdata/final_RE_motifs_table.txt")
+motifs <- motifs[between(dist, -5000, 0)]
 motifs <- dat[motifs, on="FBgn", nomatch= NULL]
 
 # Compute gene network

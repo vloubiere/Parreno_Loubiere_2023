@@ -7,7 +7,6 @@ require(data.table)
 #############################
 # Import data
 dat <- fread("Rdata/final_gene_features_table.txt")
-dat <- dat[!is.na(cl)]
 dat <- dat[!is.na(recovery)]
 
 # Compute GO enrich
@@ -19,12 +18,13 @@ GO <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat$recovery),
 #############################
 # PLOT
 #############################
-pdf("pdf/recovery_GOs.pdf", 4, 30)
-par(mar= c(5,31,3,7),
+pdf("pdf/recovery_GOs.pdf", 4, 4.5)
+par(mar= c(7,31,1,7),
     las= 2,
     cex= 0.5)
 plot(GO, 
-     padj_cutoff = 0.05, 
-     top_enrich = 200, 
-     cex.balloons= 0.4)
+     padj_cutoff = 0.001, 
+     top_enrich = 25, 
+     cex.balloons= 0.4,
+     order= 'log2OR')
 dev.off()
