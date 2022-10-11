@@ -23,8 +23,8 @@ par(mar= c(7,31,1,7),
     las= 2,
     cex= 0.5)
 plot(GO, 
-     padj_cutoff = 0.001, 
-     top_enrich = 25, 
+     padj_cutoff = 0.01, 
+     top_enrich = 15, 
      cex.balloons= 0.4,
      order= 'log2OR')
 dev.off()

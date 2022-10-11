@@ -15,7 +15,7 @@ dat[, cdition:= gsub("diff_", "", variable)]
 GO <- dat[, {
   vl_GO_enrich(geneIDs = split(FBgn, list(value, ifelse(PRC1_bound, "PRC1+", "PRC1-")), sep= " "),
                species = "Dm", 
-               plot = F)
+               geneUniverse_IDs = fread("Rdata/final_gene_features_table.txt")$FBgn)
 }, cdition]
 
 ###################################################

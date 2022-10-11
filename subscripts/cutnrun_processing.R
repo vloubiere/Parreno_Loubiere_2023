@@ -98,7 +98,7 @@ MACS <- function(bam_ChIP,
                  broad,
                  SPMR)
 {
-  cmd <- paste0("/home/vloubiere/.local/bin/macs2 callpeak --keep-dup 1 -g dm --keep-dup 1 -f BAMPE",
+  cmd <- paste0("/home/vloubiere/.local/bin/macs2 callpeak -g dm --keep-dup 1 -f BAMPE",
                 ifelse(SPMR, " -B --SPMR", ""),
                 " --outdir ", paste0(dirname(output), "/"),
                 " -t ", paste(bam_ChIP, collapse= " "), 
