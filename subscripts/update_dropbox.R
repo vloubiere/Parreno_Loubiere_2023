@@ -35,3 +35,42 @@ file.copy("git_epiCancer/epiCancer_presentation.html",
 file.copy("git_epiCancer/styles.css",
           paste0("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/Presentations/styles.css"),
           overwrite = T)
+
+# Tables for collaborators
+dir.create("/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/tables_collaborators/", showWarnings = F)
+dat <- fread("Rdata/final_gene_features_table.txt")
+cols <- c("FBgn", "symbol", 
+          "log2FoldChange_PH18", "padj_PH18",           
+          "log2FoldChange_PHD11", "padj_PHD11", 
+          "log2FoldChange_PHD9", "padj_PHD9",
+          "log2FoldChange_PH29", "padj_PH29")
+fwrite(dat[recovery=="Recovery", ..cols],
+       "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/tables_collaborators/Recovery_genes.txt", 
+       col.names = T, 
+       sep= "\t",
+       na= NA,
+       quote= F)
+fwrite(dat[recovery=="noRecovery", ..cols],
+       "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/tables_collaborators/noRecovery_genes.txt", 
+       col.names = T, 
+       sep= "\t",
+       na= NA,
+       quote= F)
+fwrite(dat[cl==2, ..cols],
+       "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/tables_collaborators/nonRecovering_cluster2_genes.txt", 
+       col.names = T, 
+       sep= "\t",
+       na= NA,
+       quote= F)
+fwrite(dat[cl==5, ..cols],
+       "/mnt/c/Users/User/Dropbox (Compte personnel)/collaborations/epigenetic_cancer/tables_collaborators/Recovering_cluster5_genes.txt", 
+       col.names = T, 
+       sep= "\t",
+       na= NA,
+       quote= F)
+
+
+
+
+
+

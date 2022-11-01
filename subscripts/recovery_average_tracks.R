@@ -21,7 +21,8 @@ tracks <- data.table(file= c(list.files("db/bw/cutnrun/", "merge", full.names = 
                              "db/bw/SA_2020/SUZ12_ED_merge.bw",
                              "db/bw/SA_2020/PHO_CNSID_merge.bw",
                              "db/bw/SA_2020/COMBGAP_CNSID_RP.bw",
-                             "db/bw/SA_2020/SPPS_CNSID_BL_merge.bw"))
+                             "db/bw/SA_2020/SPPS_CNSID_BL_merge.bw",
+                             "db/bw/SA_2020/GAF_WD_OH_merge.bw"))
 tracks[, c("variable", "cdition"):= tstrsplit(basename(file), "_", keep= 1:2)]
 tracks[variable=="EcR", c("variable", "cdition"):= .(paste0(variable, cdition), "ED")]
 tracks[variable=="ATAC", cdition:= "ED"]
@@ -40,7 +41,7 @@ dat <- tracks[, {
 }, (tracks)]
 # Order before plotting
 dat[, recovery:= factor(recovery, c("Recovery", "noRecovery"))]
-dat[, cdition:= factor(cdition, c("PH18", "PH29", "PHD9", "PHD11", "ED", "CNSID"))]
+dat[, cdition:= factor(cdition, c("PH18", "PH29", "PHD9", "PHD11", "ED", "CNSID", "WD"))]
 setorderv(dat, c("recovery", "variable", "cdition"))
 
 #-----------------------------------------#

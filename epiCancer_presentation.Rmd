@@ -166,9 +166,15 @@ knitr::include_graphics("../pdf/recovery_GOs.pdf")
 knitr::include_graphics("../pdf/recovery_STRING_network.pdf")
 ```
 ### Motifs enrichment
+#### Over represented motifs
 ```{r}
 knitr::include_graphics("../pdf/recovery_motifs_enrichment.pdf")
 ```
+#### Heatmap ZEB and STAT motifs
+```{r}
+knitr::include_graphics("../pdf/recovery_promoters_motif_counts_heatmap.pdf")
+```
+
 ## Average tracks 
 ### Gene promoters PH18/WT conditions
 ```{r}
@@ -181,8 +187,13 @@ knitr::include_graphics("../pdf/recovery_cditions_average_tracks.pdf")
 ### PH assigned peaks 
 PH peaks assigned to their closest gene -> split between recovery & noRecovery
 
+Not used anymore
+
+### Compare PH peaks from Science Advances
+PH peaks from the Science Advances were used -> aTSS, enhancer, peaks overlapping recovering/non recovering genes promoters
+
 ```{r}
-knitr::include_graphics("../pdf/recovery_ph18_average_tracks_PH_peaks.pdf")
+knitr::include_graphics("../pdf/recovery_neoPRC1_average_tracks.pdf")
 ```
 
 ## Cutnrun FC between KD and PH18
@@ -193,9 +204,14 @@ knitr::include_graphics("../pdf/recovery_ChIP_FC_cditions.pdf")
 ```{r}
 knitr::include_graphics("../pdf/recovery_H3K36me3_noRecovery_genes.pdf")
 ```
-
-
-
+## K27Ac at recovery/noRecovery vs activity matched genes
+```{r}
+knitr::include_graphics("../pdf/recovery_H3K27Ac_activity_matched_genes.pdf")
+```
+## Compare FC at Day11 with PH  K27  K118 enrichments
+```{r}
+knitr::include_graphics("../pdf/recovery_PH_levels_vs_FC_D9_D11.pdf")
+```
 
 
 # gDNA mutations

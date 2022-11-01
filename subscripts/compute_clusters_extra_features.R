@@ -49,8 +49,6 @@ GO_PRC1 <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat[, paste(cl, ifelse(PRC1_bo
                         species = "Dm", 
                         plot= F)
 
-
-
 # Save
 saveRDS(list(net= net, 
              GO_all= GO_all,

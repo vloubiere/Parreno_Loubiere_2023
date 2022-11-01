@@ -71,9 +71,11 @@ plot(GO_PRC1,
 title("GOs enrichment per cluster +/- PRC1")
 
 # Motifs
-par(mar= c(5,6,3,8))
+par(mar= c(5,6,3,8),
+    cex.axis= 0.8)
 plot(enr,
      padj_cutoff= 0.05,
-     top_enrich= 15,
-     main= "TSS motifs")
+     top_enrich= 20,
+     main= "TSS motifs", 
+     cex.balloons = 0.9)
 dev.off()

@@ -6,14 +6,16 @@ require(data.table)
 ######################################################################
 dat <- readRDS("Rdata/gDNA_final_table.rds")
 dat <- dat[(cdition=="PH18_2" | !(PH18)) & type!="unknown"]
-dat[cdition=="PH18_2", occurence:= "Ph18_control"]
+dat[cdition=="PH18_2", occurence:= "PH18_control"]
 dat <- unique(dat[, .(id, type, class, occurence)])
 dat[, type:= factor(type)]
 dat[, type:= droplevels(type)]
+dat[occurence=="single condition", occurence:=  "single condition (not PH18)"]
+dat[occurence=="shared >=1 conditions", occurence:=  "shared >=1 conditions (not PH18)"]
 dat[, occurence:= factor(occurence,
-                         c("Ph18_control", 
-                           "single condition",
-                           "shared >=1 conditions"))]
+                         c("PH18_control", 
+                           "single condition (not PH18)",
+                           "shared >=1 conditions (not PH18)"))]
 Cc <- rainbow(length(levels(dat$type)))
 Cc <- adjustcolor(Cc, 0.4)
 

@@ -4,35 +4,31 @@ require(data.table)
 ######################################################################
 # Import data
 ######################################################################
-genes <- rtracklayer::import("../../genomes/dm6/dmel-all-r6.36.gtf")
-GenomeInfoDb::seqlevelsStyle(genes) <- "UCSC"
-genes <- as.data.table(genes)
-
 dat <- readRDS("Rdata/gDNA_final_table.rds")
 dat <- dat[!(PH18) & type %in% c("nonsynonymous SNV", "stopgain")]
-dat <- dat[, .(FBgn= unlist(FBgn)), .(id, class, occurence, cdition)]
+dat <- dat[, .(FBgn= unlist(FBgn), symbol= unlist(symbol)), .(id, class, occurence, cdition)]
 dat <- na.omit(dat)
 dat[, occurence:= factor(occurence,
                          c("single condition",
                            "shared >=1 conditions"))]
+dat[, cdition:= factor(cdition)]
+enr <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat$class), species = "Dm")
 
-pdf("pdf/gDNA_mutant_genes_GO.pdf")
-par(mar= c(5,15,5,8),
-    tcl= -0.2,
-    mgp= c(2,0.5, 0),
-    las= 2)
-GOs <- dat[, {
-  res <- vl_GO_enrich(geneIDs = unique(FBgn), species = "Dm")
-  title(main= class)
-  res
-}, class]
+pdf("pdf/gDNA_mutant_genes_GO.pdf", 4, 4)
+par(mar= c(7,31,3,7),
+    las= 2,
+    cex= 0.5)
+pl <- plot(enr)
+par(mar=c(5,20,3,7))
+pl[, {
+  sel <- AnnotationDbi::select(x= org.Dm.eg.db::org.Dm.eg.db,
+                               keys = as.character(variable), # Only GOs from test set are relevant!
+                               keytype= "GOALL", 
+                               columns= "FLYBASE")
+  tab <- dcast(dat[FBgn %in% sel$FLYBASE], symbol~cdition, fun.aggregate = length, drop = F)
+  tab <- tab[order(rowSums(tab[,!"symbol"]), decreasing = T, PH29_1, PH29_2, PHD11_1, PHD11_2, PHD9_1, PHD9_2)]
+  tab <- as.matrix(tab,1)
+  vl_heatmap(tab, cluster_cols= F, display_numbers= T, main= name, col= c("white", "red"))
+  ""
+}, .(variable, name)]
 dev.off()
-
-sel <- GOs[padj<0.05 & log2OR>0, 
-           .(FBgn= AnnotationDbi::select(org.Dm.eg.db::org.Dm.eg.db,
-                                         keys = as.character(GO),
-                                         keytype= "GOALL", 
-                                         columns= "FLYBASE")$FLYBASE), 
-           .(GO, variable)]
-sel <- sel[FBgn %in% unlist(dat$FBgn)]
-saveRDS(sel, "Rdata/GO_mutated_genes.rds")

@@ -18,13 +18,14 @@ layout(matrix(1:2, ncol= 1),
        heights = c(0.2, 1))
 par(las= 1, 
     mgp= c(2, 0.5,0),
-    tcl= -0.2)
+    tcl= -0.2,
+    cex.main= 0.8)
 pl[, {
   par(mar= c(0.2, 4.1, 1, 2.1))
   plot(density(NORMAL_alt_freq_max), 
        frame= F, 
        xaxt= "n", 
-       main= paste0(occurence, " (SNP+InDel)"),
+       main= paste0(occurence, " (SNP+InDel not found in PH18)"),
        yaxt= "n",
        ylab= NA)
   par(mar= c(3.1, 4.1, 0.2, 2.1))

@@ -14,9 +14,10 @@ if(F)
   ###########################################################################
   # Clustering and data tables
   ###########################################################################
-  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # Assign TSS/ATAC/PH peaks to closest prom -> motif +/-250bp
   file.edit("git_epiCancer/subscripts/clustering_transcriptomes.R") # SOM
   file.edit("git_epiCancer/subscripts/make_GENEs_data_table.R") # For each gene, retrieve RNA-Seq and compute features 
+  
+  file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # not used
   
   ###########################################################################
   # RNA analyses
@@ -71,11 +72,14 @@ if(F)
   file.edit("git_epiCancer/subscripts/recovery_GO.R") # GO
   file.edit("git_epiCancer/subscripts/recovery_STRING_network.R") # Network
   file.edit("git_epiCancer/subscripts/recovery_motifs_enrichment.R") # Motifs enrichment
-  file.edit("git_epiCancer/subscripts/recovery_motifs_counts.R") # Motifs enrichment
+  file.edit("git_epiCancer/subscripts/recovery_motifs_counts.R") # Motifs coutns histograms
+  file.edit("git_epiCancer/subscripts/recovery_motifs_specific_proteins.R") # Heatmap ZEB STAT motifs
   file.edit("git_epiCancer/subscripts/recovery_average_tracks.R") # average tracks in control and between cditions
-  file.edit("git_epiCancer/subscripts/recovery_average_tracks_PH_peaks.R") # average tracks centered on assigned PH peaks
+  file.edit("git_epiCancer/subscripts/recovery_average_tracks_neoPRC1.R") # average tracks in control and between cditions
   file.edit("git_epiCancer/subscripts/recovery_ChIP_FC_cditions.R") # ChIP FC per condition
   file.edit("git_epiCancer/subscripts/recovery_K36me3_enrich.R") # No recovery genes abortive transcription?
+  file.edit("git_epiCancer/subscripts/recovery_K27Ac_enrich.R") # Recovery genes have particular chromatin?
+  file.edit("git_epiCancer/subscripts/recovery_PH_levels_vs_FC.R") # PH levels vs FC
   
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_screenshots.R") # Not used
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_FC_development.R") # Not used

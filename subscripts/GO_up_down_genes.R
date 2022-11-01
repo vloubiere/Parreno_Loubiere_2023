@@ -1,9 +1,5 @@
 setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(vlfunctions)
-require(kohonen)
-require(readxl)
-require(GenomicRanges)
-require(BSgenome.Dmelanogaster.UCSC.dm6)
 
 # Import
 dat <- fread("Rdata/final_gene_features_table.txt")
@@ -33,7 +29,7 @@ GO[, {
   plot(.c,
        padj_cutoff = 0.05,
        top_enrich = 10,
-       cex.balloons= 0.5,
+       cex.balloons= 0.45,
        col= c("blue", "red"),
        main= cdition)
   print("done")

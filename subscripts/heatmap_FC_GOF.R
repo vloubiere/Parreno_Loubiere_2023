@@ -23,13 +23,13 @@ pdf("pdf/RNA_heatmap_FC_GOF.pdf",
     width = 4)
 par(mar= c(7,7,3,6),
     las= 2)
-.c <- vl_heatmap(mat, 
-                 row_clusters = pl$group,
-                 cluster_rows= F,
-                 cluster_cols= F, 
-                 display_numbers= T,
-                 legend_title= "log2FC",
-                 display_numbers_matrix = round(mat, 1),
-                 display_numbers_cex = 0.7,
-                 breaks= c(-5, 0, 5))
+vl_heatmap(mat, 
+           row_clusters = factor(pl$group, unique(pl$group)),
+           cluster_rows= F,
+           cluster_cols= F, 
+           display_numbers= T,
+           legend_title= "log2FC",
+           display_numbers_matrix = round(mat, 1),
+           display_numbers_cex = 0.7,
+           breaks= c(-5, 0, 5))
 dev.off()

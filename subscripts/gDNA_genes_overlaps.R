@@ -24,7 +24,7 @@ par(mar= c(10,11,6,2),
 dat[, {
   pl <- split(FBgn, cdition)
   vl_upset_plot(pl)
-  title(main= class)
+  title(main= paste(class, "(not found in PH18)"))
   print(class)
 }, class]
 dev.off()
