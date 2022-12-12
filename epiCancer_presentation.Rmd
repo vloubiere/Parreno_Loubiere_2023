@@ -16,8 +16,6 @@ knitr::opts_chunk$set(echo = FALSE, out.width = "1250px", out.height = "625px")
 ```
 
 
-
-
 # RNA-Seq
 ## Quality checks
 ### Alignment statistics

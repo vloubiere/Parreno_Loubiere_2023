@@ -80,6 +80,7 @@ if(F)
   file.edit("git_epiCancer/subscripts/recovery_K36me3_enrich.R") # No recovery genes abortive transcription?
   file.edit("git_epiCancer/subscripts/recovery_K27Ac_enrich.R") # Recovery genes have particular chromatin?
   file.edit("git_epiCancer/subscripts/recovery_PH_levels_vs_FC.R") # PH levels vs FC
+  file.edit("git_epiCancer/subscripts/recovery_PH_K27me3_peaks_overlaps_between_cditions.R") # PH levels vs FC
   
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_screenshots.R") # Not used
   file.edit("git_epiCancer/subscripts/RECOVERY_vs_NOT_FC_development.R") # Not used
@@ -106,6 +107,11 @@ if(F)
   ###########################################################################
   file.edit("git_epiCancer/epiCancer_presentation.Rmd")
   file.edit("git_epiCancer/subscripts/update_dropbox.R")
+  file.edit("git_epiCancer/subscripts/gDNA_genes_overlaps_with_PH18.R")
+  file.edit("git_epiCancer/subscripts/gDNA_mut_features_fig1.R")
+  
+  
+  
   
   ###########################################################################
   # MISCELLANEOUS / Casual
