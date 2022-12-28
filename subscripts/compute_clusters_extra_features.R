@@ -1,4 +1,4 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+# setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(vlfunctions)
 
 # Import data
@@ -14,7 +14,7 @@ TSS <- vl_resizeBed(dat[, .(seqnames, start, end, strand)],
                     downstream = 50)
 counts <- vl_motif_counts(TSS, 
                           genome = "dm6", 
-                          sel= vl_Dmel_motifs_DB_full[!is.na(FBgn), motif_ID])
+                          sel= vl_Dmel_motifs_DB_full[collection %in% c("bergman", "flyfactorsurvey", "jaspar") & !is.na(FBgn), motif_ID])
 counts_list <- split(counts, dat[, paste(cl, ifelse(PRC1_bound, "PRC1+", "PRC1-"))])
 enr <- vl_motif_cl_enrich(counts_list = counts_list, control_cl = c("0 PRC1-", "0 PRC1+"))
 
@@ -37,7 +37,8 @@ net <- vl_STRING_interaction(symbols = dat$symbol,
                              col= dat$col,
                              size = sizes*2.5,
                              cex.label = sizes/4,
-                             plot= F)
+                             plot= F, 
+                             version = "11.0")
 
 # Compute GO enrich
 GO_all <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat$cl),

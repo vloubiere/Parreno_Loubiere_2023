@@ -1,4 +1,5 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+# setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+setwd("/groups/stark/vloubiere/projects/epigenetic_cancer/")
 
 if(F)
 {
@@ -15,9 +16,43 @@ if(F)
   # Clustering and data tables
   ###########################################################################
   file.edit("git_epiCancer/subscripts/clustering_transcriptomes.R") # SOM
+  file.edit("git_epiCancer/subscripts/compute_clusters_extra_features.R") # Network, GO, motifs and STRING network
   file.edit("git_epiCancer/subscripts/make_GENEs_data_table.R") # For each gene, retrieve RNA-Seq and compute features 
-  
+  file.edit("git_epiCancer/subscripts/gDNA_final_table.R")
   file.edit("git_epiCancer/subscripts/make_REs_data_table.R") # not used
+  
+  ###########################################################################
+  # Main figures
+  ###########################################################################
+  # Figure 1
+  file.edit("git_epiCancer/subscripts/violin_plot_phKD_sizes.R")
+  file.edit("git_epiCancer/subscripts/mutations_features.R")
+  file.edit("git_epiCancer/subscripts/exonic_mutations_features.R")
+  file.edit("git_epiCancer/subscripts/mutated_genes_overlaps.R")
+  
+  # Supplementary
+  file.edit("git_epiCancer/subscripts/gDNA_GO_mutated_genes.R")
+  file.edit("git_epiCancer/subscripts/violin_plot_PscKD_sizes.R")
+  
+  # Figure 2
+  file.edit("git_epiCancer/subscripts/MA_plots.R") # Check up down genes
+  file.edit("git_epiCancer/subscripts/alluvial_plot_affected_genes.R") # Transitions timecourse
+  file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
+  file.edit("git_epiCancer/subscripts/heatmap_FC_JAKSTAT_JNK.R") # heatmap FC genes of interest
+  file.edit("git_epiCancer/subscripts/violin_plot_zfh1KD_sizes.R")
+  
+  # Figure 3
+  file.edit("git_epiCancer/subscripts/boxplots_FPKM_CUTNRUN_CHIP.R")
+  file.edit("git_epiCancer/subscripts/barplot_PH.R")
+  file.edit("git_epiCancer/subscripts/screenshots.R")
+  file.edit("git_epiCancer/subscripts/MA_plots_K27.R") # based on peaks
+  
+  # Figure 4
+  file.edit("git_epiCancer/subscripts/boxplot_FPKMs_PHbound_genes.R") # average tracks in control and between cditions
+  file.edit("git_epiCancer/subscripts/recovery_average_tracks.R") # average tracks in control and between cditions
+  file.edit("git_epiCancer/subscripts/recovery_motifs_enrichment.R") # Motifs enrichment
+  
+  
   
   ###########################################################################
   # RNA analyses
@@ -28,9 +63,7 @@ if(F)
   file.edit("git_epiCancer/subscripts/PCA_counts_transriptomes.R") # Compare replicates
   file.edit("git_epiCancer/subscripts/PCA_log2FC_transriptomes.R") # Compare conditions
   file.edit("git_epiCancer/subscripts/chisq_compare_GFP_noGFP_up_down_genes.R") # Overlaps between systems
-  file.edit("git_epiCancer/subscripts/MA_plots.R") # Check up down genes
   file.edit("git_epiCancer/subscripts/boxplot_FC_up_down_genes.R") # Check up down genes
-  file.edit("git_epiCancer/subscripts/alluvial_plot_affected_genes.R") # Transitions timecourse
   file.edit("git_epiCancer/subscripts/upset_plot_overlapping_genes_transriptomes.R") # Overlaps between conditions
   file.edit("git_epiCancer/subscripts/heatmap_FC_GOF.R") # heatmap FC genes of interest
   file.edit("git_epiCancer/subscripts/GO_up_down_genes.R") # For each RNAi cdition, up/down PRC1+/1 GOs
@@ -40,8 +73,6 @@ if(F)
   ###########################################################################
   # RNA clusters analyses
   ###########################################################################
-  file.edit("git_epiCancer/subscripts/compute_clusters_extra_features.R") # Network, GO, motifs and STRING network
-  file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
   file.edit("git_epiCancer/subscripts/network_per_clusters.R") # Clusters networks
   file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_diff.R") # RNA-Seq/CHIP signal per cluster +/- PRC1
   file.edit("git_epiCancer/subscripts/percentage_PRC1_bound_genes.R") # Check percentage of PRC1 bound genes per cluster
@@ -74,7 +105,6 @@ if(F)
   file.edit("git_epiCancer/subscripts/recovery_motifs_enrichment.R") # Motifs enrichment
   file.edit("git_epiCancer/subscripts/recovery_motifs_counts.R") # Motifs coutns histograms
   file.edit("git_epiCancer/subscripts/recovery_motifs_specific_proteins.R") # Heatmap ZEB STAT motifs
-  file.edit("git_epiCancer/subscripts/recovery_average_tracks.R") # average tracks in control and between cditions
   file.edit("git_epiCancer/subscripts/recovery_average_tracks_neoPRC1.R") # average tracks in control and between cditions
   file.edit("git_epiCancer/subscripts/recovery_ChIP_FC_cditions.R") # ChIP FC per condition
   file.edit("git_epiCancer/subscripts/recovery_K36me3_enrich.R") # No recovery genes abortive transcription?
@@ -89,7 +119,6 @@ if(F)
   ###########################################################################
   # Genomic DNA
   ###########################################################################
-  file.edit("git_epiCancer/subscripts/gDNA_final_table.R")
   file.edit("git_epiCancer/subscripts/gDNA_overlaps_conditions.R")
   file.edit("git_epiCancer/subscripts/gDNA_mut_counts.R")
   file.edit("git_epiCancer/subscripts/gDNA_allele_frequency.R")
@@ -97,7 +126,6 @@ if(F)
   file.edit("git_epiCancer/subscripts/gDNA_mut_features.R")
   file.edit("git_epiCancer/subscripts/gDNA_exonic_mut_features.R")
   file.edit("git_epiCancer/subscripts/gDNA_genes_overlaps.R")
-  file.edit("git_epiCancer/subscripts/gDNA_GO_mutated_genes.R")
   file.edit("git_epiCancer/subscripts/gDNA_table_mutated_genes.R")
   file.edit("git_epiCancer/subscripts/gDNA_mutations_impact_FC.R")
   file.edit("git_epiCancer/subscripts/gDNA_hotspots.R")
@@ -107,8 +135,6 @@ if(F)
   ###########################################################################
   file.edit("git_epiCancer/epiCancer_presentation.Rmd")
   file.edit("git_epiCancer/subscripts/update_dropbox.R")
-  file.edit("git_epiCancer/subscripts/gDNA_genes_overlaps_with_PH18.R")
-  file.edit("git_epiCancer/subscripts/gDNA_mut_features_fig1.R")
   
   
   
