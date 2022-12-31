@@ -1,4 +1,4 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+# setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(vlfunctions)
 require(data.table)
 
@@ -22,9 +22,9 @@ pl <- dat[(PRC1_bound), .N, .(cl, estimate, p.value, total_cluster, K27me3_bound
 pl[, perc:= N/total_cluster*100, .(cl, total_cluster)]
 
 
-pdf("pdf/cluster_percentage_PRC1_bound_genes.pdf",
+pdf("pdf/Extended_data_5_cluster_PRC1_K27me3_binding.pdf",
     width = 2.5,
-    height = 3)
+    height = 2.5)
 par(mar= c(3,3,1,0.5),
     mgp= c(2,0.5,0),
     las= 1,
@@ -35,12 +35,16 @@ bar <- barplot(perc~K27me3_bound+cl,
         ylab= "PRC1 bound genes (%)",
         ylim= c(0, 40), 
         beside= F, 
-        col= c("lightgrey", "cornflowerblue"))
+        col= c("lightgrey", "cornflowerblue"),
+        xlab= NA,
+        xaxt= "n")
+vl_tilt_xaxis(x= bar, 
+              labels= c("Unaffected", paste0("Cluster", 1:6)),
+              srt= 30)
 pl[, vl_plot_pval_text(bar[.GRP], 
                        sum(perc), 
                        p.value, 
-                       stars_only = T,
-                       cex= 0.78), cl]
+                       stars_only = T), cl]
 legend("topleft",
        fill= c("lightgrey",
                "cornflowerblue"),

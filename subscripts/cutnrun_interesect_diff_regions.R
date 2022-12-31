@@ -1,4 +1,3 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(data.table)
 
 # Import

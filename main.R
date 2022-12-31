@@ -25,6 +25,7 @@ if(F)
   # Main figures
   ###########################################################################
   # Figure 1
+  file.edit("git_epiCancer/subscripts/barplot_WB_quantif.R")
   file.edit("git_epiCancer/subscripts/violin_plot_phKD_sizes.R")
   file.edit("git_epiCancer/subscripts/mutations_features.R")
   file.edit("git_epiCancer/subscripts/exonic_mutations_features.R")
@@ -52,7 +53,14 @@ if(F)
   file.edit("git_epiCancer/subscripts/recovery_average_tracks.R") # average tracks in control and between cditions
   file.edit("git_epiCancer/subscripts/recovery_motifs_enrichment.R") # Motifs enrichment
   
+  # Extended data 5
+  file.edit("git_epiCancer/subscripts/zfh1_screenshot.R")
+  file.edit("git_epiCancer/subscripts/percentage_PRC1_bound_genes.R") # Check percentage of PRC1 bound genes per cluster
+  file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_diff.R") # RNA-Seq/CHIP signal per cluster +/- PRC1
+  file.edit("git_epiCancer/subscripts/MA_plot_K118Ub.R") # based on peaks
+  file.edit("git_epiCancer/subscripts/recovery_average_tracks_K27_K118.R") # average tracks in control and between cditions
   
+  # For PH quantif -> see figure 3
   
   ###########################################################################
   # RNA analyses
@@ -74,8 +82,6 @@ if(F)
   # RNA clusters analyses
   ###########################################################################
   file.edit("git_epiCancer/subscripts/network_per_clusters.R") # Clusters networks
-  file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_diff.R") # RNA-Seq/CHIP signal per cluster +/- PRC1
-  file.edit("git_epiCancer/subscripts/percentage_PRC1_bound_genes.R") # Check percentage of PRC1 bound genes per cluster
   file.edit("git_epiCancer/subscripts/cluster_genes_tissue_specificity.R") # Based on encode method
   
   ###########################################################################
