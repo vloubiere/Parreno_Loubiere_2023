@@ -29,7 +29,7 @@ setorderv(dat, c("file", "recovery"))
 #-----------------------------------------#
 # Plot 1
 #-----------------------------------------#
-Cc <- c("palegreen3", "rosybrown1")
+Cc <- c("rosybrown1", "palegreen3")
 # Cc <- c("chartreuse3", "brown2", "chocolate1", "darkorchid2")
 # Cc <- c("darkorchid2", "chartreuse3")
 

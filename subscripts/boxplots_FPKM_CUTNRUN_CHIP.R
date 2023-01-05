@@ -11,6 +11,7 @@ pl <- melt(dat,
            variable.factor = F)
 pl <- rbind(pl[!is.na(recovery)],
             pl[, recovery:= "all"])
+pl[, recovery:= factor(recovery, c("all", "noRecovery", "Recovery"))]
 pl[, class:= tstrsplit(variable, "_", keep= 1)]
 pl[, class:= switch(class, 
                     "log2FoldChange"= "RNA-Seq fold change (log2)",

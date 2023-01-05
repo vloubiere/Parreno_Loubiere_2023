@@ -1,4 +1,4 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+# setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(vlfunctions)
 require(kohonen)
 require(readxl)
@@ -38,7 +38,7 @@ dat <- fpkms[dat, on= "FBgn"]
 ##########################################################
 # Add gene coordinates and symbols
 ##########################################################
-gtf <- rtracklayer::import("/mnt/d/_R_data/genomes/dm6/dmel-all-r6.36.gtf")
+gtf <- rtracklayer::import("/groups/stark/vloubiere/genomes/flybase/dm6/dmel-all-r6.36.gtf")
 GenomeInfoDb::seqlevelsStyle(gtf) <- "UCSC"
 gtf <- as.data.table(gtf)
 dat[gtf[type=="gene"], c("symbol", "seqnames", "start", "end", "strand"):= 
@@ -47,17 +47,21 @@ dat[gtf[type=="gene"], c("symbol", "seqnames", "start", "end", "strand"):=
 ##########################################################
 # PRC1 and K27me3 binding
 ##########################################################
+# Retrieve genes that overlap PH
 PH <- vl_importBed("db/peaks/cutnrun/PH_PH18_confident_peaks.narrowPeak")
 cl <- vl_closestBed(dat, PH)
 bound <- cl[between(dist, -2500, 0), FBgn]
 dat[, PRC1_bound:= FBgn %in% bound]
-# Retrieve genes whose TSS overlaps K27me3
+# Retrieve genes whose TSS overlap PH
+TSS <- vl_resizeBed(dat, "start", 250, 250)
+dat[, PRC1_bound_promoter:= vl_covBed(TSS, PH)>0]
+# Retrieve genes that overlap K27me3
 K27me3 <- vl_importBed("db/peaks/cutnrun/H3K27me3_PH18_confident_peaks.broadPeak")
 K27me3 <- vl_collapseBed(K27me3, mingap = 2500)
 TSS <- vl_resizeBed(dat, "start", 0, 0)
 sel <- TSS$FBgn[vl_covBed(TSS, K27me3)>0]
 dat[, K27me3_bound:= FBgn %in% sel]
-# Retrieve genes whose TSS overlaps K118Ub
+# Retrieve genes that overlap K118Ub
 K118Ub <- vl_importBed("db/peaks/cutnrun/H2AK118Ub_PH18_confident_peaks.broadPeak")
 K118Ub <- vl_collapseBed(K118Ub, mingap = 2500)
 sel <- TSS$FBgn[vl_covBed(TSS, K118Ub)>0]
@@ -77,6 +81,9 @@ dat[, K118Ub_bound:= FBgn %in% sel]
 dat[(PRC1_bound | K27me3_bound | K118Ub_bound), recovery:= fcase(cl==2, "noRecovery",
                                                                  cl==5, "Recovery",
                                                                  default= NA)]
+dat[!is.na(recovery) & PRC1_bound_promoter, PRC1_bound_recovery:= fcase(cl==2, "noRecovery",
+                                                                        cl==5, "Recovery",
+                                                                        default= NA)]
 ##########################################################
 # Quantif CUTNRUN
 ##########################################################
@@ -127,8 +134,8 @@ dat[chromhmm, chromhmm:= i.name, .EACHI, on= c("seqnames", "start<=end", "start>
 # Save
 ##########################################################
 setcolorder(dat,
-            c("FBgn", "symbol", "PRC1_bound", "K27me3_bound", "cl", 
-              "recovery", "chromhmm", "col", "seqnames", "start", "end", "strand", 
+            c("FBgn", "symbol", "PRC1_bound", "PRC1_bound_promoter", "K27me3_bound", "K118Ub_bound", "cl", 
+              "recovery", "PRC1_bound_recovery", "chromhmm", "col", "seqnames", "start", "end", "strand", 
               "diff_PH18", "diff_PH29", "diff_PHD9", "diff_PHD11"))
 fwrite(dat,
        "Rdata/final_gene_features_table.txt", 
