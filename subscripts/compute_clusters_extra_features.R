@@ -15,8 +15,8 @@ TSS <- vl_resizeBed(dat[, .(seqnames, start, end, strand)],
 counts <- vl_motif_counts(TSS, 
                           genome = "dm6", 
                           sel= vl_Dmel_motifs_DB_full[collection %in% c("bergman", "flyfactorsurvey", "jaspar") & !is.na(FBgn), motif_ID])
-counts_list <- split(counts, dat[, paste(cl, ifelse(PRC1_bound, "PRC1+", "PRC1-"))])
-enr <- vl_motif_cl_enrich(counts_list = counts_list, control_cl = c("0 PRC1-", "0 PRC1+"))
+counts_list <- split(counts, dat[, paste(cl, ifelse(PRC1_bound|K27me3_bound|K118Ub_bound, "PcG+", "PcG-"))])
+enr <- vl_motif_cl_enrich(counts_list = counts_list, control_cl = c("0 PcG-", "0 PcG+"))
 
 # Collapse Dmel ID
 enr[vl_Dmel_motifs_DB_full, name:= i.Dmel, on= "variable==motif_ID"]
@@ -45,14 +45,14 @@ GO_all <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat$cl),
                        geneUniverse_IDs = fread("Rdata/final_gene_features_table.txt")$FBgn,
                        species = "Dm", 
                        plot= F)
-GO_PRC1 <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat[, paste(cl, ifelse(PRC1_bound, "PRC1+", "PRC1-"))]),
-                        geneUniverse_IDs = fread("Rdata/final_gene_features_table.txt")$FBgn,
-                        species = "Dm", 
-                        plot= F)
+GO_PcG <- vl_GO_enrich(geneIDs = split(dat$FBgn, dat[, paste(cl, ifelse(PRC1_bound|K27me3_bound|K118Ub_bound, "PcG+", "PcG-"))]),
+                       geneUniverse_IDs = fread("Rdata/final_gene_features_table.txt")$FBgn,
+                       species = "Dm", 
+                       plot= F)
 
 # Save
 saveRDS(list(net= net, 
              GO_all= GO_all,
-             GO_PRC1= GO_PRC1,
+             GO_PcG= GO_PcG,
              enr= enr), 
         "Rdata/clustering_RNA_features.rds")

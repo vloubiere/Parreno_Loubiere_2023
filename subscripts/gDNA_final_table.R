@@ -10,18 +10,18 @@ import_vcf <- function(vcf_file,
   dat <- as.data.table(vcfR::getFIX(vcf))
   dat <- dat[, .(id= paste0("chr", CHROM, ":", POS, "-", as.numeric(POS)+nchar(REF), ":", REF, "_", ALT), 
                  filter= FILTER=="PASS")]
-  
+
   #--------------------------------------------------------#
   # Compute custom phyper test on allele freq -> not used!
   #--------------------------------------------------------#
   # # Extract allele counts and fraction
   # # vcfR::queryMETA(vcf, element = 'AD')
   # # vcfR::queryMETA(vcf, element = 'AF')
-  # AD <- as.data.table(vcfR::extract.gt(vcf, "AD"))
-  # cols <- paste0(rep(names(AD), each=2), c("_ref", "_alt"))
-  # AD <- AD[, c(tstrsplit(TUMOR, ","), tstrsplit(NORMAL, ","))]
-  # AD <- AD[, lapply(.SD, as.numeric)]
-  # setnames(AD, cols)
+  AD <- as.data.table(vcfR::extract.gt(vcf, "AD"))
+  cols <- paste0(rep(names(AD), each=2), c("_ref", "_alt"))
+  AD <- AD[, c(tstrsplit(TUMOR, ","), tstrsplit(NORMAL, ","))]
+  AD <- AD[, lapply(.SD, as.numeric)]
+  setnames(AD, cols)
   # # Add phyper test
   # AD[, qvalue:= phyper(TUMOR_alt, 
   #                      TUMOR_alt+NORMAL_alt, 
@@ -43,9 +43,9 @@ import_vcf <- function(vcf_file,
   
   # RETURN
   # dat <- cbind(dat, AD, AF, annot)
-  dat <- cbind(dat, annot)
+  dat <- cbind(dat, AD, annot)
   dat[as.numeric(gsub("line", "", type$line)), exonic_annotation:= type$type]
-  return(dat[(filter), !"filter"])
+  return(dat)
 }
 dat <- data.table(cdition= list.files("db/DNA_analysis_novogene/", 
                                       ".somaticcall_SNP.vcf.gz$", 
@@ -82,8 +82,21 @@ seqlevelsStyle(genes) <- "UCSC"
 genes <- as.data.table(genes)
 genes <- genes[!is.na(transcript_id)]
 setkeyv(genes, "transcript_id")
-dat[, FBgn:= lapply(FBtr, function(x) unique(genes[x, gene_id]))]
-dat[, symbol:= lapply(FBtr, function(x) unique(genes[x, gene_symbol]))]
+dat <- dat[, .(FBtr= unlist(FBtr)), setdiff(names(dat), "FBtr")]
+dat[genes, c("FBgn", "symbol"):= .(i.gene_id, i.gene_symbol), on= "FBtr==transcript_id"]
+dat <- dat[, .(FBgn= .(unique(FBgn)), 
+               symbol= .(unique(symbol))), 
+           .(cdition, 
+             filter, 
+             pattern, 
+             alt_class, 
+             id, 
+             annotation, 
+             exonic_annotation, 
+             NORMAL_ref,
+             NORMAL_alt,
+             TUMOR_ref,
+             TUMOR_alt)]
 
 # SAVE
 saveRDS(dat, "Rdata/gDNA_final_table.rds")

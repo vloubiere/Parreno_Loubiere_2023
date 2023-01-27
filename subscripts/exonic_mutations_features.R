@@ -5,6 +5,7 @@ require(data.table)
 # Import data
 ######################################################################
 dat <- readRDS("Rdata/gDNA_final_table.rds")
+dat <- dat[(filter), !"filter"]
 dat <- dat[!is.na(exonic_annotation)]
 dat[, exonic_annotation:= factor(exonic_annotation)]
 dat[, exonic_annotation:= droplevels(exonic_annotation)]

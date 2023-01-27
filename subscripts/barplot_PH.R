@@ -3,21 +3,15 @@ require(vlfunctions)
 # Import
 dat <- fread("Rdata/final_gene_features_table.txt")
 # Extend promoters
-dat <- vl_resizeBed(dat, "start", 0, 0)
+dat <- vl_resizeBed(dat, "start", 250, 250)
 
 # Overlaps
 PH <- vl_importBed("db/peaks/cutnrun/PH_PH18_confident_peaks.narrowPeak")
-cl <- vl_closestBed(dat, PH)
-bound <- cl[between(dist, -2500, 0), FBgn]
-dat[, PRC1_PH18:= FBgn %in% bound]
+dat[, PRC1_PH18:= vl_covBed(.SD, PH)>0]
 PH <- vl_importBed("db/peaks/cutnrun/PH_PH29_confident_peaks.narrowPeak")
-cl <- vl_closestBed(dat, PH)
-bound <- cl[between(dist, -2500, 0), FBgn]
-dat[, PRC1_PH29:= FBgn %in% bound]
+dat[, PRC1_PH29:= vl_covBed(.SD, PH)>0]
 PH <- vl_importBed("db/peaks/cutnrun/PH_PHD11_confident_peaks.narrowPeak")
-cl <- vl_closestBed(dat, PH)
-bound <- cl[between(dist, -2500, 0), FBgn]
-dat[, PRC1_PHD11:= FBgn %in% bound]
+dat[, PRC1_PHD11:= vl_covBed(.SD, PH)>0]
 
 # Prepare for ploting
 pl <- melt(dat, "recovery", patterns("^PRC1_PH"))
@@ -77,7 +71,7 @@ legend(par("usr")[2],
                adjustcolor("palegreen3", 0.6),
                "black"),
        density= c(-1,-1,40),
-       legend= c("Irreversible", "Reversible", "PRC1-bound"),
+       legend= c("Irreversible", "Reversible", "PH-bound promoter"),
        bty= "n",
        xpd= NA)
 dev.off()

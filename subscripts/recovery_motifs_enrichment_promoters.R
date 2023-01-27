@@ -28,7 +28,7 @@ enr <- vl_motif_cl_enrich(counts_list = counts_list, control_cl = "0")
 enr[vl_Dmel_motifs_DB_full, name:= i.Dmel, on= "variable==motif_ID"]
 enr <- enr[variable %in% enr[, .SD[log2OR>0][which.min(padj), variable], name]$V1]
 
-pdf("pdf/Figure_3_motifs_enrichment.pdf", 6.5, 8)
+pdf("pdf/Figure_3_motifs_enrichment_promoters.pdf", 6.5, 8)
 par(mar= c(4,20,3,7),
     mgp= c(2,0.5,0),
     las= 1,

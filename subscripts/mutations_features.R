@@ -5,6 +5,7 @@ require(data.table)
 # Import data
 ######################################################################
 dat <- readRDS("Rdata/gDNA_final_table.rds")
+dat <- dat[(filter), !"filter"]
 dat[, annotation:= factor(annotation)]
 dat[, annotation:= droplevels(annotation)]
 dat[, cdition:= switch(cdition,

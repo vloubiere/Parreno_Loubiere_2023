@@ -13,13 +13,13 @@ par(las= 2,
     mgp= c(2.25,0.5,0),
     mar= c(6.5,4,0.5,0.5),
     lwd= 0.75)
-vl_boxplot(dat/1000, 
+vl_boxplot(dat, 
            violin = T, 
            viocol = adjustcolor("rosybrown1", 0.6), 
            col= "white",
            compute_pval = list(c(1,2), c(1,3), c(3,4), c(1,4)), 
            viowex = 0.6,
-           ylab= "Eye discs area (mm2)", 
+           ylab= "Eye discs area (um2)", 
            tilt.names = T,
-           ylim= c(0, 400))
+           ylim= c(0, 400000))
 dev.off()

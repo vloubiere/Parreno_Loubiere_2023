@@ -25,33 +25,39 @@ if(F)
   # Main figures
   ###########################################################################
   # Figure 1
-  file.edit("git_epiCancer/subscripts/barplot_WB_quantif.R")
+  file.edit("git_epiCancer/subscripts/barplot_WB_quantif.R") # Not used
   file.edit("git_epiCancer/subscripts/violin_plot_phKD_sizes.R")
   file.edit("git_epiCancer/subscripts/mutations_features.R")
   file.edit("git_epiCancer/subscripts/exonic_mutations_features.R")
   file.edit("git_epiCancer/subscripts/mutated_genes_overlaps.R")
   
   # Supplementary
-  file.edit("git_epiCancer/subscripts/gDNA_GO_mutated_genes.R")
+  file.edit("git_epiCancer/subscripts/gDNA_GO_mutated_genes.R") # No GO enriched for genes mutated in at least two conditions
   file.edit("git_epiCancer/subscripts/violin_plot_PscKD_sizes.R")
   
   # Figure 2
   file.edit("git_epiCancer/subscripts/MA_plots.R") # Check up down genes
   file.edit("git_epiCancer/subscripts/alluvial_plot_affected_genes.R") # Transitions timecourse
-  file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with motifs and GO analysis
+  file.edit("git_epiCancer/subscripts/figure_transcriptomes_clusters.R") # Clusters Fig. with network and motifs
+  file.edit("git_epiCancer/subscripts/clusters_GOs.R") # Clusters GO analysis
   file.edit("git_epiCancer/subscripts/heatmap_FC_JAKSTAT_JNK.R") # heatmap FC genes of interest
   file.edit("git_epiCancer/subscripts/violin_plot_zfh1KD_sizes.R")
   
   # Figure 3
-  file.edit("git_epiCancer/subscripts/boxplots_FPKM_CUTNRUN_CHIP.R")
-  file.edit("git_epiCancer/subscripts/barplot_PH.R")
+  file.edit("git_epiCancer/subscripts/boxplots_FPKM_CUTNRUN_CHIP.R") # Quantif signal
+  file.edit("git_epiCancer/subscripts/barplot_PH.R") # Count overlap with peaks
   file.edit("git_epiCancer/subscripts/screenshots.R")
   file.edit("git_epiCancer/subscripts/MA_plots_K27.R") # based on peaks
   
   # Figure 4
   file.edit("git_epiCancer/subscripts/boxplot_FPKMs_PHbound_genes.R") # average tracks in control and between cditions
   file.edit("git_epiCancer/subscripts/recovery_average_tracks.R") # average tracks in control and between cditions
-  file.edit("git_epiCancer/subscripts/recovery_motifs_enrichment.R") # Motifs enrichment
+  file.edit("git_epiCancer/subscripts/recovery_average_tracks_PH_peaks.R") # average tracks in control and between cditions
+  file.edit("git_epiCancer/subscripts/recovery_motifs_enrichment_promoters.R") # Motifs enrichment promoters
+  file.edit("git_epiCancer/subscripts/recovery_motifs_enrichment_PH_peaks.R") # Motifs enrichment PH peaks
+  file.edit("git_epiCancer/subscripts/recovery_motifs_icisTarget_ATAC_peaks.R") # Motifs enrichment at ATAC-Seq peaks
+  file.edit("git_epiCancer/subscripts/recovery_motifs_icisTarget_genes_list.R") # Not used -> Motifs enrichment at genes
+  file.edit("git_epiCancer/subscripts/recovery_motifs_icisTarget_PH_peaks.R") # Not used -> Motifs enrichment at PH peaks
   
   # Extended data 5
   file.edit("git_epiCancer/subscripts/zfh1_screenshot.R")
@@ -59,7 +65,6 @@ if(F)
   file.edit("git_epiCancer/subscripts/transcriptomes_clusters_FC_diff.R") # RNA-Seq/CHIP signal per cluster +/- PRC1
   file.edit("git_epiCancer/subscripts/MA_plot_K118Ub.R") # based on peaks
   file.edit("git_epiCancer/subscripts/recovery_average_tracks_K27_K118.R") # average tracks in control and between cditions
-  
   # For PH quantif -> see figure 3
   
   ###########################################################################
