@@ -33,7 +33,6 @@ if(F)
   
   # Supplementary
   file.edit("git_epiCancer/subscripts/gDNA_GO_mutated_genes.R") # No GO enriched for genes mutated in at least two conditions
-  file.edit("git_epiCancer/subscripts/violin_plot_PscKD_sizes.R")
   
   # Figure 2
   file.edit("git_epiCancer/subscripts/MA_plots.R") # Check up down genes
@@ -59,6 +58,10 @@ if(F)
   file.edit("git_epiCancer/subscripts/recovery_motifs_icisTarget_genes_list.R") # Not used -> Motifs enrichment at genes
   file.edit("git_epiCancer/subscripts/recovery_motifs_icisTarget_PH_peaks.R") # Not used -> Motifs enrichment at PH peaks
   
+  
+  # Extended data 2
+  file.edit("git_epiCancer/subscripts/violin_plot_PscKD_sizes.R")
+  
   # Extended data 5
   file.edit("git_epiCancer/subscripts/zfh1_screenshot.R")
   file.edit("git_epiCancer/subscripts/percentage_PRC1_bound_genes.R") # Check percentage of PRC1 bound genes per cluster
@@ -67,11 +70,13 @@ if(F)
   file.edit("git_epiCancer/subscripts/recovery_average_tracks_K27_K118.R") # average tracks in control and between cditions
   # For PH quantif -> see figure 3
   
+  # Extended data 6
+  file.edit("git_epiCancer/subscripts/GFP_reads_barplot.R") # Validate genetic system
+  
   ###########################################################################
   # RNA analyses
   ###########################################################################
   file.edit("git_epiCancer/subscripts/Alignment_statistics_RNA.R") #QC
-  file.edit("git_epiCancer/subscripts/GFP_reads_barplot.R") # Validate genetic system
   file.edit("git_epiCancer/subscripts/transcriptomes_correlations.R") # PCC between replicates
   file.edit("git_epiCancer/subscripts/PCA_counts_transriptomes.R") # Compare replicates
   file.edit("git_epiCancer/subscripts/PCA_log2FC_transriptomes.R") # Compare conditions

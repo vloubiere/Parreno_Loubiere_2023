@@ -59,8 +59,8 @@ dat[, {
   abline(v= c(-upstream, downstream), lty= 2)
   title(main= "No ph-KD")
   legend("topright", 
-         legend= c(paste0("Irreversible (", sum(recovery=="Irreversible"), ")"), 
-                   paste0("Reversible (", sum(recovery=="Reversible"), ")")), 
+         legend= c(paste0("Irreversible (n= ", sum(recovery=="Irreversible"), ")"), 
+                   paste0("Reversible (n= ", sum(recovery=="Reversible"), ")")), 
          fill= adjustcolor(Cc, 0.6),
          bty= "n")
   # Boxplot

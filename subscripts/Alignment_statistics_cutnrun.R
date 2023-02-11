@@ -1,4 +1,4 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+# setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
 require(data.table)
 require(gridExtra)
 

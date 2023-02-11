@@ -1,6 +1,7 @@
 require(vlfunctions)
 
 dat <- fread("Rdata/final_gene_features_table.txt")
+leg <- table(dat$recovery, useNA= "ifany")
 pl <- melt(dat, 
            id.vars = "recovery", 
            measure.vars = c("log2FoldChange_PH18", "log2FoldChange_PH29", "log2FoldChange_PHD11",
@@ -21,6 +22,16 @@ pl[, class:= switch(class,
                     "PH"= "PH enrichment"), class]
 pl[class=="PH enrichment", value:= value+1]
 
+# Legend
+leg <- pl[, .N, .(variable, recovery, class)]
+leg[, recovery:= switch(as.character(recovery), 
+                        "noRecovery"= "Irreversible",
+                        "Recovery"= "Reversible",
+                        "all"= "Unaffected genes"), recovery]
+leg[, recovery:= factor(recovery, c("Irreversible","Reversible","Unaffected genes"))]
+leg <- data.table(leg= unique(leg[, paste0(recovery, " (n=", N, ")")]),
+                  col= c("rosybrown1", "palegreen3", "lightgrey"))
+  
 pdf("pdf/Figure_3_boxplots_FPKM_CUTNRUN_ChIP.pdf", 
     width = 5, 
     height = 4.5)
@@ -48,12 +59,14 @@ pl[, {
                 y = grconvertY(grconvertY(0, "npc", "inch")-strheight("M", "inch"), "inch", "user"),
                 labels = c("No ph-KD", "Constant ph-KD", "Transient ph-KD"),
                 srt= 30)
-  legend(par("usr")[2],
-         par("usr")[4],
-         fill= c("rosybrown1", "palegreen3", "lightgrey"),
-         legend= c("Irreversible", "Reversible", "Unaffected genes"),
-         bty= "n",
-         xpd= T)
+  leg[, {
+    legend(par("usr")[2],
+           par("usr")[4],
+           fill= col,
+           legend= leg,
+           bty= "n",
+           xpd= T)
+  }]
   print("")
 }, class]
 dev.off()

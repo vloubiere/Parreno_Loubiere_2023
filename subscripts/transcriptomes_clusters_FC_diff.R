@@ -14,8 +14,8 @@ cols <- c("H3K27me3_PH18_body",
 .m <- melt(dat[, c("cl", "PRC1_bound", cols), with= F], 
            id.vars = c("cl", "PRC1_bound"), 
            measure.vars = cols)
-.m[, ylim:= fcase(grepl("K118Ub", variable), 10,
-                  grepl("K27me3", variable), 20)]
+.m[, ylim:= fcase(grepl("K118Ub", variable), 15,
+                  grepl("K27me3", variable), 30)]
 .m[, cdition:= fcase(grepl("_PH18_", variable), "No ph-KD",
                      grepl("_PH29_", variable), "Constant ph-KD",
                      grepl("_PHD11_", variable), "Transient ph-KD")]
@@ -42,6 +42,14 @@ par(las= 2,
                     ylim= c(0, ylim),
                     ylab= paste(tstrsplit(variable, "_", keep= 1), "enrichment"),
                     main= cdition)
+  text(x= rep(box$x, each= 2)+strwidth("M", cex= 0.4)*c(-1,1), 
+       y= rep(box$y, each= 2)+strheight("M", cex= 0.5),
+       labels= paste0("n= ", box$n),
+       col= c("lightgrey", "tomato"),
+       pos= 4,
+       srt= 90,
+       offset= 0,
+       cex= 0.5)
   axis(1, at= seq(1.5, 13.5, 2), labels = NA)
   vl_tilt_xaxis(x = seq(1.5, 13.5, 2),
                 labels =  c("Unaffected", paste("Cluster", 1:6)),
