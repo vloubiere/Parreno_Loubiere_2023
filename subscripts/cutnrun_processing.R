@@ -1,4 +1,5 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+# setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+setwd("/groups/stark/vloubiere/projects/epigenetic_cancer/")
 require(vlfunctions)
 require(readxl)
 require(data.table)
@@ -7,17 +8,13 @@ require(Rsubread)
 require(seqinr)
 require(rtracklayer)
 
-#--------------------------------------------------------------#
-# METDATA
-#--------------------------------------------------------------#
+# METDATA ----
 meta <- readxl::read_xlsx("Rdata/metadata_cutnrun.xlsx")
 meta <- as.data.table(meta)[!Comment %in% c("failed", "test")]
 meta[is.na(Suffix), Suffix:= ""]
 
-#--------------------------------------------------------------#
-# Scer/Dm6 combined index
+# Scer/Dm6 combined index ----
 # Yeast genome -> https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna
-#--------------------------------------------------------------#
 if(length(list.files("/mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/", ".bt2$"))==0)
 {
   dm6 <- read.fasta("/mnt/d/_R_data/genomes/dm6/Sequence/WholeGenomeFasta/genome.fa")
@@ -29,9 +26,7 @@ if(length(list.files("/mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/", ".bt2
   system("bowtie2-build /mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/dm6_S288C.fna /mnt/d/_R_data/genomes/dm6_S288C_combined_bowtie2/dm6_S288C")
 }
 
-#--------------------------------------------------------------#
-# Retrieve fastqs and trim reads
-#--------------------------------------------------------------#
+# Retrieve fastqs and trim reads ----
 meta[, fq1:= list.files("/mnt/f/_R_data/projects/epigenetic_cancer/db/fastq/Cut_n_run/", 
                         recursive = T, 
                         full.names = T, 
@@ -40,7 +35,6 @@ meta[, fq2:= list.files("/mnt/f/_R_data/projects/epigenetic_cancer/db/fastq/Cut_
                         recursive = T, 
                         full.names = T, 
                         pattern = paste0(fq2, "$")), fq2]
-
 meta[, fq1_trim:= gsub(".fq.gz$", "_val_1.fq.gz", fq1)]
 meta[, fq2_trim:= gsub(".fq.gz$", "_val_2.fq.gz", fq2)]
 
@@ -58,9 +52,7 @@ if(!all(file.exists(meta$fq1_trim, meta$fq2_trim)))
   mc.preschedule = F,
   mc.cores = getDTthreads())
 
-#--------------------------------------------------------------#
-# Alignment
-#--------------------------------------------------------------#
+# Alignment ----
 # Make chrom_sizes object
 chrom_sizes <- rbind(data.table(fread("/mnt/d/_R_data/genomes/dm6/dm6.chrom.sizes.txt", 
                                       col.names = c("seqnames", "seqlengths")), 
@@ -87,9 +79,7 @@ meta[, {
   print("DONE")
 }, bam]
 
-#--------------------------------------------------------------#
-# Peak calling
-#--------------------------------------------------------------#
+# Peak calling ----
 meta[!ChIP %in% c("IgG", "input"), input:= ifelse(ChIP=="PH", "input", "IgG")]
 meta[!is.na(input), input_bam:= meta[.BY, bam, on= c("ChIP==input", "rep", "cdition")], .(input, rep, cdition)]
 MACS <- function(bam_ChIP,
@@ -141,9 +131,7 @@ meta[!is.na(input), {
 meta[!is.na(input), peaks_rep:= paste0(peaks_rep, ifelse(broad, "_peaks.broadPeak", "_peaks.narrowPeak"))]
 meta[!is.na(input), peaks_merge:= paste0(peaks_merge, ifelse(broad, "_peaks.broadPeak", "_peaks.narrowPeak"))]
 
-#--------------------------------------------------------------#
-# Confident peaks
-#--------------------------------------------------------------#
+# Confident peaks ----
 meta[!is.na(input), filtered_peaks:= paste0("db/peaks/cutnrun/", ChIP, "_", cdition, 
                                             ifelse(broad, 
                                                    "_confident_peaks.broadPeak", 
@@ -177,9 +165,7 @@ meta[!is.na(input), {
   print("DONE")
 }, .(filtered_peaks, peaks_merge, dist_cutoff)]
 
-#--------------------------------------------------------------#
-# Merged_peaks
-#--------------------------------------------------------------#
+# Merged_peaks ----
 meta[!is.na(input), merged_file:= paste0("db/peaks/cutnrun_merged_peaks/", ChIP, "_merged_peaks", 
                                          ifelse(broad, ".broadPeak", ".narrowPeak"))]
 meta[!is.na(input), {
@@ -202,9 +188,7 @@ meta[!is.na(input), {
   print("DONE")
 }, .(merged_file, dist_cutoff)]
 
-#--------------------------------------------------------------#
-# bw files
-#--------------------------------------------------------------#
+# bw files ----
 meta[!is.na(peaks_rep), bw_file:= paste0("db/bw/cutnrun/", ChIP, "_", cdition, "_", rep, ".bw")]
 meta[!is.na(peaks_rep), {
   if(!file.exists(bw_file))
@@ -235,11 +219,9 @@ meta[!is.na(peaks_rep), {
                 output = bw_merge)
   }
   print("done")
-}, .(peaks_rep, bw_file, broad)]
+}, bw_merge]
 
-#--------------------------------------------------------------#
-# Compute features SAF files
-#--------------------------------------------------------------#
+# Compute features SAF files ----
 if(any(!file.exists(c("db/saf/promoters_750_250.saf",
                       "db/saf/geneBody_1000_end.saf",
                       "db/saf/TSSs_0_0.saf",
@@ -319,9 +301,7 @@ if(any(!file.exists(c("db/saf/promoters_750_250.saf",
   }
 }
 
-#--------------------------------------------------------------#
-# PEAKS SAF files
-#--------------------------------------------------------------#
+# PEAKS SAF files ----
 meta[!is.na(merged_file), peaks_saf:= paste0("db/saf/", ChIP, "_", "peaks.saf"), ChIP]
 meta[!is.na(merged_file), {
   if(any(!file.exists(peaks_saf)))
@@ -342,9 +322,7 @@ meta[!is.na(merged_file), {
   print("done")
 }, .(merged_file, peaks_saf, broad)]
 
-#--------------------------------------------------------------#
-# Compute counts
-#--------------------------------------------------------------#
+# Compute counts ----
 count_FUN <- function(saf, output, bam)
 {
   saf <- fread(saf)
@@ -394,9 +372,7 @@ meta[ChIP=="H3K36me3", {
   print("done")
 }, TTS_counts]
 
-#--------------------------------------------------------------#
-# DESeq2 analysis
-#--------------------------------------------------------------#
+# DESeq2 analysis ----
 dds <- melt(meta, 
             id.vars = "ChIP", 
             measure.vars = patterns("counts$"), 
@@ -453,9 +429,7 @@ dds[, {
   print("DONE")
 }, .(ChIP, counts, dds_file)]
 
-#--------------------------------------------------------------#
-# Add files to meta
-#--------------------------------------------------------------#
+# Add files to meta ----
 add <- melt(dds, id.vars = c("ChIP", "feature", "V1"), measure.vars = patterns("file$"))
 add[, name:= paste0(gsub("_file$", "", variable), "_", feature)]
 add <- dcast(add, ChIP+V1~name, value.var = "value")
@@ -465,9 +439,7 @@ processed <- merge(meta,
                    by.y= c("ChIP", "V1"), 
                    all.x=T)
 
-#--------------------------------------------------------------#
-# SAVE
-#--------------------------------------------------------------#
+# SAVE ----
 fwrite(processed,
        "Rdata/processed_metadata_CUTNRUN.txt",
        na= NA)

@@ -1,14 +1,20 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+setwd("/groups/stark/vloubiere/projects/epigenetic_cancer/")
 require(vlfunctions)
 require(GenomicRanges)
 require(readxl)
 
-#----------------------------------------------------------#
-# Import metadata
-#----------------------------------------------------------#
+# Import metadata ----
 meta <- as.data.table(read_xlsx("Rdata/metadata_RNA.xlsx"))
-# meta <- meta[!is.na(DESeq2_object)]
 meta <- meta[DESeq2_object %in% c("epiCancer_GFP", "epiCancer_noGFP")]
+
+# Output file names
+meta[, bam:= paste0("/mnt/f/_R_data/projects/epigenetic_cancer/db/bam/", project, "/",
+                    DESeq2_object, "_", cdition, "_rep", rep, ".bam"), .(DESeq2_object, cdition, rep)]
+meta[, read_counts:= paste0("db/counts/RNA/", DESeq2_object, "_read_counts.rds"), DESeq2_object]
+meta[, GFP_counts:= paste0("db/counts/RNA/", DESeq2_object, "_GFP_counts.rds"), DESeq2_object]
+meta[, dds_file:= paste0("db/dds/RNA/", DESeq2_object, "_dds.rds"), DESeq2_object]
+meta[DESeq2_object=="epiCancer_noGFP", bw_merge:= paste0("db/bw/RNA/", DESeq2_object, "_", cdition, "_merge.bw")]
+
 # Retrieve fq files 
 meta[, c("fq1", "fq2"):= lapply(.SD, function(x){
   list.files(paste0("/mnt/f/_R_data/projects/epigenetic_cancer/db/fastq/", project), 
@@ -17,9 +23,7 @@ meta[, c("fq1", "fq2"):= lapply(.SD, function(x){
              full.names = T)
 }), by= .(fq1, fq2, project), .SDcols= c("fq1", "fq2")]
 
-#----------------------------------------------------------#
-# BUILD dm6 index with GFP sequences
-#----------------------------------------------------------#
+# BUILD dm6 index with GFP sequences ----
 # Build dm6 index
 if(!file.exists("/mnt/d/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index.log"))
 {
@@ -39,11 +43,7 @@ if(!file.exists("/mnt/d/_R_data/genomes/dm6/subreadr_index/subreadr_dm6_index.lo
              reference= "/mnt/d/_R_data/genomes/dm6_GFP/dm6_GFP.fa")
 }
 
-#----------------------------------------------------------#
-# ALIGNMENT
-#----------------------------------------------------------#
-meta[, bam:= paste0("/mnt/f/_R_data/projects/epigenetic_cancer/db/bam/", project, "/",
-                    DESeq2_object, "_", cdition, "_rep", rep, ".bam"), .(DESeq2_object, cdition, rep)]
+# ALIGNMENT ----
 meta[, {
   if(!file.exists(bam))
   {
@@ -59,9 +59,7 @@ meta[, {
   print(paste(bam, "--> DONE!"))
 }, .(bam, fq1, fq2)]
 
-#----------------------------------------------------------#
-# GFP SAF file
-#----------------------------------------------------------#
+# GFP SAF file ----
 fwrite(data.table(GeneID= c("GFP", "EGFP", "mRFP1"), 
                   Chr=  c("GFP", "EGFP", "mRFP1"),
                   start= 1,
@@ -72,11 +70,7 @@ fwrite(data.table(GeneID= c("GFP", "EGFP", "mRFP1"),
        sep= "\t",
        quote= F)
 
-#----------------------------------------------------------#
-# Counts
-#----------------------------------------------------------#
-meta[, read_counts:= paste0("db/counts/RNA/", DESeq2_object, "_read_counts.rds"), DESeq2_object]
-meta[, GFP_counts:= paste0("db/counts/RNA/", DESeq2_object, "_GFP_counts.rds"), DESeq2_object]
+# Counts ----
 meta[, {
   if(!file.exists(read_counts))
   {
@@ -98,10 +92,7 @@ meta[, {
   }
 }, .(read_counts, GFP_counts, layout)]
 
-#----------------------------------------------------------#
-# DESeq2
-#----------------------------------------------------------#
-meta[, dds_file:= paste0("db/dds/RNA/", DESeq2_object, "_dds.rds"), DESeq2_object]
+# DESeq2 ----
 FC <- meta[, {
   if(!file.exists(dds_file))
   {
@@ -132,9 +123,7 @@ FC <- meta[, {
      unique = T)[V1!=V2]
 }, .(read_counts, dds_file, DESeq2_object)]
 
-#----------------------------------------------------------#
-# FC tables
-#----------------------------------------------------------#
+# FC tables ----
 cditions_table <- read_xlsx("Rdata/RNA_dds_conditions.xlsx")
 setkeyv(FC, c("V1", "V2"))
 FC <- FC[as.data.table(cditions_table), on= c("V1==condition", "V2==control"), nomatch= NULL]
@@ -163,12 +152,10 @@ FC[, {
   print("DONE")
 }, dds_file]
 # Add to meta
-meta[FC, FC_file:= i.FC_file, on= c("cdition==V1", "dds_file")]
+meta[FC[grepl("^W", V2)], FC_file:= i.FC_file, on= c("cdition==V1", "dds_file")]
+meta[FC[grepl("^PH", V2)], FC_file.11:= i.FC_file, on= c("cdition==V1", "dds_file")]
 
-#----------------------------------------------------------#
-# BW files
-#----------------------------------------------------------#
-meta[DESeq2_object=="epiCancer_noGFP", bw_merge:= paste0("db/bw/RNA/", DESeq2_object, "_", cdition, "_merge.bw")]
+# BW files ----
 meta[DESeq2_object=="epiCancer_noGFP", {
   if(!file.exists(bw_merge))
   {
@@ -185,9 +172,7 @@ meta[DESeq2_object=="epiCancer_noGFP", {
   print("done")
 }, bw_merge]
 
-#----------------------------------------------------------#
-# SAVE
-#----------------------------------------------------------#
+# SAVE ----
 meta[DESeq2_object=="epiCancer_GFP", system:= "GFP"]
 meta[DESeq2_object=="epiCancer_noGFP", system:= "noGFP"]
 fwrite(meta, 

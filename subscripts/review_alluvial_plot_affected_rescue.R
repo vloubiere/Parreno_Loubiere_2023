@@ -3,20 +3,18 @@ require(vlfunctions)
 require(readxl)
 require(ggalluvial)
 
-# Import metadata
+# Import data
 dat <- readRDS("Rdata/final_gene_features_table.rds")
-dat <- dat[, .(diff_PH18, diff_PH29, diff_PHD9, diff_PHD11)]
+dat <- dat[, .(diff_GFP_PH, diff_STAT92E_PH, diff_ZFH1_PH)]
 dat <- dat[apply(dat, 1, function(x) any(x!="unaffected"))]
-setnames(dat,
-         c("no ph-KD", "Constant ph-KD", "Transient ph-KD d9", "Transient ph-KD d11"))
 dat <- na.omit(dat)
 dat <- dat[, .(freq= .N, subject= .GRP), (dat)]
 dat <- melt(dat,
-            measure.vars = setdiff(names(dat), c("freq", "subject")))
+            measure.vars = patterns("diff"))
 dat[, value:= factor(value, c("up", "unaffected", "down"))]
 
 # Plot ----
-pdf("pdf/Figure_2_alluvial_plot_timecourse_transcriptome.pdf", 
+pdf("pdf/review_alluvial_plot_rescue_transcriptomes.pdf", 
     width = 3.5, 
     height = 3.5)
 ggplot(dat,
@@ -29,7 +27,6 @@ ggplot(dat,
   geom_stratum(alpha = .7, colour= NA, width = 1/1.5) +
   geom_text(stat = "stratum", size = 3) +
   theme_classic() +
-  ylab("Number of genes\n(vs temperature-matched w-KD)")+
   theme(axis.line = element_blank(),
         axis.ticks.x = element_blank(),
         axis.text.x = element_text(angle = 45, vjust = 1, hjust= 1),

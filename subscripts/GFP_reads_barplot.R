@@ -1,4 +1,4 @@
-# setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+setwd("/groups/stark/vloubiere/projects/epigenetic_cancer/")
 require(data.table)
 require(vlfunctions)
 

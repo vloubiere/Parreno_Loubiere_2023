@@ -3,23 +3,24 @@ require(vlfunctions)
 require(readxl)
 require(ggalluvial)
 
-# Import metadata
-dat <- readRDS("Rdata/final_gene_features_table.rds")
-dat <- dat[, .(diff_PH18, diff_PH29, diff_PHD9, diff_PHD11)]
-dat <- dat[apply(dat, 1, function(x) any(x!="unaffected"))]
-setnames(dat,
-         c("no ph-KD", "Constant ph-KD", "Transient ph-KD d9", "Transient ph-KD d11"))
-dat <- na.omit(dat)
-dat <- dat[, .(freq= .N, subject= .GRP), (dat)]
-dat <- melt(dat,
-            measure.vars = setdiff(names(dat), c("freq", "subject")))
-dat[, value:= factor(value, c("up", "unaffected", "down"))]
+# Import metadata ----
+dat <- readRDS("Rdata/final_ATAC_rescue_table.rds")
 
-# Plot ----
-pdf("pdf/Figure_2_alluvial_plot_timecourse_transcriptome.pdf", 
-    width = 3.5, 
+# Only peaks that are decently strong and show a difference in at least one of the conditions ----
+dat <- dat[log10(baseMean)>1.25 & (diff_gfp_ph!="unaffected" | diff_zfh1_ph!="unaffected")]
+
+# Prepare for plotting ----
+pl <- na.omit(dat[, .(diff_gfp_ph, diff_zfh1_ph)])
+pl <- pl[, .(freq= .N, subject= .GRP), (pl)]
+pl <- melt(pl,
+            measure.vars = patterns("diff"))
+pl[, value:= factor(value, c("up", "unaffected", "down"))]
+
+ # Plot ----
+pdf("pdf/review_alluvial_plot_rescue_ATAC.pdf",
+    width = 3.5,
     height = 3.5)
-ggplot(dat,
+ggplot(pl,
        aes(x = variable, stratum = value, alluvium = subject,
            y = freq,
            fill = value, label = value)) +
@@ -29,7 +30,6 @@ ggplot(dat,
   geom_stratum(alpha = .7, colour= NA, width = 1/1.5) +
   geom_text(stat = "stratum", size = 3) +
   theme_classic() +
-  ylab("Number of genes\n(vs temperature-matched w-KD)")+
   theme(axis.line = element_blank(),
         axis.ticks.x = element_blank(),
         axis.text.x = element_text(angle = 45, vjust = 1, hjust= 1),

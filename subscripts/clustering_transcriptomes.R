@@ -1,13 +1,11 @@
-setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+setwd("/groups/stark/vloubiere/projects/epigenetic_cancer/")
 require(vlfunctions)
 require(kohonen)
 require(readxl)
 require(GenomicRanges)
 require(BSgenome.Dmelanogaster.UCSC.dm6)
 
-##########################################################
-# Import metadata
-##########################################################
+# Import metadata ----
 meta <- fread("Rdata/processed_metadata_RNA.txt")
 meta <- meta[DESeq2_object=="epiCancer_noGFP" & FC_file!="NA"]
 dat <- meta[, fread(FC_file), .(DESeq2_object, cdition, FC_file)]
@@ -20,7 +18,7 @@ dat <- dat[!(FBgn %in% diffGenesPH18)]
 dat <- dat[cdition!="PH18"]
 dat <- dat[, cdition:= factor(cdition, c("PHD11", "PHD9", "PH29"))]
 
-# Clip outliers
+# Clip outliers ----
 dat[, corr_log2FoldChange:= {
   lim <- quantile(log2FoldChange, c(0.05, 0.95), na.rm= T)
   log2FoldChange[log2FoldChange<lim[1]] <- lim[1]
@@ -30,9 +28,7 @@ dat[, corr_log2FoldChange:= {
 dat[padj>0.05, c("log2FoldChange", 
                  "corr_log2FoldChange"):= .(NA, 0)]
 
-##########################################################
-# Clustering
-##########################################################
+# Clustering ----
 layers <- as.matrix(dcast(dat, FBgn~cdition, value.var = "corr_log2FoldChange"), 1)
 layers <- list(constant= layers[, "PH29", drop= F],
                transient= layers[, c("PHD11", "PHD9")])
@@ -55,15 +51,13 @@ som$unit.classif <- c(5, 4, 2, 6, 1, 3)[som$unit.classif]
 
 mat <- as.matrix(dcast(dat, FBgn~cdition, value.var = "log2FoldChange"), 1)
 vl_heatmap(mat[, c("PH29", "PHD9", "PHD11")], 
-           row_clusters = som$unit.classif,
-           cluster_rows= F,
-           cluster_cols= F, 
-           breaks = seq(-5, 5, length.out= 100), 
-           show_rownames = F, 
-           col = vl_palette_blueWhiteRed(100), 
-           legend_title = "Fold Change (log2)", 
-           auto_margins = F,
-           show_col_clusters = F)
+           row.clusters = som$unit.classif,
+           cluster.rows= F,
+           cluster.cols= F, 
+           breaks = c(-4, 0, 4), 
+           show.rownames = F, 
+           legend.title = "Fold Change (log2)", 
+           show.col.clusters = F)
 
 # SAVE
 saveRDS(som,

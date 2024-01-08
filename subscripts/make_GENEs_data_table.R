@@ -1,13 +1,7 @@
-# setwd("/mnt/d/_R_data/projects/epigenetic_cancer/")
+setwd("/groups/stark/vloubiere/projects/epigenetic_cancer/")
 require(vlfunctions)
-require(kohonen)
-require(readxl)
-require(GenomicRanges)
-require(BSgenome.Dmelanogaster.UCSC.dm6)
 
-##########################################################
-# Import RNA-Seq data
-##########################################################
+# Import RNA-Seq FC ----
 meta <- fread("Rdata/processed_metadata_RNA.txt")
 meta <- meta[DESeq2_object=="epiCancer_noGFP" & FC_file!="NA"]
 meta[, cdition:= factor(cdition, c("PH18", "PHD11", "PHD9", "PH29"))]
@@ -16,16 +10,45 @@ dat <- dcast(dat,
              FBgn~cdition, 
              value.var = list("log2FoldChange", "padj", "diff"))
 
-##########################################################
-# Add RNA clusters
-##########################################################
+# Add PHD11 vs PH29 comparison ----
+PH29 <- fread("db/FC_tables/RNA/epiCancer_noGFP_PHD11_vs_PH29.txt")
+setnames(PH29,
+         c("FBgn", "log2FoldChange", "padj", "diff"),
+         c("FBgn", "log2FoldChange_PHD11_vs_PH29", "padj_PHD11_vs_PH29", "diff_PHD11_vs_PH29"))
+dat <- merge(dat, PH29, "FBgn")
+
+# Add review RNA-Seq data ----
+meta <- fread("Rdata/processed_metadata_RNA_review.txt")
+meta <- meta[FC_file!="NA"]
+meta <- unique(meta[, .(FC_file= unlist(tstrsplit(FC_file, ","))), cdition])
+meta <- meta[grepl("_vs_W_|vs_GFP_W", FC_file)]
+meta <- rbind(meta,
+              data.table(cdition= c("ZFH1_PH_vs_GFP_PH", "STAT92E_PH_vs_GFP_PH"),
+                         FC_file= c("db/FC_tables/RNA/epiCancer_rescue_ZFH1_PH_vs_GFP_PH.txt",
+                                    "db/FC_tables/RNA/epiCancer_rescue_STAT92E_PH_vs_GFP_PH.txt")))
+meta[, cdition:= factor(cdition, 
+                        c("ZFH1_W", "STAT92E_W", "GFP_PH", "ZFH1_PH", "STAT92E_PH", "ZFH1_PH_vs_GFP_PH", "STAT92E_PH_vs_GFP_PH",
+                          "PH_lL3",
+                          "PH_eL3_0h_recov", "PH_eL3_24h_recov", "PH_eL3_48h_recov", "PH_eL3_96h_recov"))]
+new <- meta[, fread(FC_file), .(cdition, FC_file)]
+new <- dcast(new, 
+             FBgn~cdition, 
+             value.var = list("log2FoldChange", "padj", "diff"))
+dat <- merge(dat, 
+             new,
+             by= "FBgn",
+             all.x= T,
+             all.y= T)
+
+# Add RNA clusters ----
 som <- readRDS("Rdata/clustering_RNA.rds")
 dat[data.table(FBgn= rownames(som$data[[1]]), cl= som$unit.classif), cl:= i.cl, on= "FBgn"]
-dat[, col:= vl_palette_few_categ(max(cl, na.rm = T))[cl]]
+dat[, cl:= as.factor(cl)]
+dat[, cl:= c("Transient-specific", "Irreversible", "Down 2", "Down 3", "Reversible", "Down 1")[as.numeric(cl)]]
+dat[diff_PH29=="unaffected" & diff_PHD11=="unaffected" & diff_PHD9=="unaffected", cl:= "Unaffected"]
+dat[, cl:= factor(cl, c("Unaffected", "Reversible", "Irreversible", "Transient-specific", "Down 1", "Down 2", "Down 3"))]
 
-##########################################################
-# Add FPKMs
-##########################################################
+# Add FPKMs ----
 dds <- readRDS("db/dds/RNA/epiCancer_noGFP_dds.rds")
 fpkms <- as.data.table(DESeq2::fpkm(dds), keep.rownames = "FBgn")
 fpkms <- melt(fpkms, id.vars = "FBgn")
@@ -35,111 +58,38 @@ fpkms <- dcast(fpkms, FBgn~variable, value.var = "FPKM")
 setnames(fpkms, names(fpkms)[-1], paste0("FPKM_", names(fpkms)[-1]))
 dat <- fpkms[dat, on= "FBgn"]
 
-##########################################################
-# Add gene coordinates and symbols
-##########################################################
-gtf <- rtracklayer::import("/groups/stark/vloubiere/genomes/flybase/dm6/dmel-all-r6.36.gtf")
+# Add gene coordinates and symbols ----
+gtf <- rtracklayer::import("/groups/stark/vloubiere/genomes/Drosophila_melanogaster/flybase/dm6/dmel-all-r6.36.gtf")
 GenomeInfoDb::seqlevelsStyle(gtf) <- "UCSC"
 gtf <- as.data.table(gtf)
-dat[gtf[type=="gene"], c("symbol", "seqnames", "start", "end", "strand"):= 
-      .(i.gene_symbol, seqnames, start, end, strand), on= "FBgn==gene_id"]
+gtf <- gtf[type=="gene", .(gene_id, symbol= gene_symbol, seqnames, start, end, strand)]
+dat <- merge(dat,
+             gtf,
+             by.x= "FBgn",
+             by.y= "gene_id")
 
-##########################################################
-# PRC1 and K27me3 binding
-##########################################################
-# Retrieve genes that overlap PH
-PH <- vl_importBed("db/peaks/cutnrun/PH_PH18_confident_peaks.narrowPeak")
-cl <- vl_closestBed(dat, PH)
-bound <- cl[between(dist, -2500, 0), FBgn]
-dat[, PRC1_bound:= FBgn %in% bound]
-# Retrieve genes whose TSS overlap PH
-TSS <- vl_resizeBed(dat, "start", 250, 250)
-dat[, PRC1_bound_promoter:= vl_covBed(TSS, PH)>0]
-# Retrieve genes that overlap K27me3
-K27me3 <- vl_importBed("db/peaks/cutnrun/H3K27me3_PH18_confident_peaks.broadPeak")
-K27me3 <- vl_collapseBed(K27me3, mingap = 2500)
-TSS <- vl_resizeBed(dat, "start", 0, 0)
-sel <- TSS$FBgn[vl_covBed(TSS, K27me3)>0]
-dat[, K27me3_bound:= FBgn %in% sel]
-# Retrieve genes that overlap K118Ub
-K118Ub <- vl_importBed("db/peaks/cutnrun/H2AK118Ub_PH18_confident_peaks.broadPeak")
-K118Ub <- vl_collapseBed(K118Ub, mingap = 2500)
-sel <- TSS$FBgn[vl_covBed(TSS, K118Ub)>0]
-dat[, K118Ub_bound:= FBgn %in% sel]
+# Add PcG binding ----
+ov <- vl_closestBed(dat, "db/bed/merged_K27_domains/PH18.bed")
+ov <- ov[dist==0]
+ov[, max_start:= apply(.SD, 1, max), .SDcols= c("start", "start.b")]
+ov[, min_end:= apply(.SD, 1, max), .SDcols= c("end", "end.b")]
+ov <- ov[(min_end-max_start+1)/(end-start+1)>0.5] # 50% of the gene body covered with the mark
+dat[, PcG_bound:= FBgn %in% ov$FBgn]
 
-##########################################################
-# Add RECOVERY
-##########################################################
-# dat[, unaffected_PH18:= padj_PH18>0.05] # Strict
-# dat[, up_PH29:= padj_PH29<0.05 & log2FoldChange_PH29>(log2(1.5))] # Strict
-# dat[, up_PHD9:= padj_PHD9<0.05 & log2FoldChange_PHD9>0] # Lose
-# dat[, up_PHD11:= padj_PHD11<0.05 & log2FoldChange_PHD11>0] # Lose
-# dat[K27me3_bound
-#     & unaffected_PH18
-#     & up_PH29, recovery:= ifelse(up_PHD9 | up_PHD11, "noRecovery", "Recovery")]
-# dat$unaffected_PH18 <- dat$up_PH29 <- dat$up_PHD9 <- dat$up_PHD11 <- NULL
-dat[(PRC1_bound | K27me3_bound | K118Ub_bound), recovery:= fcase(cl==2, "noRecovery",
-                                                                 cl==5, "Recovery",
-                                                                 default= NA)]
-dat[!is.na(recovery) & PRC1_bound_promoter, PRC1_bound_recovery:= fcase(cl==2, "noRecovery",
-                                                                        cl==5, "Recovery",
-                                                                        default= NA)]
-##########################################################
-# Quantif CUTNRUN
-##########################################################
-# Body marks
-gene_body <- vl_resizeBed(dat, 
-                          center = "start", 
-                          upstream = 1000, 
-                          downstream = dat[, end-start+1], 
-                          genome = "dm6")
-files <- list.files("db/bw/cutnrun/", 
-                    "^H2AK118Ub.*merge|^H3K27me3.*merge|^H3K4me1.*merge", 
-                    full.names = T)
-.n <- paste0(gsub("_merge.bw$", "", basename(files)), "_body")
-dat[, (.n):= lapply(files, function(x) vl_bw_coverage(gene_body, x))]
+# Add RECOVERY ----
+dat[, class:= fcase(PcG_bound & cl=="Irreversible", "Irreversible",
+                    PcG_bound & cl=="Reversible", "Reversible",
+                    PcG_bound & cl=="Unaffected", "Unaffected",
+                    default= NA)]
+dat[, class:= factor(class, c("Unaffected", "Irreversible", "Reversible"))]
 
-# Promoter marks
-prom <- vl_resizeBed(dat, 
-                     center = "start", 
-                     upstream = 750, 
-                     downstream = 250, 
-                     genome = "dm6")
-files <- list.files("db/bw/SA_2020/", "PC_ED|PH_ED|PSC_ED|SUZ12_ED|PHO_CNSID", full.names = T)
-files <- c(files, "db/bw/ATAC/ATAC_merged.bw")
-files <- c(files,
-           list.files("db/bw/cutnrun/", "^PH.*merge|^H3K27Ac.*merge", full.names = T))
-.n <- paste0(gsub("_merge.bw$|_merged.bw", "", basename(files)), "_prom")
-dat[, (.n):= lapply(files, function(x) vl_bw_coverage(prom, x))]
-
-# TTS marks
-TTS <- vl_resizeBed(dat, 
-                    center = "end", 
-                    upstream = 2500, 
-                    downstream = 1000, 
-                    genome = "dm6")
-files <- list.files("db/bw/cutnrun/", 
-                    "^H3K36me3.*merge", 
-                    full.names = T)
-.n <- paste0(gsub("_merge.bw$|_merged.bw$", "", basename(files)), "_TTS")
-dat[, (.n):= lapply(files, function(x) vl_bw_coverage(prom, x))]
-
-##########################################################
-# Add chromatin types SA2020
-##########################################################
-chromhmm <- vl_importBed("external_data/chromatin_types_SA2020_table_s1.txt")
-dat[chromhmm, chromhmm:= i.name, .EACHI, on= c("seqnames", "start<=end", "start>=start")]
-
-##########################################################
-# Save
-##########################################################
+# Save ----
 setcolorder(dat,
-            c("FBgn", "symbol", "PRC1_bound", "PRC1_bound_promoter", "K27me3_bound", "K118Ub_bound", "cl", 
-              "recovery", "PRC1_bound_recovery", "chromhmm", "col", "seqnames", "start", "end", "strand", 
-              "diff_PH18", "diff_PH29", "diff_PHD9", "diff_PHD11"))
-fwrite(dat,
-       "Rdata/final_gene_features_table.txt", 
-       sep= "\t",
-       quote= F,
-       na= NA)
-
+            c("FBgn", "symbol", 
+              "cl", "class", "PcG_bound",
+              "seqnames", "start", "end", "strand", 
+              grep("^diff", names(dat), value = T),
+              grep("^log2FoldChange", names(dat), value = T),
+              grep("^padj", names(dat), value = T)))
+saveRDS(dat,
+        "Rdata/final_gene_features_table.rds")
