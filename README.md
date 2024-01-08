@@ -7,6 +7,6 @@ BioXriv doi: https://doi.org/10.1101/2023.01.04.522799.
 The "main.R" file lists all the different scripts (see the "subscripts/" folder) that were generated, starting from the processing of raw sequencing reads to figure panels.
 Script names should be self-explanatory and additional comments link them to the corresponding figure panel when relevant.
 
-All custom functions that were generated were wrapped into a R package that was made publicly available: https://github.com/vloubiere/vlfunction/tree/Parreno_loubiere_2023_revised 
+All custom functions that were generated were wrapped into a R package that was made publicly available: https://github.com/vloubiere/vlfunction/tree/nature_v2_revised
 
 For any reasonable further request, please contact anne-marie.martinez@igh.cnrs.fr, giacomo.cavalli@igh.cnrs.fr, vincent.loubiere@imp.ac.at
