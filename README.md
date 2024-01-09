@@ -33,6 +33,6 @@ Instructions for use:
 
 5/ The "Extended data tables" were used to format the extended data tables.
 
-Furthere details can be found in the Mehods section on the paper.
+Running the whole set of analyses should be doable within 2 days. Further details regarding the analyses can be found in the Mehods section on the paper.
 
 For any reasonable further request, please contact anne-marie.martinez@igh.cnrs.fr, giacomo.cavalli@igh.cnrs.fr, vincent.loubiere@imp.ac.at
