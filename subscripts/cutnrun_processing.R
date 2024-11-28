@@ -289,7 +289,7 @@ if(any(!file.exists(c("db/saf/promoters_750_250.saf",
     ATAC <- vl_importBed("db/peaks/ATAC/ATAC_confident_peaks.narrowPeak")
     TSSs <- fread("db/saf/TSSs_0_0.saf", col.names = c("gene_id", "seqnames", "start", "end", "strand"))
     cl <- vl_closestBed(a = ATAC, b= TSSs)
-    ATAC[cl, gene_id:= gene_id.b, on= c("seqnames", "start", "end"), mult= "first"]
+    ATAC[cl, gene_id:= gene_id.b, on= c("seqnames", "start", "end")]
     ATAC <- ATAC[, .(GeneID= paste0("ATAC_", seqnames, ":", start, "-", end, ":", strand, "_", gene_id),
                      Chr= seqnames,
                      Start= start,
@@ -309,7 +309,7 @@ meta[!is.na(merged_file), {
     .c <- vl_importBed(merged_file)
     TSSs <- fread("db/saf/TSSs_0_0.saf", col.names = c("gene_id", "seqnames", "start", "end", "strand"))
     cl <- vl_closestBed(a = .c, b= TSSs)
-    .c[cl, gene_id:= gene_id.b, on= c("seqnames", "start", "end"), mult= "first"]
+    .c[cl, gene_id:= gene_id.b, on= c("seqnames", "start", "end")]
     .c <- .c[, .(GeneID= paste0("PEAK_", seqnames, ":", start, "-", end, ":", strand, "_", gene_id),
                  Chr= seqnames,
                  Start= start,

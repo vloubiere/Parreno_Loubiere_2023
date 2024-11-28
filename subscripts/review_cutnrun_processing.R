@@ -203,7 +203,7 @@ meta[!is.na(peaks_saf), {
     .c <- vl_importBed(merged_file)
     TSSs <- fread("db/saf/TSSs_0_0.saf", col.names = c("gene_id", "seqnames", "start", "end", "strand"))
     cl <- vl_closestBed(a = .c, b= TSSs)
-    .c[cl, gene_id:= gene_id.b, on= c("seqnames", "start", "end"), mult= "first"]
+    .c[cl, gene_id:= gene_id.b, on= c("seqnames", "start", "end")]
     .c <- .c[, .(GeneID= paste0("PEAK_", seqnames, ":", start, "-", end, ":", strand, "_", gene_id),
                  Chr= seqnames,
                  Start= start,
